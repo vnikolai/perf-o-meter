@@ -4,3 +4,4 @@
 project (perfometer)
 
 add_subdirectory (perfometer)
+add_subdirectory (samples)
