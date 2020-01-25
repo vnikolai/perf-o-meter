@@ -1,14 +1,12 @@
 // Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
 
 #include <perfometer/perfometer.h>
-#include <fstream>
+#include "serializer.h"
 
 namespace perfometer {
 
 static bool s_initialized = false;
-std::ofstream s_report_file;
-
-const char FILE_HEADER[] = "PERFOMETER.1.0.0";
+serializer s_report_file;
 
 result initialize(const char fileName[])
 {
@@ -17,14 +15,12 @@ result initialize(const char fileName[])
 		return result::ok;
 	}
 
-	s_report_file.open(fileName, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
-
-	if (!s_report_file)
+	result res = s_report_file.open_file_stream(fileName);
+	if (res != result::ok)
 	{
-		return result::io_error;
+		s_report_file.close();
+		return res;
 	}
-
-	s_report_file << FILE_HEADER;
 
 	s_initialized = true;
 
@@ -54,9 +50,7 @@ result flush()
 		return result::not_initialized;
 	}
 
-	s_report_file.flush();
-
-	return s_report_file.fail() ? result::io_error : result::ok;
+	return s_report_file.flush();
 }
 
 result log_work_start(const char tagName[], time startTime)

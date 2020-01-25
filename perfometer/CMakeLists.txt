@@ -3,6 +3,7 @@
 
 add_library (perfometer
             STATIC
-            src/perfometer.cpp)
+            src/perfometer.cpp
+            src/serializer.cpp)
 
 target_include_directories (perfometer PUBLIC include)
