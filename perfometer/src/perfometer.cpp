@@ -59,5 +59,19 @@ result flush()
 	return s_report_file.fail() ? result::io_error : result::ok;
 }
 
+result log_work_start(const char tagName[], time startTime)
+{
+	return result::ok;
+}
+
+result log_work_end(time endTime)
+{
+	return result::ok;
+}
+
+result log_work(const char tagName[], time startTime, time endTime)
+{
+	return result::ok;
+}
 
 } // namespace perfometer

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <perfometer/config.h>
+#include <perfometer/time.h>
 
 namespace perfometer
 {
@@ -16,5 +17,9 @@ namespace perfometer
 	result shutdown();
 
 	result flush();
+
+	result log_work_start(const char tagName[], time startTime);
+	result log_work_end(time endTime);
+	result log_work(const char tagName[], time startTime, time endTime);
 	
 } // namespace perfometer
