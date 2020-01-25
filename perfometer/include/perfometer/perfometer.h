@@ -1,6 +1,8 @@
 // Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
 #pragma once
 
+#include <perfometer/config.h>
+
 namespace perfometer
 {
 	enum result
