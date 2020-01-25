@@ -14,9 +14,9 @@ serializer::~serializer()
     close();    
 }
 
-result serializer::open_file_stream(const char fileName[])
+result serializer::open_file_stream(const char file_name[])
 {
-    m_report_file.open(fileName, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
+    m_report_file.open(file_name, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
 
 	if (!m_report_file)
 	{
@@ -53,6 +53,7 @@ result serializer::write_header()
 	}
 
 	write_clock_config();
+	write_thread_info();
 
 	return result::ok;
 }
@@ -69,6 +70,19 @@ result serializer::write_clock_config()
 
 	m_report_file.write(reinterpret_cast<const char*>(&clock_frequency), time_size);
 	m_report_file.write(reinterpret_cast<const char*>(&start_time), time_size);
+
+	return m_report_file.fail() ? result::io_error : result::ok;
+}
+
+result serializer::write_thread_info()
+{
+	m_report_file << record_type::thread_info;
+
+	unsigned char thread_id_size = sizeof(thread_id);
+	m_report_file << thread_id_size;
+
+	thread_id id = get_thread_id();
+	m_report_file.write(reinterpret_cast<const char*>(&id), thread_id_size);
 
 	return m_report_file.fail() ? result::io_error : result::ok;
 }

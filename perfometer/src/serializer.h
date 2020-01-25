@@ -21,6 +21,7 @@ namespace perfometer
     private:
         result write_header();
         result write_clock_config();
+        result write_thread_info();
 
     private:
         std::ofstream m_report_file;

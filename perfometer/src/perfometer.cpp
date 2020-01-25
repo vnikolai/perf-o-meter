@@ -8,14 +8,14 @@ namespace perfometer {
 static bool s_initialized = false;
 serializer s_report_file;
 
-result initialize(const char fileName[])
+result initialize(const char file_name[])
 {
 	if (s_initialized)
 	{
 		return result::ok;
 	}
 
-	result res = s_report_file.open_file_stream(fileName);
+	result res = s_report_file.open_file_stream(file_name);
 	if (res != result::ok)
 	{
 		s_report_file.close();
@@ -53,19 +53,34 @@ result flush()
 	return s_report_file.flush();
 }
 
-result log_work_start(const char tagName[], time startTime)
+result log_thread_name(const char thread_name[], thread_id id)
 {
-	return result::ok;
+	if (!s_initialized)
+	{
+		return result::not_initialized;
+	}
+
+	return result::not_implemented;
 }
 
-result log_work_end(time endTime)
+result log_thread_name(const char thread_name[])
 {
-	return result::ok;
+	return log_thread_name(thread_name, get_thread_id());
 }
 
-result log_work(const char tagName[], time startTime, time endTime)
+result log_work_start(const char tag_name[], time start_time)
 {
-	return result::ok;
+	return result::not_implemented;
+}
+
+result log_work_end(time end_time)
+{
+	return result::not_implemented;
+}
+
+result log_work(const char tag_name[], time start_time, time end_time)
+{
+	return result::not_implemented;
 }
 
 } // namespace perfometer

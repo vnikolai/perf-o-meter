@@ -12,8 +12,14 @@ namespace perfometer
 
 	enum record_type : uint8_t
 	{
-		clock_configuration = 1     // 16 bit record type, 8 bit frequency size,
-                                    // variadic frequency value, variadic initial time
+		clock_configuration = 1,    // 8 bit record type
+                                    // 8 bit time size
+                                    // time size clock frequency value
+                                    // time size initial time
+
+        thread_info = 2             // 8 bit record type
+                                    // 8 bit thread id size
+                                    // thred id size initialization thread id
 	};
 
     inline std::ostream& operator << (std::ostream& stream, const record_type& type)
