@@ -1,15 +1,18 @@
 // Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
-
 #pragma once
 
-enum perfometer_result
+namespace perfometer
 {
-	OK,
-	NOT_INITIALIZED,
-	IO_ERROR
-};
+	enum result
+	{
+		ok,
+		not_initialized,
+		io_error
+	};
 
-perfometer_result perfometer_initialize(const char fileName[] = "profiling.report");
-perfometer_result perfometer_shutdown();
+	result initialize(const char fileName[] = "profiling.report");
+	result shutdown();
 
-perfometer_result perfometer_flush();
+	result flush();
+	
+} // namespace perfometer

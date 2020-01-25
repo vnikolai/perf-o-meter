@@ -5,11 +5,11 @@
 
 int main(int argc, const char** argv)
 {
-	auto result = perfometer_initialize();
-	std::cout << "perfometer_initialize() returned " << result << std::endl;
+	auto result = perfometer::initialize();
+	std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	result = perfometer_shutdown();
-	std::cout << "perfometer_shutdown() returned " << result << std::endl;
+	result = perfometer::shutdown();
+	std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
 	return 0;
 }

@@ -3,58 +3,61 @@
 #include <perfometer/perfometer.h>
 #include <fstream>
 
+namespace perfometer {
+
 static bool s_initialized = false;
 std::ofstream s_report_file;
 
 const char FILE_HEADER[] = "PERFOMETER.1.0.0";
 
-perfometer_result perfometer_initialize(const char fileName[])
+result initialize(const char fileName[])
 {
 	if (s_initialized)
 	{
-		return perfometer_result::OK;
+		return result::ok;
 	}
 
 	s_report_file.open(fileName, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
 
 	if (!s_report_file)
 	{
-		return perfometer_result::IO_ERROR;
+		return result::io_error;
 	}
 
 	s_report_file << FILE_HEADER;
 
 	s_initialized = true;
 
-	return perfometer_result::OK;
+	return result::ok;
 }
 
-perfometer_result perfometer_shutdown()
+result shutdown()
 {
 	if (!s_initialized)
 	{
-		return perfometer_result::NOT_INITIALIZED;
+		return result::not_initialized;
 	}
 
-	perfometer_result result = perfometer_flush();
+	result res = flush();
 
 	s_report_file.close();
 	
 	s_initialized = false;
 
-	return result;
+	return res;
 }
 
-perfometer_result perfometer_flush()
+result flush()
 {
 	if (!s_initialized)
 	{
-		return perfometer_result::NOT_INITIALIZED;
+		return result::not_initialized;
 	}
 
 	s_report_file.flush();
 
-	return s_report_file.fail() ?
-		perfometer_result::IO_ERROR :
-		perfometer_result::OK;
+	return s_report_file.fail() ? result::io_error : result::ok;
 }
+
+
+} // namespace perfometer
