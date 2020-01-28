@@ -2,6 +2,7 @@
 
 #include "serializer.h"
 #include <fstream>
+#include <algorithm>
 
 namespace perfometer {
 
@@ -40,12 +41,56 @@ result serializer::close()
 	return m_report_file.fail() ? result::io_error : result::ok;
 }
 
+result serializer::serialize_thread_name(const thread_id& id, const char* name)
+{
+	*this << record_type::thread_name
+		  << id
+		  << name;
+
+	return m_report_file.fail() ? result::io_error : result::ok;
+}
+
+serializer& serializer::operator << (const unsigned char byte)
+{
+	m_report_file.write(reinterpret_cast<const char*>(&byte), 1);
+	return *this;
+}
+
+serializer& serializer::operator << (const char* string)
+{
+	unsigned char string_length = std::min(255, static_cast<int>(strlen(string)));
+	*this << string_length;
+
+	m_report_file.write(string, string_length);
+
+	return *this;
+}
+
+serializer& serializer::operator << (const record_type type)
+{
+	m_report_file << type;
+	return *this;
+}
+
+serializer& serializer::operator << (const thread_id& id)
+{
+	m_report_file.write(reinterpret_cast<const char *>(&id), sizeof(thread_id));
+	return *this;
+}
+
+serializer& serializer::operator << (const time& time)
+{
+	m_report_file.write(reinterpret_cast<const char*>(&time), sizeof(time));
+	return *this;
+}
+
 result serializer::write_header()
 {
-	m_report_file << header
-				  << major_version
-				  << minor_version
-				  << patch_version;
+	m_report_file << header;
+
+	*this << major_version
+		  << minor_version
+		  << patch_version;
 
 	if (m_report_file.fail())
 	{
@@ -60,29 +105,26 @@ result serializer::write_header()
 
 result serializer::write_clock_config()
 {
+	unsigned char time_size = sizeof(time);
 	auto start_time = get_time();
-	auto clock_frequency = get_clock_frequency();
+	auto clock_frequency = get_clock_frequency();	
 
-	m_report_file << record_type::clock_configuration;
-
-	unsigned char time_size = sizeof(clock_frequency);
-	m_report_file << time_size;
-
-	m_report_file.write(reinterpret_cast<const char*>(&clock_frequency), time_size);
-	m_report_file.write(reinterpret_cast<const char*>(&start_time), time_size);
+	*this << record_type::clock_configuration
+		  << time_size
+		  << clock_frequency
+		  << start_time;
 
 	return m_report_file.fail() ? result::io_error : result::ok;
 }
 
 result serializer::write_thread_info()
 {
-	m_report_file << record_type::thread_info;
-
 	unsigned char thread_id_size = sizeof(thread_id);
-	m_report_file << thread_id_size;
-
 	thread_id id = get_thread_id();
-	m_report_file.write(reinterpret_cast<const char*>(&id), thread_id_size);
+
+	*this << record_type::thread_info	
+		  << thread_id_size
+		  << id;
 
 	return m_report_file.fail() ? result::io_error : result::ok;
 }

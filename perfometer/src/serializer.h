@@ -18,7 +18,16 @@ namespace perfometer
         result flush();
         result close();
 
+        result serialize_thread_name(const thread_id& id, const char* name);
+
     private:
+
+        serializer& operator << (const unsigned char byte);
+        serializer& operator << (const char* string);
+        serializer& operator << (const record_type type);
+        serializer& operator << (const thread_id& id);
+        serializer& operator << (const time& time);
+
         result write_header();
         result write_clock_config();
         result write_thread_info();

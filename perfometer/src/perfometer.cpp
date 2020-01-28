@@ -87,6 +87,10 @@ result log_thread_name(const char thread_name[], thread_id id)
 		return result::not_initialized;
 	}
 
+	// TODO asynchornous
+	
+	s_serializer.serialize_thread_name(id, thread_name);
+
 	return result::not_implemented;
 }
 

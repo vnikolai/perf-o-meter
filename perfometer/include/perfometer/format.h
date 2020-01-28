@@ -17,9 +17,14 @@ namespace perfometer
                                     // time size clock frequency value
                                     // time size initial time
 
-        thread_info = 2             // 8 bit record type
+        thread_info = 2,            // 8 bit record type
                                     // 8 bit thread id size
-                                    // thred id size initialization thread id
+                                    // thread id size initialization thread id
+
+        thread_name = 3             // 8 bit record type
+                                    // thread id size thread id
+                                    // 8 bit string length
+                                    // string length size string data
 	};
 
     inline std::ostream& operator << (std::ostream& stream, const record_type& type)
