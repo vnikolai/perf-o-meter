@@ -32,23 +32,14 @@ result serializer::flush()
 {
 	m_report_file.flush();
 
-	return m_report_file.fail() ? result::io_error : result::ok;
+	return status();
 }
 
 result serializer::close()
 {
 	m_report_file.close();
 
-	return m_report_file.fail() ? result::io_error : result::ok;
-}
-
-result serializer::serialize_thread_name(const thread_id& id, const char* name)
-{
-	*this << record_type::thread_name
-		  << id
-		  << name;
-
-	return m_report_file.fail() ? result::io_error : result::ok;
+	return status();
 }
 
 serializer& serializer::operator << (const unsigned char byte)
@@ -64,6 +55,12 @@ serializer& serializer::operator << (const char* string)
 
 	m_report_file.write(string, string_length);
 
+	return *this;
+}
+
+serializer& serializer::operator << (const string_id& value)
+{
+	m_report_file.write(reinterpret_cast<const char*>(&value), sizeof(string_id));
 	return *this;
 }
 
@@ -101,7 +98,7 @@ result serializer::write_header()
 	write_clock_config();
 	write_thread_info();
 
-	return result::ok;
+	return status();
 }
 
 result serializer::write_clock_config()
@@ -115,7 +112,7 @@ result serializer::write_clock_config()
 		  << clock_frequency
 		  << start_time;
 
-	return m_report_file.fail() ? result::io_error : result::ok;
+	return status();
 }
 
 result serializer::write_thread_info()
@@ -127,7 +124,7 @@ result serializer::write_thread_info()
 		  << thread_id_size
 		  << id;
 
-	return m_report_file.fail() ? result::io_error : result::ok;
+	return status();
 }
 
 } // namespace perfometer

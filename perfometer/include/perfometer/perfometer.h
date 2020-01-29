@@ -27,8 +27,6 @@ namespace perfometer
 	result log_thread_name(const char thread_name[], thread_id id);
 	result log_thread_name(const char thread_name[]);
 
-	result log_work_start(const char tag_name[], time start_time);
-	result log_work_end(time end_time);
 	result log_work(const char tag_name[], time start_time, time end_time);
 	
 } // namespace perfometer

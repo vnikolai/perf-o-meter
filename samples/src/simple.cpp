@@ -7,18 +7,18 @@
 
 void my_func_to_trace()
 {
-	perfometer::log_work_start(__FUNCTION__, perfometer::get_time());
+	auto start = perfometer::get_time();
 
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-	perfometer::log_work_end(perfometer::get_time());
+	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
 }
 
 void my_enclosed_func()
 {
 	auto start = perfometer::get_time();
 
-	std::this_thread::sleep_for(std::chrono::seconds(2));
+	std::this_thread::sleep_for(std::chrono::milliseconds(350));
 
 	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
 }

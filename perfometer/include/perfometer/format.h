@@ -10,6 +10,9 @@ namespace perfometer
     const char header[] = "PERFOMETER.";    // PERFOMETER.VER - VER is version composed from
                                             // major minor and patch versions one byte each
 
+    using string_id = uint16_t;
+    constexpr string_id invalid_string_id = 0;
+
 	enum record_type : uint8_t
 	{
 		clock_configuration = 1,    // 8 bit record type
@@ -21,10 +24,20 @@ namespace perfometer
                                     // 8 bit thread id size
                                     // thread id size initialization thread id
 
-        thread_name = 3             // 8 bit record type
-                                    // thread id size thread id
+        string = 3,                 // 8 bit record type
+                                    // 16 bit string id
                                     // 8 bit string length
                                     // string length size string data
+
+        thread_name = 4,            // 8 bit record type
+                                    // thread id size thread id
+                                    // 16 bit string id
+
+        work = 5                    // 8 bit record type
+                                    // 16 bit name string id
+                                    // time size time start
+                                    // time size time end
+                                    // thread id size thread id
 	};
 
     inline std::ostream& operator << (std::ostream& stream, const record_type& type)

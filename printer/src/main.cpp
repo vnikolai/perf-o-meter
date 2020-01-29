@@ -1,13 +1,15 @@
 // Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
 
 #include <perfometer/format.h>
-#include <algorithm>
-#include <fstream>
 #include <cstddef>
 #include <cstring>
+#include <algorithm>
+#include <unordered_map>
+#include <fstream>
 
-using perf_thread_id = int64_t;
-using perf_time = uint64_t;
+using perf_thread_id = int64_t;		// holding at least 8 bytes
+using perf_time = uint64_t;			// holding at least 8 bytes
+using perf_string_id = perfometer::string_id;
 
 class reader : public std::ifstream
 {
@@ -37,6 +39,13 @@ public:
 		time = 0; // potentially clearing upper part if size < 8
 
 		read(reinterpret_cast<char*>(&time), m_time_size);
+
+		return *this;
+	}
+
+	reader& operator >> (perf_string_id& id)
+	{
+		read(reinterpret_cast<char*>(&id), sizeof(perf_string_id));
 
 		return *this;
 	}
@@ -107,9 +116,12 @@ int main(int argc, const char** argv)
 	char buffer[buffer_size];
 
 	perf_time clock_frequency = 0;
-	perf_time start_time = 0;
+	perf_time init_time = 0;
 
 	perf_thread_id main_thread_id = 0;
+
+	std::unordered_map<perf_string_id, std::string>		strings;
+	std::unordered_map<perf_thread_id, perf_string_id>	threads;
 
 	perfometer::record_type record;
 
@@ -137,11 +149,11 @@ int main(int argc, const char** argv)
 				report_file.set_time_size(time_size);
 
 				report_file >> clock_frequency
-							>> start_time;
+							>> init_time;
 
 				std::cout << "Time size " << int(time_size) << " bytes" << std::endl;
 				std::cout << "Clock frequency " << clock_frequency << std::endl;
-				std::cout << "Start time " << start_time << std::endl;
+				std::cout << "Start time " << init_time << std::endl;
 				
 				break;
 			}
@@ -165,14 +177,50 @@ int main(int argc, const char** argv)
 				
 				break;
 			}
-			case perfometer::record_type::thread_name:
+			case perfometer::record_type::string:
 			{
-				perf_thread_id id = 0;
+				perf_string_id id = 0;
 				report_file >> id;
 
 				report_file.read_string(buffer, buffer_size);
 
-				std::cout << "Thread ID " << id << " name " << buffer << std::endl;
+				strings[id] = buffer;
+
+				std::cout << "String ID " << id << " name " << buffer << std::endl;
+
+				break;
+			}
+			case perfometer::record_type::thread_name:
+			{
+				perf_thread_id thread_id = 0;
+				perf_string_id string_id = 0;
+
+				report_file >> thread_id
+							>> string_id;
+
+				threads[thread_id] = string_id;
+
+				std::cout << "Thread ID " << thread_id << " name " << strings[string_id].c_str() << std::endl;
+
+				break;
+			}
+			case perfometer::record_type::work:
+			{
+				perf_string_id string_id = 0;
+				perf_thread_id thread_id = 0;
+				perf_time time_start = 0;
+				perf_time time_end = 0;
+				
+				report_file >> string_id
+							>> time_start
+							>> time_end
+							>> thread_id;
+
+				std::cout << "Work " << strings[string_id].c_str()
+						  << " on "  << strings[threads[thread_id]].c_str()
+						  << " started " << static_cast<double>(time_start - init_time) / clock_frequency << " sec"
+						  << " duration " << static_cast<double>(time_end - time_start) / clock_frequency << " sec"
+						  << std::endl;
 
 				break;
 			}
