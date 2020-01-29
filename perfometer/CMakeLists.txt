@@ -7,3 +7,5 @@ add_library (perfometer
             src/serializer.cpp)
 
 target_include_directories (perfometer PUBLIC include)
+
+set_property(TARGET perfometer PROPERTY CXX_STANDARD 17)

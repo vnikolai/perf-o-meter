@@ -3,6 +3,7 @@
 #include "serializer.h"
 #include <fstream>
 #include <algorithm>
+#include <cstring>
 
 namespace perfometer {
 
@@ -58,7 +59,7 @@ serializer& serializer::operator << (const unsigned char byte)
 
 serializer& serializer::operator << (const char* string)
 {
-	unsigned char string_length = std::min(255, static_cast<int>(strlen(string)));
+	unsigned char string_length = std::min(255, static_cast<int>(std::strlen(string)));
 	*this << string_length;
 
 	m_report_file.write(string, string_length);

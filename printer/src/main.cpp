@@ -4,9 +4,10 @@
 #include <algorithm>
 #include <fstream>
 #include <cstddef>
+#include <cstring>
 
-using thread_id = int64_t;
-using time = uint64_t;
+using perf_thread_id = int64_t;
+using perf_time = uint64_t;
 
 class reader : public std::ifstream
 {
@@ -22,7 +23,7 @@ public:
 		return *this;
 	}
 
-	reader& operator >> (thread_id& id)
+	reader& operator >> (perf_thread_id& id)
 	{
 		id = 0; // potentially clearing upper part if size < 8
 
@@ -31,7 +32,7 @@ public:
 		return *this;
 	}
 
-	reader& operator >> (time& time)
+	reader& operator >> (perf_time& time)
 	{
 		time = 0; // potentially clearing upper part if size < 8
 
@@ -85,7 +86,7 @@ int main(int argc, const char** argv)
 	report_file.read(header, 11);
 	header[11] = 0;
 
-	if (report_file.fail() || strcmp(header, perfometer::header))
+	if (report_file.fail() || std::strncmp(header, perfometer::header, 11))
 	{
 		std::cout << "Wrong file format " << argv[1] << std::endl;
 		return -1;
@@ -105,10 +106,10 @@ int main(int argc, const char** argv)
 	constexpr size_t buffer_size = 1024;
 	char buffer[buffer_size];
 
-	time clock_frequency = 0;
-	time start_time = 0;
+	perf_time clock_frequency = 0;
+	perf_time start_time = 0;
 
-	thread_id main_thread_id = 0;
+	perf_thread_id main_thread_id = 0;
 
 	perfometer::record_type record;
 
@@ -166,7 +167,7 @@ int main(int argc, const char** argv)
 			}
 			case perfometer::record_type::thread_name:
 			{
-				thread_id id = 0;
+				perf_thread_id id = 0;
 				report_file >> id;
 
 				report_file.read_string(buffer, buffer_size);
