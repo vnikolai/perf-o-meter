@@ -4,6 +4,18 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "clean all",
+            "type": "shell",
+            "linux": {
+                "command": "rm -rdf build bin lib"
+            },
+            "windows": {
+                "command": "rm build, bin, lib -Force -Recurse -ErrorAction Ignore"
+            },
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
             "label": "build all",
             "type": "shell",
             "linux": {

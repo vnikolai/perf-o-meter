@@ -1,0 +1,112 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Simple",
+            "type": "cppdbg",
+            "linux": {
+                "type": "cppdbg",
+                "program": "${workspaceFolder}/bin/simple",
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            },
+            "windows": {
+                "type":"cppvsdbg",
+                "program": "${workspaceFolder}/bin/simple.exe",
+            },
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false,
+        },
+        {
+            "name": "Pause",
+            "type": "cppdbg",
+            "linux": {
+                "type": "cppdbg",
+                "program": "${workspaceFolder}/bin/pause",
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            },
+            "windows": {
+                "type":"cppvsdbg",
+                "program": "${workspaceFolder}/bin/pause.exe",
+            },
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false,
+        },
+        {
+            "name": "Printer",
+            "type": "cppdbg",
+            "linux": {
+                "type": "cppdbg",
+                "program": "${workspaceFolder}/bin/printer",
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            },
+            "windows": {
+                "type":"cppvsdbg",
+                "program": "${workspaceFolder}/bin/printer.exe",
+            },
+            "request": "launch",            
+            "args": ["perfometer.report"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false,
+        },
+        {
+            "name": "Visualizer",
+            "type": "cppdbg",
+            "linux": {
+                "type": "cppdbg",
+                "program": "${workspaceFolder}/bin/visualizer",
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            },
+            "windows": {
+                "type":"cppvsdbg",
+                "program": "${workspaceFolder}/bin/visualizer.exe",
+            },
+            "request": "launch",            
+            "args": ["perfometer.report"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false,
+        }
+    ]
+}

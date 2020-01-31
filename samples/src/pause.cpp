@@ -35,6 +35,7 @@ void my_another_func()
 int main(int argc, const char** argv)
 {
 	auto result = perfometer::initialize("perfometer.report", false);
+	std::cout << "perfometer::initialize() returned " << result << std::endl;
 	
 	// perfometer started in paused mode, my_func_to_trace will not be logged
 	my_func_to_trace();
@@ -42,17 +43,20 @@ int main(int argc, const char** argv)
 	// thread name will be logged even while work logging paused
 	perfometer::log_thread_name("MAIN_THREAD");
 
-	perfometer::resume();
+	result = perfometer::resume();
+	std::cout << "perfometer::resume() returned " << result << std::endl;
 
 	// my_another_func will be logged
 	my_another_func();
 
-	perfometer::pause();
+	result = perfometer::pause();
+	std::cout << "perfometer::pause() returned " << result << std::endl;
 
 	// perfometer paused, my_enclosed_func not logged
 	my_enclosed_func();
 
 	result = perfometer::shutdown();
+	std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
 	return 0;
 }

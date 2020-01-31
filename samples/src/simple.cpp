@@ -35,7 +35,7 @@ void my_another_func()
 int main(int argc, const char** argv)
 {
 	auto result = perfometer::initialize();
-	std::cout << "perfometer_initialize() returned " << result << std::endl;
+	std::cout << "perfometer::initialize() returned " << result << std::endl;
 
 	perfometer::log_thread_name("MAIN_THREAD");
 
@@ -44,7 +44,7 @@ int main(int argc, const char** argv)
 	my_another_func();
 
 	result = perfometer::shutdown();
-	std::cout << "perfometer_shutdown() returned " << result << std::endl;
+	std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
 	return 0;
 }
