@@ -2,34 +2,12 @@
 
 #include <QApplication>
 #include <QMainWindow>
-#include <QOpenGLWidget>
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
+#include "TimeLineView.h"
 #include <cstring>
 #include <perfometer/perfometer.h>
 
-class OpenGLRenderer : public QOpenGLWidget, QOpenGLFunctions
-{
-public:
-	OpenGLRenderer() :
-		QOpenGLWidget(nullptr)
-	{
-	}
 
-protected:
-	void initializeGL() override
-	{
-		QOpenGLFunctions::initializeOpenGLFunctions();
 
-		glClearColor(0.117f, 0.117f, 0.117f, 1.0f);
-	}
-
-	void paintGL() override
-	{
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
-	
-};
 
 int main(int argc, char** argv)
 {
@@ -46,7 +24,7 @@ int main(int argc, char** argv)
 
 	QMainWindow window;
 	window.resize(1280, 720);
-	window.setCentralWidget(new OpenGLRenderer());
+	window.setCentralWidget(new visualizer::TimeLineView());
 	window.show();
 
 	return app.exec();

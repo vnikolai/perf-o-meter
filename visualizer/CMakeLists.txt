@@ -3,7 +3,9 @@
 
 find_package(Qt5 COMPONENTS Core Gui OpenGL REQUIRED)
 
-add_executable(visualizer src/main.cpp)
+add_executable(visualizer
+                src/main.cpp
+                src/TimeLineView.cpp)
 
 target_link_libraries(
     visualizer
