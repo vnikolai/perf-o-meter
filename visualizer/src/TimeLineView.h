@@ -5,6 +5,8 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QScrollBar>
+#include "PerfometerReport.h"
+#include <memory>
 
 namespace visualizer
 {
@@ -15,6 +17,8 @@ namespace visualizer
     public:
         TimeLineView();
         virtual ~TimeLineView();
+
+        void setReport(std::shared_ptr<PerfometerReport> report) { m_report = report; };
 
     protected:
         void initializeGL() override;
@@ -30,8 +34,10 @@ namespace visualizer
     private:
         using super = QOpenGLWidget;
 
-        QScrollBar  m_horizontalBar;
-        QPoint      m_mousePosition;
-        int         m_zoom;
+        QScrollBar                          m_horizontalBar;
+        QPoint                              m_mousePosition;
+        int                                 m_zoom;
+
+        std::shared_ptr<PerfometerReport>   m_report;
     };
 } // namespace visualizer

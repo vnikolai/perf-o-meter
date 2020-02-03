@@ -2,11 +2,12 @@
 
 #include <QApplication>
 #include <QMainWindow>
+#include <QMessageBox>
 #include "TimeLineView.h"
+#include "PerfometerReport.h"
 #include <cstring>
+#include <memory>
 #include <perfometer/perfometer.h>
-
-
 
 
 int main(int argc, char** argv)
@@ -22,10 +23,39 @@ int main(int argc, char** argv)
 
 	QApplication::setApplicationName(title);
 
+	visualizer::TimeLineView* timeLineView = new visualizer::TimeLineView();
+
 	QMainWindow window;
 	window.resize(1280, 720);
-	window.setCentralWidget(new visualizer::TimeLineView());
+	window.setCentralWidget(timeLineView);
 	window.show();
+
+	if (argc > 1)
+	{
+		std::shared_ptr<visualizer::PerfometerReport> report = std::make_shared<visualizer::PerfometerReport>();
+
+		const std::string reportFileName(argv[1]);
+
+		if (report->loadFile(reportFileName))
+		{
+			timeLineView->setReport(report);
+
+			char titleWithFile[1024];
+			std::snprintf(titleWithFile, 1024, "%s - %s", title, reportFileName.c_str());
+
+			window.setWindowTitle(titleWithFile);
+		}
+		else
+		{
+			QString text;
+			text = text.fromStdString(reportFileName);
+			text.prepend("Cannot open report file ");
+
+			QMessageBox messageBox;
+			messageBox.setText(text);
+			messageBox.exec();
+		}
+	}
 
 	return app.exec();
 }
