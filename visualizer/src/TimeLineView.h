@@ -17,35 +17,45 @@ namespace visualizer
         TimeLineView();
         virtual ~TimeLineView();
 
-        void setReport(std::shared_ptr<PerfometerReport> report) { m_report = report; };
+        void setReport(std::shared_ptr<PerfometerReport> report);
+
+    public slots:
+        void onHorizontalSliderChanged(int value);
+        void onVerticalSliderChanged(int value);
 
     protected:
         void initializeGL() override;
         void paintGL() override;
 
-        virtual void mouseMoveEvent(QMouseEvent *event) override;
-        virtual void wheelEvent(QWheelEvent *event) override;
-        virtual void resizeEvent(QResizeEvent *event) override;
-
+        virtual void mouseMoveEvent(QMouseEvent* event) override;
+        virtual void wheelEvent(QWheelEvent* event) override;
+        virtual void resizeEvent(QResizeEvent* event) override;
+    
     private:
+        float pixelsPerSecond() const;
         void drawStatusMessage(QPainter& painter);
-        void drawRuler(QPainter& painter);
+        int drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record);
+        int drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records);
+        void drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report);
+        void drawRuler(QPainter& painter, QPoint& pos);
 
         void layout();
+
+        std::string formatTime(double time);
+
+        int getReportHeight(const PerfometerReport& report);
+        int getRecordHeight(const Record& record);
 
     private:
         using super = QOpenGLWidget;
 
-        static constexpr int DefaultZoom = 1000;
-        static constexpr double VisibleMargin = 0.1; //10% of report time each size
-
-        QScrollBar                          m_horizontalBar;
+        QScrollBar                          m_horizontalScrollBar;
+        QScrollBar                          m_verticalScrollBar;
         QPoint                              m_mousePosition;
         int                                 m_zoom;
+        int                                 m_reportHeightPx;
 
-        double                              m_reportStartTime;
-        double                              m_reportEndTime;
-        double                              m_offset;
+        QPoint                              m_offset;
 
         std::shared_ptr<PerfometerReport>   m_report;
     };
