@@ -13,7 +13,8 @@ namespace perfometer
 		not_initialized,
 		io_error,
 		not_running,
-		not_implemented
+		invalid_arguments,
+		not_implemented		
 	};
 
 	result initialize(const char file_name[] = "perfometer.report", bool running = true);

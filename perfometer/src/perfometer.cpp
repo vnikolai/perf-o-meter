@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <stack>
+#include <utility>
 
 namespace perfometer {
 
@@ -15,12 +16,14 @@ static bool s_logging_running = false;
 
 std::unordered_map<std::string, string_id> s_strings_map;
 
-string_id get_string_id(const char* string)
+using get_string_result = std::pair<string_id, bool>;
+
+get_string_result get_string_id(const char* string)
 {
 	auto it = s_strings_map.find(string);
 	if (it != s_strings_map.end())
 	{
-		return it->second;
+		return get_string_result(it->second, false);
 	}
 
 	static string_id s_unique_id = invalid_string_id + 1;
@@ -28,12 +31,12 @@ string_id get_string_id(const char* string)
 	if (s_unique_id == invalid_string_id)
 	{
 		// loop after overflow 
-		return invalid_string_id;
+		return get_string_result(invalid_string_id, false);
 	}
 
 	s_strings_map.emplace(string, s_unique_id);
 
-	return s_unique_id++;
+	return get_string_result(s_unique_id++, true);
 }
 
 result initialize(const char file_name[], bool running)
@@ -41,6 +44,11 @@ result initialize(const char file_name[], bool running)
 	if (s_initialized)
 	{
 		return result::ok;
+	}
+
+	if (file_name == nullptr)
+	{
+		return result::invalid_arguments;
 	}
 
 	result res = s_serializer.open_file_stream(file_name);
@@ -117,19 +125,24 @@ result log_thread_name(const char thread_name[], thread_id id)
 		return result::not_initialized;
 	}
 
+	if (thread_name == nullptr)
+	{
+		return result::invalid_arguments;
+	}
+
 	// TODO asynchornous
 	
-	string_id name_id = get_string_id(thread_name);
-	if (name_id != invalid_string_id)
+	auto string_result = get_string_id(thread_name);
+	if (string_result.second)
 	{
 		s_serializer << record_type::string
-			  		 << name_id
+			  		 << string_result.first
 		  			 << thread_name;
 	}
 
 	s_serializer << record_type::thread_name
 		  		 << id
-		  		 << name_id;
+		  		 << string_result.first;
 
 	return s_serializer.status();
 }
@@ -146,18 +159,22 @@ result log_work(const char tag_name[], time start_time, time end_time)
 		return result::not_running;
 	}
 
-	// TODO asynchornous
-	string_id name_id = get_string_id(tag_name);
+	if (tag_name == nullptr)
+	{
+		return result::invalid_arguments;
+	}
 
-	if (name_id != invalid_string_id)
+	// TODO asynchornous
+	auto string_result = get_string_id(tag_name);
+	if (string_result.second)
 	{
 		s_serializer << record_type::string
-			  		 << name_id
+			  		 << string_result.first
 			  		 << tag_name;
 	}
 
 	s_serializer << record_type::work
-				 << name_id
+				 << string_result.first
 				 << start_time
 				 << end_time
 				 << get_thread_id();
