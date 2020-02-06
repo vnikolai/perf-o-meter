@@ -1,35 +1,32 @@
 // Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
 
 #include <perfometer/perfometer.h>
+#include <perfometer/helpers.h>
 #include <iostream>
 #include <thread>
 #include <chrono>
 
+// Simple starting report and using PERFOMETER_LOG_FUNCTION macro to trace functions performance
+
 void my_func_to_trace()
 {
-	auto start = perfometer::get_time();
+	PERFOMETER_LOG_FUNCTION();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
-
-	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
 }
 
 void my_enclosed_func()
 {
-	auto start = perfometer::get_time();
+	PERFOMETER_LOG_FUNCTION();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(350));
-
-	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
 }
 
 void my_another_func()
 {
-	auto start = perfometer::get_time();
+	PERFOMETER_LOG_FUNCTION();
 
 	my_enclosed_func();
-
-	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
 }
 
 int main(int argc, const char** argv)
