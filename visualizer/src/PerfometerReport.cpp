@@ -75,6 +75,7 @@ private:
 PerfometerReport::PerfometerReport()
 	: m_startTime(std::numeric_limits<double>::max())
 	, m_endTime(std::numeric_limits<double>::min())
+	, m_mainThreadID(0)
 {
 }
 
@@ -111,8 +112,6 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 
 	PerfTime clockFrequency = 0;
 	PerfTime initTime = 0;
-
-	ThreadID mainThreadID = 0;
 
 	std::unordered_map<PerfStringID, std::string>	strings;
 
@@ -158,7 +157,7 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 				
 				report.setThreadIDSize(threadIDSize);
 				
-				report >> mainThreadID;
+				report >> m_mainThreadID;
 				
 				break;
 			}

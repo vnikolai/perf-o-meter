@@ -42,6 +42,8 @@ namespace visualizer
         double getStartTime() const { return m_startTime; }
         double getEndTime() const { return m_endTime; }
 
+        ThreadID mainThreadID() const { return m_mainThreadID; }
+
         const Threads& getThreads() const;
         Thread& getThread(ThreadID id);
         const Thread& getThread(ThreadID id) const;
@@ -51,6 +53,8 @@ namespace visualizer
         double m_endTime;
 
         Threads m_threads;
+
+        ThreadID m_mainThreadID;
     };
 
 } // namespace visualizer
