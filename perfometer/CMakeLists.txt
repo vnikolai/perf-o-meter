@@ -8,4 +8,8 @@ add_library (perfometer
 
 target_include_directories (perfometer PUBLIC include)
 
-set_property(TARGET perfometer PROPERTY CXX_STANDARD 17)
+if (CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(perfometer pthread)
+endif()
+
+set_property(TARGET perfometer PROPERTY CXX_STANDARD 11)

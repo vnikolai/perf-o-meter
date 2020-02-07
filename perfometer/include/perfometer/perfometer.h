@@ -10,11 +10,12 @@ namespace perfometer
 	enum result
 	{
 		ok,
-		not_initialized,
 		io_error,
-		not_running,
 		invalid_arguments,
-		not_implemented		
+		no_memory_available,
+		not_initialized,
+		not_running,
+		not_implemented
 	};
 
 	result initialize(const char file_name[] = "perfometer.report", bool running = true);

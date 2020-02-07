@@ -1,25 +1,47 @@
 // Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
 
 #include <perfometer/perfometer.h>
+#include <perfometer/mutex.h>
+#include "record_buffer.h"
 #include "serializer.h"
 #include <string>
+#include <cstring>
 #include <unordered_map>
-#include <stack>
 #include <utility>
+#include <queue>
+#include <thread>
+#include <atomic>
 
 namespace perfometer {
 
 static bool s_initialized = false;
 serializer s_serializer;
+static mutex s_serializer_mutex;
 
-static bool s_logging_running = false;
+static bool s_logging_enabled = false;
+
+static bool s_logger_thread_running = false;
+static std::thread s_logger_thread;
+
+static std::queue<record_buffer*> s_logger_records_queue;
+static std::unordered_map<thread_id, record_buffer*> s_records_inprogress;
+static mutex s_records_mutex;
+static thread_local record_buffer* s_record_cache = nullptr;
+
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+std::atomic<time>	s_overhead {0};
+std::atomic<int>	s_numcalls {0};
+#endif
 
 std::unordered_map<std::string, string_id> s_strings_map;
+mutex s_string_map_mutex;
 
 using get_string_result = std::pair<string_id, bool>;
 
 get_string_result get_string_id(const char* string)
 {
+	scoped_lock lock(s_string_map_mutex);
+
 	auto it = s_strings_map.find(string);
 	if (it != s_strings_map.end())
 	{
@@ -30,13 +52,60 @@ get_string_result get_string_id(const char* string)
 
 	if (s_unique_id == invalid_string_id)
 	{
-		// loop after overflow 
+		// loop after overflow
 		return get_string_result(invalid_string_id, false);
 	}
 
 	s_strings_map.emplace(string, s_unique_id);
 
 	return get_string_result(s_unique_id++, true);
+}
+
+void logger_thread()
+{
+	while (s_logger_thread_running)
+	{
+		record_buffer* buffer = nullptr;
+		{
+			scoped_lock lock(s_records_mutex);
+
+			if (!s_logger_records_queue.empty())
+			{
+				buffer = s_logger_records_queue.front();
+				s_logger_records_queue.pop();
+			}
+		}
+
+		if (buffer)
+		{
+			for (size_t i = 0; i < buffer->count; ++i)
+			{
+				const work_record& record = buffer->records[i];
+
+				auto string_result = get_string_id(record.name);
+
+				scoped_lock lock(s_serializer_mutex);
+				if (string_result.second)
+				{
+					s_serializer << record_type::string
+								<< string_result.first
+								<< record.name;
+				}
+
+				s_serializer << record_type::work
+							 << string_result.first
+							 << record.start
+							 << record.end
+							 << record.tid;
+			}
+
+			delete buffer;
+		}
+		else
+		{
+			std::this_thread::yield();
+		}
+	}
 }
 
 result initialize(const char file_name[], bool running)
@@ -62,7 +131,11 @@ result initialize(const char file_name[], bool running)
 				 << string_id(invalid_string_id)
 				 << "String limit overflow";
 
-	s_logging_running = running;
+	s_logger_thread_running = true;
+	s_logger_thread = std::thread(logger_thread);
+
+	s_logging_enabled = running;
+	
 	s_initialized = true;
 	
 	return result::ok;
@@ -75,11 +148,39 @@ result shutdown()
 		return result::not_initialized;
 	}
 
+	s_logging_enabled = false;
+
+	{
+		scoped_lock lock(s_records_mutex);
+
+		for (auto pair : s_records_inprogress)
+		{
+			record_buffer* buffer = pair.second;
+			s_logger_records_queue.push(buffer);
+		}
+
+		s_records_inprogress.clear();
+	}
+
 	result res = flush();
+
+	s_logger_thread_running = false;
+
+	if (s_logger_thread.joinable())
+	{
+		s_logger_thread.join();
+	}
+
+	scoped_lock lock(s_serializer_mutex);
 
 	s_serializer.close();
 	
 	s_initialized = false;
+
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+	std::cout << "Perf-o-meter log_work numcalls: " << s_numcalls << std::endl;
+	std::cout << "Perf-o-meter log_work overhead: " << s_overhead << std::endl;
+#endif
 
 	return res;
 }
@@ -91,7 +192,7 @@ result pause()
 		return result::not_initialized;
 	}
 
-	s_logging_running = false;
+	s_logging_enabled = false;
 
 	return result::ok;
 }
@@ -103,7 +204,7 @@ result resume()
 		return result::not_initialized;
 	}
 
-	s_logging_running = true;
+	s_logging_enabled = true;
 
 	return result::ok;
 }
@@ -115,10 +216,66 @@ result flush()
 		return result::not_initialized;
 	}
 
+	bool logger_done = false;
+	while (!logger_done)
+	{
+		{
+			scoped_lock lock(s_records_mutex);
+			logger_done = s_logger_records_queue.empty();
+		}
+
+		if (!logger_done)
+		{
+			std::this_thread::yield();
+		}
+	}
+
 	return s_serializer.flush();
 }
 
-result log_thread_name(const char thread_name[], thread_id id)
+result ensure_buffer()
+{
+#if defined(PERFOMETER_LOG_RECORD_SWAP_OVERHEAD)
+	time start_time = get_time();
+#endif
+	if (s_record_cache && s_record_cache->count == records_cache_size)
+    {
+		{
+			scoped_lock lock(s_records_mutex);
+			s_logger_records_queue.push(s_record_cache);
+		}
+
+		s_record_cache = nullptr;
+    }
+
+	if (s_record_cache == nullptr)
+	{
+		s_record_cache = new record_buffer();
+		if (!s_record_cache || !s_record_cache->records)
+		{
+			delete s_record_cache;
+			s_record_cache = nullptr;
+
+			return result::no_memory_available;
+		}
+
+		auto tid = get_thread_id();
+		scoped_lock lock(s_records_mutex);
+		s_records_inprogress[tid] = s_record_cache;
+	}
+
+#if defined(PERFOMETER_LOG_RECORD_SWAP_OVERHEAD)
+	time end_time = get_time();
+	if (end_time - start_time > 1000)
+	{
+		log_work(__FUNCTION__, start_time, end_time);
+	}
+#endif
+	
+	return result::ok;
+}
+
+result log_thread_name(const char thread_name[], thread_id tid)
 {
 	if (!s_initialized)
 	{
@@ -130,19 +287,19 @@ result log_thread_name(const char thread_name[], thread_id id)
 		return result::invalid_arguments;
 	}
 
-	// TODO asynchornous
+	scoped_lock lock(s_serializer_mutex);
 	
 	auto string_result = get_string_id(thread_name);
 	if (string_result.second)
 	{
 		s_serializer << record_type::string
-			  		 << string_result.first
-		  			 << thread_name;
+					 << string_result.first
+					 << thread_name;
 	}
 
 	s_serializer << record_type::thread_name
-		  		 << id
-		  		 << string_result.first;
+				 << tid
+				 << string_result.first;
 
 	return s_serializer.status();
 }
@@ -154,7 +311,7 @@ result log_thread_name(const char thread_name[])
 
 result log_work(const char tag_name[], time start_time, time end_time)
 {
-	if (!s_logging_running)
+	if (!s_logging_enabled)
 	{
 		return result::not_running;
 	}
@@ -164,22 +321,24 @@ result log_work(const char tag_name[], time start_time, time end_time)
 		return result::invalid_arguments;
 	}
 
-	// TODO asynchornous
-	auto string_result = get_string_id(tag_name);
-	if (string_result.second)
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+	time start = get_time();
+#endif
+
+	result res = ensure_buffer();
+	if (res != result::ok)
 	{
-		s_serializer << record_type::string
-			  		 << string_result.first
-			  		 << tag_name;
+		return res;
 	}
 
-	s_serializer << record_type::work
-				 << string_result.first
-				 << start_time
-				 << end_time
-				 << get_thread_id();
+	s_record_cache->add_record(std::move(work_record({tag_name, start_time, end_time, get_thread_id()})));
+	
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+	s_overhead += get_time() - start;
+	s_numcalls++;
+#endif
 
-	return s_serializer.status();
+	return result::ok;
 }
 
 } // namespace perfometer
