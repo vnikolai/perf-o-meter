@@ -19,7 +19,7 @@ class reader : public std::ifstream
 {
 public:
 	reader(const std::string& fileName)
-		: std::ifstream(fileName)
+		: std::ifstream(fileName, std::ios::binary)
 	{
 	}
 

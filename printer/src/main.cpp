@@ -15,7 +15,7 @@ class reader : public std::ifstream
 {
 public:
 	reader(const char* file_name)
-		: std::ifstream(file_name)
+		: std::ifstream(file_name, std::ios::binary)
 	{
 	}
 
