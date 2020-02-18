@@ -9,24 +9,30 @@
 
 namespace visualizer {
 
-constexpr int       DefaultZoom = 1000;
-constexpr double    VisibleMargin = 0.1;        // 10% of report time each size
-constexpr int       RulerHeight = 24;           // pixels
-constexpr int       RulerDistReport = 12;       // pixels
-constexpr int       ThreadTitleHeight = 32;     // pixels
-constexpr int       TitleOffsetSmall = 2;       // pixels
-constexpr int       RecordHeight = 16;          // pixels
-constexpr int       ScrolBarThickness = 24;     // pixels
-constexpr int       NumColors = 8;
-constexpr int       MinZoom = 10;
-constexpr int       ZoomKeyboardStep = 250;
-constexpr int       OffsetKeyboardStep = 10;
-constexpr int       OffsetKeyboardPageStep = 240;
+constexpr int       DefaultZoom             = 1000;
+constexpr double    VisibleMargin           = 0.1;  // 10% of report time each size
+constexpr int       RulerHeight             = 24;
+constexpr int       RulerDistReport         = 12;
+constexpr int       ThreadTitleHeight       = 32;
+constexpr int       TitleOffsetSmall        = 2;
+constexpr int       RecordHeight            = 16;
+constexpr int       ScrolBarThickness       = 24;
+constexpr int       MinZoom                 = 10;
+constexpr int       ZoomKeyboardStep        = 250;
+constexpr int       OffsetKeyboardStep      = 10;
+constexpr int       OffsetKeyboardPageStep  = 240;
+constexpr int       RecordMinTextWidth      = 10;
+constexpr int       PixelsPerSecond         = 128;
 
-constexpr int   PixelsPerSecond = 128;
-
-QColor colors[NumColors] = {Qt::darkRed, Qt::darkGreen, Qt::gray, Qt::darkYellow,
-                            Qt::darkCyan, Qt::darkMagenta, Qt::lightGray, Qt::darkGray};
+constexpr int NumColors = 8;
+QColor Colors[NumColors] = { Qt::darkRed,
+                             Qt::darkGreen,
+                             Qt::darkCyan,
+                             Qt::darkYellow,
+                             Qt::darkMagenta,
+                             Qt::gray,
+                             Qt::lightGray,                             
+                             Qt::darkGray };
 
 TimeLineView::TimeLineView()
     : QOpenGLWidget(nullptr)
@@ -153,20 +159,35 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
 
 int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record)
 {
+    const auto thisWidth = width();
+    const auto pixpersec = pixelsPerSecond();
+    
     int depth = 1;
-
-    auto pixpersec = pixelsPerSecond();
 
     int x = pos.x() + static_cast<int>(record.timeStart * pixpersec);
     int y = pos.y();
-
     int w = static_cast<int>((record.timeEnd - record.timeStart) * pixpersec);
-    painter.fillRect(x, y, w, RecordHeight, colors[rand() % NumColors]);
-    painter.drawRect(x, y, w, RecordHeight);                
+    int h = RecordHeight;
     
-    QString text;
-    text = text.fromStdString(record.name + " " + formatTime(record.timeEnd - record.timeStart));
-    painter.drawText(x + TitleOffsetSmall, y, w, RecordHeight, Qt::AlignVCenter | Qt::AlignLeft, text);
+    const int colorIndex = rand() % NumColors;
+
+    const bool visible = x + w > 0 && x < thisWidth;
+    if (visible)
+    {
+        if (w > 2)
+        {
+            painter.fillRect(x, y, w, h, Colors[colorIndex]);
+        }
+
+        painter.drawRect(x, y, w, h);
+    
+        if (w >= RecordMinTextWidth)
+        {
+            QString text;
+            text = text.fromStdString(record.name + " " + formatTime(record.timeEnd - record.timeStart));
+            painter.drawText(x + TitleOffsetSmall, y, w, h, Qt::AlignVCenter | Qt::AlignLeft, text);
+        }
+    }
 
     pos.ry() += RecordHeight;
     depth += drawPerfometerRecords(painter, pos, record.enclosed);
@@ -193,16 +214,23 @@ int TimeLineView::drawPerfometerRecords(QPainter& painter, QPoint& pos, const st
 void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report)
 {
     const auto thisWidth = width();
+    const auto thisHeight = height();
 
     QString text;
-
-    srand(0);
 
     painter.setFont(QFont("Helvetica", 10));
     
     for (const auto& it : report.getThreads())
     {
         const Thread& thread = it.second;
+
+        int threadHeight = getThreadHeight(thread);
+
+        if (pos.ry() + threadHeight < RulerHeight + RulerDistReport)
+        {
+            pos.ry() += threadHeight;
+            continue;
+        }
 
         painter.setPen(Qt::white);
         painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
@@ -212,9 +240,16 @@ void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const Pe
 
         pos.ry() += ThreadTitleHeight;
 
+        srand(0);
+
         painter.setPen(Qt::black);
         int depth = drawPerfometerRecords(painter, pos, thread.records);
         pos.ry() += depth * RecordHeight;
+
+        if (pos.ry() >= thisHeight )
+        {
+            break;
+        }
     }
 }
 
@@ -418,16 +453,24 @@ int TimeLineView::getReportHeight(const PerfometerReport& report)
     {
         const Thread& thread = it.second;
 
-        height += ThreadTitleHeight;
-
-        int recordsHeight = 0;
-        for (auto record : thread.records)
-        {
-            recordsHeight = std::max(recordsHeight, getRecordHeight(record));
-        }
-
-        height += recordsHeight * RecordHeight;
+        height += getThreadHeight(thread);
     }
+
+    return height;
+}
+
+int TimeLineView::getThreadHeight(const Thread& thread)
+{
+    int height = ThreadTitleHeight;
+
+    int recordsHeight = 0;
+    for (auto record : thread.records)
+    {
+        recordsHeight = std::max(recordsHeight, getRecordHeight(record));
+    }
+
+    height += recordsHeight * RecordHeight;
+
     return height;
 }
 
