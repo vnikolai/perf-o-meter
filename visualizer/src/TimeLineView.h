@@ -36,6 +36,7 @@ namespace visualizer
         void drawStatusMessage(QPainter& painter);
         int drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record);
         int drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records);
+        void drawPerfometerThread(QPainter& painter, QPoint& pos, const Thread& thread);
         void drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report);
         void drawRuler(QPainter& painter, QPoint& pos);
 

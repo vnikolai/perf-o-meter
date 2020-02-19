@@ -93,6 +93,7 @@ void TimeLineView::paintGL()
     glClear(GL_COLOR_BUFFER_BIT);
 
     QPainter painter(this);
+    painter.setFont(QFont("Helvetica", 10));
 
     QPoint pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
     if (m_report)
@@ -153,7 +154,6 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
              m_mousePosition.x(), m_mousePosition.y(), m_zoom, m_offset.x(), m_offset.y());
 
     painter.setPen(Qt::white);
-    painter.setFont(QFont("Helvetica", 16));
     painter.drawText(thisWidth - 250, thisHeight - 50, text);
 }
 
@@ -211,40 +211,55 @@ int TimeLineView::drawPerfometerRecords(QPainter& painter, QPoint& pos, const st
     return depth;
 }
 
-void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report)
+void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, const Thread& thread)
 {
     const auto thisWidth = width();
-    const auto thisHeight = height();
+    int threadHeight = getThreadHeight(thread);
+
+    if (pos.ry() + threadHeight < RulerHeight + RulerDistReport)
+    {
+        pos.ry() += threadHeight;
+        return;
+    }
 
     QString text;
+    painter.setPen(Qt::white);
+    painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
+                        thisWidth, ThreadTitleHeight,
+                        Qt::AlignVCenter | Qt::AlignLeft,
+                        text.fromStdString(thread.name));
 
-    painter.setFont(QFont("Helvetica", 10));
-    
+    pos.ry() += ThreadTitleHeight;
+
+    srand(0);
+
+    painter.setPen(Qt::black);
+    int depth = drawPerfometerRecords(painter, pos, thread.records);
+    pos.ry() += depth * RecordHeight;
+}
+
+void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report)
+{
+    const auto thisHeight = height();
+
+    std::multimap<std::string, const Thread*> threads;
     for (const auto& it : report.getThreads())
     {
-        const Thread& thread = it.second;
-
-        int threadHeight = getThreadHeight(thread);
-
-        if (pos.ry() + threadHeight < RulerHeight + RulerDistReport)
+        const ThreadID tid = it.first;
+        if (tid != report.mainThreadID())
         {
-            pos.ry() += threadHeight;
-            continue;
+            const Thread& thread = it.second;
+            threads.emplace(thread.name, &thread);
         }
+    }
 
-        painter.setPen(Qt::white);
-        painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
-                         thisWidth, ThreadTitleHeight,
-                         Qt::AlignVCenter | Qt::AlignLeft,
-                         text.fromStdString(thread.name));
+    drawPerfometerThread(painter, pos, report.getThread(report.mainThreadID()));
+    
+    for (const auto& it : threads)
+    {
+        const Thread& thread = *it.second;
 
-        pos.ry() += ThreadTitleHeight;
-
-        srand(0);
-
-        painter.setPen(Qt::black);
-        int depth = drawPerfometerRecords(painter, pos, thread.records);
-        pos.ry() += depth * RecordHeight;
+        drawPerfometerThread(painter, pos, thread);
 
         if (pos.ry() >= thisHeight )
         {
@@ -277,8 +292,6 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
 
     constexpr size_t bufferSize = 64;
     QString text;
-
-    painter.setFont(QFont("Helvetica", 10));
 
     for (int i = 0, s = 0; s < thisWidth; s += RulerStep, ++i)
     {
