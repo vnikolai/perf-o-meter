@@ -1,5 +1,4 @@
-# Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
-# Perf-o-meter flame-graph visualizer
+# Perf-o-meter report visualizer
 
 find_package(Qt5 COMPONENTS Core Gui OpenGL REQUIRED)
 

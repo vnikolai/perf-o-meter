@@ -1,5 +1,4 @@
-# Copyright 2019 Volodymyr Nikolaichuk <nikolaychuk.volodymyr@gmail.com>
-# Perometer printer to display report in readable form
+# Perf-o-meter printer to display report in readable form
 
 add_executable(printer src/main.cpp)
 

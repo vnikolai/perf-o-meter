@@ -1,2 +1,7 @@
-# perf-o-meter
-Toolset for performance data collecting and visualizing functionality
+# Perf-o-meter
+
+Toolset for instrumented performance data collecting and visualization.
+
+# License
+
+Distributed under MIT License.
