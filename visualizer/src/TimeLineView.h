@@ -32,6 +32,13 @@ namespace visualizer
     class TimeLineView : public QOpenGLWidget,
                                 QOpenGLFunctions
     {
+        struct RecordInfo
+        {
+            QRect bounds;
+            std::string name;
+            double duration;
+        };
+
     public:
         TimeLineView();
         virtual ~TimeLineView();
@@ -47,17 +54,22 @@ namespace visualizer
         void paintGL() override;
 
         virtual void mouseMoveEvent(QMouseEvent* event) override;
+        virtual void mousePressEvent(QMouseEvent* event) override;
         virtual void wheelEvent(QWheelEvent* event) override;
         virtual void resizeEvent(QResizeEvent* event) override;
     
     private:
         float pixelsPerSecond() const;
-        void drawStatusMessage(QPainter& painter);
+        
         int drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record);
         int drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records);
         void drawPerfometerThread(QPainter& painter, QPoint& pos, const Thread& thread);
         void drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report);
+
         void drawRuler(QPainter& painter, QPoint& pos);
+
+        void drawRecordInfo(QPainter& painter, const RecordInfo& info);
+        void drawStatusMessage(QPainter& painter);
 
         void layout();
 
@@ -77,6 +89,9 @@ namespace visualizer
         int                                 m_reportHeightPx;
 
         QPoint                              m_offset;
+
+        std::shared_ptr<RecordInfo>         m_highlightedRecordInfo;
+        std::shared_ptr<RecordInfo>         m_selectedRecordInfo;
 
         std::shared_ptr<PerfometerReport>   m_report;
     };

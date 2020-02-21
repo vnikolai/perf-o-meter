@@ -42,6 +42,13 @@ constexpr int       OffsetKeyboardPageStep  = 240;
 constexpr int       RecordMinTextWidth      = 10;
 constexpr int       PixelsPerSecond         = 128;
 
+constexpr int       RecordInfoHeight        = 32;
+constexpr int       RecordInfoDist          = 32;
+constexpr int       RecordInfoTextDist      = 12;
+constexpr int       RecordInfoTimeWidth     = 128;
+
+QColor              RulerBackgroundColor    (228, 230, 241, 255);
+
 constexpr int NumColors = 8;
 QColor Colors[NumColors] = { Qt::darkRed,
                              Qt::darkGreen,
@@ -137,6 +144,15 @@ void TimeLineView::mouseMoveEvent(QMouseEvent* event)
     update();
 }
 
+void TimeLineView::mousePressEvent(QMouseEvent* event)
+{
+    super::mousePressEvent(event);
+
+    m_selectedRecordInfo = m_highlightedRecordInfo;
+
+    update();
+}
+
 void TimeLineView::wheelEvent(QWheelEvent* event)
 {
     m_zoom += event->angleDelta().y();
@@ -160,21 +176,6 @@ float TimeLineView::pixelsPerSecond() const
     return PixelsPerSecond * 1.0f * m_zoom / DefaultZoom;
 }
 
-void TimeLineView::drawStatusMessage(QPainter& painter)
-{
-    const auto thisWidth = width();
-    const auto thisHeight = height();
-
-    constexpr size_t bufferSize = 64;
-    char text[bufferSize];
-    snprintf(text, bufferSize,
-             "%d %d %d %d %d",
-             m_mousePosition.x(), m_mousePosition.y(), m_zoom, m_offset.x(), m_offset.y());
-
-    painter.setPen(Qt::white);
-    painter.drawText(thisWidth - 250, thisHeight - 50, text);
-}
-
 int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record)
 {
     const auto thisWidth = width();
@@ -192,9 +193,18 @@ int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Rec
     const bool visible = x + w > 0 && x < thisWidth;
     if (visible)
     {
+        bool selected = false;
         if (w > 2)
         {
-            painter.fillRect(x, y, w, h, Colors[colorIndex]);
+            QRect bounds(x, y, w, h);
+            painter.fillRect(bounds, Colors[colorIndex]);
+
+            selected = bounds.contains(m_mousePosition);
+            if (selected)
+            {
+                RecordInfo info{bounds, record.name, record.timeEnd - record.timeStart};
+                m_highlightedRecordInfo = std::make_shared<RecordInfo>(info);
+            }
         }
 
         painter.drawRect(x, y, w, h);
@@ -271,6 +281,8 @@ void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const Pe
         }
     }
 
+    m_highlightedRecordInfo = nullptr;
+
     drawPerfometerThread(painter, pos, report.getThread(report.mainThreadID()));
     
     for (const auto& it : threads)
@@ -284,6 +296,17 @@ void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const Pe
             break;
         }
     }
+
+    if (m_highlightedRecordInfo)
+    {
+        painter.setPen(Qt::green);
+        painter.drawRect(m_highlightedRecordInfo->bounds);
+    }
+
+    if (m_selectedRecordInfo)
+    {
+        drawRecordInfo(painter, *m_selectedRecordInfo);
+    }
 }
 
 void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
@@ -295,7 +318,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     constexpr int PrimaryStrokeLength = 16;
     constexpr int SecondaryStrokeLength = 12;
 
-    painter.fillRect(0, 0, thisWidth, RulerHeight, QColor(228, 230, 241, 255));
+    painter.fillRect(0, 0, thisWidth, RulerHeight, RulerBackgroundColor);
 
     painter.setPen(Qt::black);
     painter.drawRect(1, 0, thisWidth - 1, RulerHeight);
@@ -336,6 +359,51 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
 
     painter.setPen(Qt::darkRed);
     painter.drawLine(zeroX, 0, zeroX, thisHeight);
+}
+
+void TimeLineView::drawRecordInfo(QPainter& painter, const RecordInfo& info)
+{
+    const auto thisWidth = width();
+    const auto thisHeight = height();
+
+    QString text;
+
+    painter.setPen(Qt::black);
+
+    QRect recordInfoBounds(
+            RecordInfoDist,
+            thisHeight - RecordInfoHeight - RecordInfoDist,
+            thisWidth - 2 * RecordInfoDist,
+            RecordInfoHeight
+        );
+
+    painter.fillRect(recordInfoBounds, RulerBackgroundColor);
+
+    recordInfoBounds.setLeft(recordInfoBounds.left() + RecordInfoTextDist);
+    recordInfoBounds.setWidth(recordInfoBounds.width() - 2 * RecordInfoTextDist - RecordInfoTimeWidth);
+
+    text = text.fromStdString(info.name);
+    painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignLeft, text);
+
+    recordInfoBounds.setRight(thisWidth - RecordInfoDist - RecordInfoTextDist);
+
+    text = text.fromStdString(formatTime(info.duration));
+    painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
+}
+
+void TimeLineView::drawStatusMessage(QPainter& painter)
+{
+    const auto thisWidth = width();
+    const auto thisHeight = height();
+
+    constexpr size_t bufferSize = 64;
+    char text[bufferSize];
+    snprintf(text, bufferSize,
+             "%d %d %d %d %d",
+             m_mousePosition.x(), m_mousePosition.y(), m_zoom, m_offset.x(), m_offset.y());
+
+    painter.setPen(Qt::white);
+    painter.drawText(thisWidth - 250, thisHeight - 100, text);
 }
 
 void TimeLineView::layout()
