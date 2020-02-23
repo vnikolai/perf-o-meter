@@ -56,7 +56,7 @@ QColor Colors[NumColors] = { Qt::darkRed,
                              Qt::darkYellow,
                              Qt::darkMagenta,
                              Qt::gray,
-                             Qt::lightGray,                             
+                             Qt::lightGray,
                              Qt::darkGray };
 
 TimeLineView::TimeLineView()
@@ -171,9 +171,9 @@ void TimeLineView::resizeEvent(QResizeEvent* event)
     layout();
 }
 
-float TimeLineView::pixelsPerSecond() const
+double TimeLineView::pixelsPerSecond() const
 {
-    return PixelsPerSecond * 1.0f * m_zoom / DefaultZoom;
+    return static_cast<double>(PixelsPerSecond) * m_zoom / DefaultZoom;
 }
 
 int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record)
@@ -213,7 +213,7 @@ int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Rec
         {
             QString text;
             text = text.fromStdString(record.name + " " + formatTime(record.timeEnd - record.timeStart));
-            painter.drawText(x + TitleOffsetSmall, y, w, h, Qt::AlignVCenter | Qt::AlignLeft, text);
+            painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignLeft, text);
         }
     }
 
@@ -253,9 +253,9 @@ void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, const Th
     QString text;
     painter.setPen(Qt::white);
     painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
-                        thisWidth, ThreadTitleHeight,
-                        Qt::AlignVCenter | Qt::AlignLeft,
-                        text.fromStdString(thread.name));
+                     thisWidth, ThreadTitleHeight,
+                     Qt::AlignVCenter | Qt::AlignLeft,
+                     text.fromStdString(thread.name));
 
     pos.ry() += ThreadTitleHeight;
 
@@ -309,12 +309,55 @@ void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const Pe
     }
 }
 
+void TimeLineView::getRulerStep(int& rulerStep, int& timeStep)
+{
+    constexpr int NumSteps = 22;
+    constexpr int RulerTimeSteps[NumSteps]
+    {
+        10,
+        20,
+        50,
+        100,
+        200,
+        500,
+        1000,
+        2000,
+        5000,
+        10000,
+        20000,
+        50000,
+        100000,
+        200000,
+        500000,
+        1000000,
+        2000000,
+        5000000,
+        10000000,
+        20000000,
+        50000000,
+        10000000,
+    };
+
+    static_assert(
+        sizeof(RulerTimeSteps) == NumSteps * sizeof(int),
+        "RulerTimeSteps elements number check failed");
+
+    const auto pixpersec = pixelsPerSecond();
+    int idx = 0;
+
+    do
+    {
+        timeStep = RulerTimeSteps[idx++];
+        rulerStep = timeStep * (pixpersec / 1000000);
+        
+    } while (rulerStep < 32 && idx < NumSteps);
+}
+
 void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
 {
     const auto thisWidth = width();
     const auto thisHeight = height();
 
-    constexpr int RulerStep = 24;
     constexpr int PrimaryStrokeLength = 16;
     constexpr int SecondaryStrokeLength = 12;
 
@@ -324,19 +367,20 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     painter.drawRect(1, 0, thisWidth - 1, RulerHeight);
     painter.drawLine(0, RulerHeight, thisWidth, RulerHeight);
 
-    int zeroX = 0;
+    int rulerStep = 0;
+    int timeStep = 0;
+    getRulerStep(rulerStep, timeStep);
 
-    double secondsPerPixel = 1.0f * DefaultZoom / (PixelsPerSecond * m_zoom);
-
-    int rulerCount = thisWidth / RulerStep;
-    double stepValue = RulerStep * secondsPerPixel;    
-
-    constexpr size_t bufferSize = 64;
     QString text;
 
-    for (int i = 0, s = 0; s < thisWidth; s += RulerStep, ++i)
+    const auto pixpersec = pixelsPerSecond();
+    const double secondsPerPixel = 1.0f * DefaultZoom / (PixelsPerSecond * m_zoom);
+    const int rulerCount = thisWidth / rulerStep;
+
+    for (int i = 0; i < rulerCount + 2; ++i)
     {
-        int x = s + std::max(pos.x(), 0);
+        int x = i * rulerStep + (pos.x() > 0 ? pos.x() : pos.x() % (2 * rulerStep));
+
         if (i % 2)
         {
             painter.drawLine(x, 0, x, SecondaryStrokeLength);
@@ -345,20 +389,19 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
         {
             painter.drawLine(x, 0, x, PrimaryStrokeLength);
 
-            double rulerTime = i * stepValue + (pos.x() < 0 ? -pos.x() * secondsPerPixel : 0);
+            int idx = i + 2 * (pos.x() < 0 ? -pos.x() / (2 * rulerStep) : 0);
+            double rulerTime = idx * static_cast<double>(timeStep) / 1000000;
             painter.drawText(x + TitleOffsetSmall, 0, 64, RulerHeight,
                              Qt::AlignVCenter | Qt::AlignLeft,
                              text.fromStdString(formatTime(rulerTime)));
         }
-
-        if (i == 0)
-        {
-            zeroX = x;
-        }
     }
 
-    painter.setPen(Qt::darkRed);
-    painter.drawLine(zeroX, 0, zeroX, thisHeight);
+    if (pos.x() > 0)
+    {
+        painter.setPen(Qt::darkRed);
+        painter.drawLine(pos.x(), 0, pos.x(), thisHeight);
+    }
 }
 
 void TimeLineView::drawRecordInfo(QPainter& painter, const RecordInfo& info)
@@ -371,11 +414,11 @@ void TimeLineView::drawRecordInfo(QPainter& painter, const RecordInfo& info)
     painter.setPen(Qt::black);
 
     QRect recordInfoBounds(
-            RecordInfoDist,
-            thisHeight - RecordInfoHeight - RecordInfoDist,
-            thisWidth - 2 * RecordInfoDist,
-            RecordInfoHeight
-        );
+        RecordInfoDist,
+        thisHeight - RecordInfoHeight - RecordInfoDist,
+        thisWidth - 2 * RecordInfoDist,
+        RecordInfoHeight
+    );
 
     painter.fillRect(recordInfoBounds, RulerBackgroundColor);
 
@@ -414,7 +457,7 @@ void TimeLineView::layout()
 
     if (m_report)
     {
-        auto pixpersec = pixelsPerSecond();;
+        const auto pixpersec = pixelsPerSecond();
         int reportStartPx = m_report->getStartTime() * pixpersec;
         int reportEndPx = m_report->getEndTime() * pixpersec;
         reportWidth = (reportEndPx - reportStartPx);
@@ -426,15 +469,21 @@ void TimeLineView::layout()
         else
         {
             int extraWidth = reportWidth - thisWidth;
-            m_horizontalScrollBar.setMinimum(reportStartPx - extraWidth * VisibleMargin / 2);
-            m_horizontalScrollBar.setMaximum(reportStartPx + extraWidth * (1 + VisibleMargin / 2));
+            
+            reportEndPx = reportStartPx + extraWidth * (1 + VisibleMargin / 2);
+            reportStartPx = reportStartPx - extraWidth * VisibleMargin / 2;
+
+            m_horizontalScrollBar.setMinimum(reportStartPx);
+            m_horizontalScrollBar.setMaximum(reportEndPx);
         }
 
         m_offset.setX(std::max(m_offset.x(), reportStartPx));
         m_offset.setX(std::min(m_offset.x(), reportEndPx));
     }
 
-    int extraHeight = m_reportHeightPx * (1 + VisibleMargin / 2) - (thisHeight - RulerHeight - RulerDistReport);
+    int extraHeight = m_reportHeightPx + RecordInfoDist + 2 * RecordInfoHeight
+                      - (thisHeight - RulerHeight - RulerDistReport);
+
     bool vertBarVisible = extraHeight > 0;
     bool horBarVisible = reportWidth > thisWidth;
     

@@ -59,13 +59,14 @@ namespace visualizer
         virtual void resizeEvent(QResizeEvent* event) override;
     
     private:
-        float pixelsPerSecond() const;
+        double pixelsPerSecond() const;
         
         int drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record);
         int drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records);
         void drawPerfometerThread(QPainter& painter, QPoint& pos, const Thread& thread);
         void drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report);
 
+        void getRulerStep(int& rulerStep, int& timeStep);
         void drawRuler(QPainter& painter, QPoint& pos);
 
         void drawRecordInfo(QPainter& painter, const RecordInfo& info);
