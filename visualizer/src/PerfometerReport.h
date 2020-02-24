@@ -23,6 +23,7 @@ SOFTWARE. */
 #include <map>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace visualizer
 {
@@ -56,7 +57,8 @@ namespace visualizer
         PerfometerReport();
         virtual ~PerfometerReport();
 
-        bool loadFile(const std::string& fileName);
+        bool loadFile(const std::string& fileName,
+                      std::function<void(const std::string&)> logger = nullptr);
 
         double getStartTime() const { return m_startTime; }
         double getEndTime() const { return m_endTime; }

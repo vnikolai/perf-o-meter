@@ -25,8 +25,16 @@ SOFTWARE. */
 #include "PerfometerReport.h"
 #include <cstring>
 #include <memory>
+#include <fstream>
 #include <perfometer/perfometer.h>
 
+static void log(const std::string& text)
+{
+	static std::ofstream logFile("perfometer.log", std::ios::trunc);
+	
+	logFile << text;
+	logFile.flush();
+}
 
 int main(int argc, char** argv)
 {
@@ -54,7 +62,7 @@ int main(int argc, char** argv)
 
 		const std::string reportFileName(argv[1]);
 
-		if (report->loadFile(reportFileName))
+		if (report->loadFile(reportFileName, log))
 		{
 			timeLineView->setReport(report);
 

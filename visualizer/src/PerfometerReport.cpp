@@ -101,11 +101,21 @@ PerfometerReport::~PerfometerReport()
 {
 }
 
-bool PerfometerReport::loadFile(const std::string& fileName)
+bool PerfometerReport::loadFile(const std::string& fileName,
+								std::function<void(const std::string&)> logger)
 {
+	auto log = [&logger](const std::string& text)
+	{
+		if (logger)
+		{
+			logger(text);
+		}
+	};
+
     reader report(fileName);
 	if (!report)
 	{
+		log(std::string("ERROR loading report: Cannot open file ") + fileName);
 		return false;
 	}
 
@@ -114,6 +124,7 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 
 	if (report.fail() || std::strncmp(header, perfometer::header, 11))
 	{
+		log("ERROR loading report: wrong file format");
 		return false;
 	}
 
@@ -139,6 +150,7 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 	{
 		if (report.fail())
 		{
+			log(std::string("ERROR loading report: cannot read from file ") + fileName);
 			return false;
 		}
 
@@ -151,7 +163,7 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 
 				if (timeSize > 8)
 				{
-					// ERROR: Time size too large
+					log("ERROR loading report: Time size too large");
 					return false;
 				}
 				
@@ -169,7 +181,7 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 
 				if (threadIDSize > 8)
 				{
-					// ERROR: Thread ID size too large
+					log("ERROR loading report: Thread ID size too large");
 					return false;
 				}
 				
@@ -242,7 +254,7 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 			}
 			default:
 			{
-				// ERROR: Unknown record type
+				log("ERROR loading report: Unknown record type");
 				return false;
 			}
 		}
