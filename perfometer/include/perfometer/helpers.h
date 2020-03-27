@@ -52,4 +52,11 @@ namespace perfometer
 #   define PERFOMETER_FUNCTION     __FUNCTION__
 #endif
 
-#define PERFOMETER_LOG_FUNCTION() perfometer::work_logger func_logger(PERFOMETER_FUNCTION)
+#define PERFOMETER_CONCAT(x, y)             x##y
+#define PERFOMETER_CONCAT_WRAPPER(x, y)     PERFOMETER_CONCAT(x, y)
+
+#define PERFOMETER_LOG_SCOPE(name)                                      \
+        perfometer::work_logger                                         \
+            PERFOMETER_CONCAT_WRAPPER(func_logger, __LINE__)( name )
+        
+#define PERFOMETER_LOG_FUNCTION()           PERFOMETER_LOG_SCOPE(PERFOMETER_FUNCTION)
