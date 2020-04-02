@@ -36,7 +36,8 @@ namespace visualizer
         {
             QRect bounds;
             std::string name;
-            double duration;
+            double startTime;
+            double endTime;
         };
 
     public:
@@ -46,16 +47,22 @@ namespace visualizer
         void setReport(std::shared_ptr<PerfometerReport> report);
 
     public slots:
-        void onHorizontalSliderChanged(int value);
-        void onVerticalSliderChanged(int value);
+        void onHorizontalScrollBarValueChanged(int value);
+        void onVerticalScrollBarValueChanged(int value);
 
     protected:
         void initializeGL() override;
         void paintGL() override;
 
-        virtual void mouseMoveEvent(QMouseEvent* event) override;
+        virtual void keyPressEvent(QKeyEvent* event) override;
+        virtual void keyReleaseEvent(QKeyEvent* event) override;
+
         virtual void mousePressEvent(QMouseEvent* event) override;
+        virtual void mouseReleaseEvent(QMouseEvent* event) override;
+        virtual void mouseMoveEvent(QMouseEvent* event) override;
         virtual void wheelEvent(QWheelEvent* event) override;
+        virtual void mouseDoubleClickEvent(QMouseEvent* event) override;
+
         virtual void resizeEvent(QResizeEvent* event) override;
     
     private:
@@ -80,12 +87,21 @@ namespace visualizer
         int getThreadHeight(const Thread& report);
         int getRecordHeight(const Record& record);
 
+        void zoom(int zoomDelta);
+        void scrollBy(QPoint delta);
+        void scrollTo(QPoint pos);
+        void scrollXBy(int xDelta);
+        void scrollYBy(int yDelta);
+        void scrollXTo(int x);
+        void scrollYTo(int y);
+
     private:
         using super = QOpenGLWidget;
 
         QScrollBar                          m_horizontalScrollBar;
         QScrollBar                          m_verticalScrollBar;
         QPoint                              m_mousePosition;
+        bool                                m_mouseDragActive;
         int                                 m_zoom;
         int                                 m_reportHeightPx;
 

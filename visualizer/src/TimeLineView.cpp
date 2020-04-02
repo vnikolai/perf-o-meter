@@ -22,6 +22,7 @@ SOFTWARE. */
 #include <cstring>
 #include <algorithm>
 #include <QPainter>
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
 
@@ -37,6 +38,7 @@ constexpr int       RecordHeight            = 16;
 constexpr int       ScrolBarThickness       = 24;
 constexpr int       MinZoom                 = 10;
 constexpr int       ZoomKeyboardStep        = 250;
+constexpr int       ZoomKeyboardLargeStep   = 5000;
 constexpr int       OffsetKeyboardStep      = 10;
 constexpr int       OffsetKeyboardPageStep  = 240;
 constexpr int       RecordMinTextWidth      = 10;
@@ -63,17 +65,19 @@ TimeLineView::TimeLineView()
     : QOpenGLWidget(nullptr)
     , m_horizontalScrollBar(Qt::Horizontal, this)
     , m_verticalScrollBar(Qt::Vertical, this)
+    , m_mouseDragActive(false)
     , m_zoom(DefaultZoom)
     , m_offset(0, 0)
+    , m_reportHeightPx(0)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
 
     connect(&m_horizontalScrollBar, &QScrollBar::valueChanged,
-            this, &TimeLineView::onHorizontalSliderChanged);
+            this, &TimeLineView::onHorizontalScrollBarValueChanged);
 
     connect(&m_verticalScrollBar, &QScrollBar::valueChanged,
-            this, &TimeLineView::onVerticalSliderChanged);
+            this, &TimeLineView::onVerticalScrollBarValueChanged);
 }
 
 TimeLineView::~TimeLineView()
@@ -89,13 +93,13 @@ void TimeLineView::setReport(std::shared_ptr<PerfometerReport> report)
     layout();
 }
 
-void TimeLineView::onHorizontalSliderChanged(int value)
+void TimeLineView::onHorizontalScrollBarValueChanged(int value)
 {
     m_offset.setX(value);
     update();
 }
 
-void TimeLineView::onVerticalSliderChanged(int value)
+void TimeLineView::onVerticalScrollBarValueChanged(int value)
 {
     m_offset.setY(value);
     update();
@@ -135,30 +139,180 @@ void TimeLineView::paintGL()
     painter.end();
 }
 
-void TimeLineView::mouseMoveEvent(QMouseEvent* event)
+void TimeLineView::keyPressEvent(QKeyEvent* event)
 {
-    super::mouseMoveEvent(event);
+    const bool ctrl = event->modifiers() & Qt::ControlModifier;
+    const bool shift = event->modifiers() & Qt::ShiftModifier;
+    const bool alt = event->modifiers() & Qt::AltModifier;
+    const bool modifier = ctrl || shift || alt;
 
-    m_mousePosition = event->pos();
+    switch (event->key())
+    {
+        case Qt::Key_Left:
+        {
+            scrollXBy(-(ctrl ? OffsetKeyboardPageStep : OffsetKeyboardStep));
+            break;
+        }
+        case Qt::Key_Right:
+        {
+            scrollXBy(ctrl ? OffsetKeyboardPageStep : OffsetKeyboardStep);
+            break;
+        }
+        case Qt::Key_Home:
+        {
+            if (ctrl)
+            {
+                scrollYTo(0);
+            }
+            else
+            {
+                scrollXTo(0);
+            }
+            break;
+        }
+        case Qt::Key_End:
+        {
+            if (ctrl)
+            {
+                scrollYTo(std::numeric_limits<int>::max());
+            }
+            else
+            {
+                scrollXTo(std::numeric_limits<int>::max());
+            }
+            break;
+        }
+        case Qt::Key_Up:
+        {
+            scrollYBy(-(ctrl ? OffsetKeyboardPageStep : OffsetKeyboardStep));
+            break;
+        }
+        case Qt::Key_Down:
+        {
+            scrollYBy(ctrl ? OffsetKeyboardPageStep : OffsetKeyboardStep);
+            break;
+        }
+        case Qt::Key_PageUp:
+        {
+            scrollYBy(-OffsetKeyboardPageStep);
+            break;
+        }
+        case Qt::Key_PageDown:
+        {
+            scrollYBy(OffsetKeyboardPageStep);
+            break;
+        }
+        case Qt::Key_Plus:
+        {
+            zoom(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep);
+            break;
+        }
+        case Qt::Key_Minus:
+        {
+            zoom(-(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep));
+            break;
+        }
+        case Qt::Key_Asterisk:
+        {
+            m_zoom = DefaultZoom;
+            break;
+        }
+        default:
+            break;
+    }
 
+    event->accept();
+
+    layout();
     update();
+}
+
+void TimeLineView::keyReleaseEvent(QKeyEvent* event)
+{
+    super::keyReleaseEvent(event);
 }
 
 void TimeLineView::mousePressEvent(QMouseEvent* event)
 {
     super::mousePressEvent(event);
 
+    const bool ctrl = event->modifiers() & Qt::ControlModifier;
+    const bool shift = event->modifiers() & Qt::ShiftModifier;
+    const bool alt = event->modifiers() & Qt::AltModifier;
+    const bool modifier = ctrl || shift || alt;
+
     m_selectedRecordInfo = m_highlightedRecordInfo;
+
+    if (!modifier && event->button() == Qt::LeftButton)
+    {
+        m_mouseDragActive = true;
+    }
 
     update();
 }
 
+void TimeLineView::mouseReleaseEvent(QMouseEvent* event)
+{
+    super::mouseReleaseEvent(event);
+
+    m_selectedRecordInfo = m_highlightedRecordInfo;
+
+    if (event->button() == Qt::LeftButton)
+    {
+        m_mouseDragActive = false;
+    }
+
+    update();
+}
+
+void TimeLineView::mouseMoveEvent(QMouseEvent* event)
+{
+    super::mouseMoveEvent(event);
+
+    if (m_mouseDragActive)
+    {
+        QPoint delta = event->pos() - m_mousePosition;
+        scrollBy(-delta);
+    }
+
+    m_mousePosition = event->pos();
+
+    update();
+    layout();
+}
+
 void TimeLineView::wheelEvent(QWheelEvent* event)
 {
-    m_zoom += event->angleDelta().y();
-    m_zoom = std::max(m_zoom, MinZoom);
+    int delta = event->angleDelta().y();
+
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        zoom(delta);
+    }
+    else
+    {
+        scrollYBy(-delta);
+    }
 
     event->accept();
+
+    update();
+    layout();
+}
+
+void TimeLineView::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    if (m_selectedRecordInfo)
+    {
+        const auto thisWidth = width();
+        const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
+        double pixPerSec = thisWidth * (1.0 - VisibleMargin) / duration;
+
+        m_zoom = pixPerSec / PixelsPerSecond * DefaultZoom;
+
+        const auto midDuration = m_selectedRecordInfo->startTime + duration / 2;
+        scrollXTo(midDuration * pixelsPerSecond() - thisWidth / 2);
+    }
 
     update();
     layout();
@@ -202,7 +356,7 @@ int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Rec
             selected = bounds.contains(m_mousePosition);
             if (selected)
             {
-                RecordInfo info{bounds, record.name, record.timeEnd - record.timeStart};
+                RecordInfo info{bounds, record.name, record.timeStart, record.timeEnd };
                 m_highlightedRecordInfo = std::make_shared<RecordInfo>(info);
             }
         }
@@ -430,7 +584,8 @@ void TimeLineView::drawRecordInfo(QPainter& painter, const RecordInfo& info)
 
     recordInfoBounds.setRight(thisWidth - RecordInfoDist - RecordInfoTextDist);
 
-    text = text.fromStdString(formatTime(info.duration));
+    const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
+    text = text.fromStdString(formatTime(duration));
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
 }
 
@@ -631,6 +786,51 @@ int TimeLineView::getRecordHeight(const Record& record)
     }
 
     return recordsHeight + 1;
+}
+
+void TimeLineView::zoom(int zoomDelta)
+{
+    int prevZoom = m_zoom;
+    
+    m_zoom += zoomDelta;
+    m_zoom = std::max(m_zoom, MinZoom);
+
+    if (m_zoom != prevZoom)
+    {
+        m_offset.setX((static_cast<double>(m_offset.x()) / prevZoom) * m_zoom);
+    }
+}
+
+void TimeLineView::scrollBy(QPoint delta)
+{
+    scrollTo(m_offset + delta);
+}
+
+void TimeLineView::scrollTo(QPoint pos)
+{
+    m_offset = pos;
+
+    m_horizontalScrollBar.setValue(m_offset.x());
+    m_verticalScrollBar.setValue(m_offset.y());
+}
+void TimeLineView::scrollXBy(int xDelta)
+{
+    scrollBy(QPoint(xDelta, 0));
+}
+
+void TimeLineView::scrollYBy(int yDelta)
+{
+    scrollBy(QPoint(0, yDelta));
+}
+
+void TimeLineView::scrollXTo(int x)
+{
+    scrollTo(QPoint(x, m_offset.y()));
+}
+
+void TimeLineView::scrollYTo(int y)
+{
+    scrollTo(QPoint(m_offset.x(), y));
 }
 
 } // namespace visualizer
