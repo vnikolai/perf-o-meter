@@ -24,8 +24,14 @@ SOFTWARE. */
 
 namespace perfometer
 {
+    enum zero_length_work_policy
+    {
+        allow,
+        skip
+    };
     // work_logger expects const string as name
 
+    template <zero_length_work_policy zero_length_policy>
     class work_logger
     {
     public:
@@ -37,7 +43,13 @@ namespace perfometer
 
         ~work_logger()
         {
-            log_work(m_name, m_start_time, get_time());
+            time end_time = get_time();
+
+            if (zero_length_policy == zero_length_work_policy::allow ||
+                m_start_time != end_time )
+            {
+                log_work(m_name, m_start_time, end_time);
+            }
         }
 
     private:
@@ -55,8 +67,8 @@ namespace perfometer
 #define PERFOMETER_CONCAT(x, y)             x##y
 #define PERFOMETER_CONCAT_WRAPPER(x, y)     PERFOMETER_CONCAT(x, y)
 
-#define PERFOMETER_LOG_SCOPE(name)                                      \
-        perfometer::work_logger                                         \
+#define PERFOMETER_LOG_SCOPE(name)                                              \
+        perfometer::work_logger<perfometer::zero_length_work_policy::skip>      \
             PERFOMETER_CONCAT_WRAPPER(func_logger, __LINE__)( name )
         
 #define PERFOMETER_LOG_FUNCTION()           PERFOMETER_LOG_SCOPE(PERFOMETER_FUNCTION)
