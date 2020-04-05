@@ -100,10 +100,14 @@ namespace visualizer
 
         QScrollBar                          m_horizontalScrollBar;
         QScrollBar                          m_verticalScrollBar;
+
         QPoint                              m_mousePosition;
         bool                                m_mouseDragActive;
+
         int                                 m_zoom;
         int                                 m_reportHeightPx;
+
+        bool                                m_statusTextVisible;
 
         QPoint                              m_offset;
 

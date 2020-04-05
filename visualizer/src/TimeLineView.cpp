@@ -49,7 +49,13 @@ constexpr int       RecordInfoDist          = 32;
 constexpr int       RecordInfoTextDist      = 12;
 constexpr int       RecordInfoTimeWidth     = 128;
 
-QColor              RulerBackgroundColor    (228, 230, 241, 255);
+constexpr int       StatusMessageWidth      = 256;
+constexpr int       StatusMessageTextDist   = 12;
+constexpr int       StatusMessageDist       = 50;
+
+QColor              BackgroundColor                 (32, 32, 32, 255);
+QColor              StatusMessageBackgroundColor    (16, 16, 16, 128);
+QColor              RulerBackgroundColor            (228, 230, 241, 255);
 
 constexpr int NumColors = 8;
 QColor Colors[NumColors] = { Qt::darkRed,
@@ -65,10 +71,12 @@ TimeLineView::TimeLineView()
     : QOpenGLWidget(nullptr)
     , m_horizontalScrollBar(Qt::Horizontal, this)
     , m_verticalScrollBar(Qt::Vertical, this)
+    , m_mousePosition(0, 0)
     , m_mouseDragActive(false)
     , m_zoom(DefaultZoom)
-    , m_offset(0, 0)
     , m_reportHeightPx(0)
+    , m_statusTextVisible(false)
+    , m_offset(0, 0)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -109,7 +117,10 @@ void TimeLineView::initializeGL()
 {
     QOpenGLFunctions::initializeOpenGLFunctions();
 
-    glClearColor(0.117f, 0.117f, 0.117f, 1.0f);
+    glClearColor(BackgroundColor.redF(),
+                 BackgroundColor.greenF(),
+                 BackgroundColor.blueF(),
+                 1.0f);
 
     layout();
 }
@@ -130,7 +141,11 @@ void TimeLineView::paintGL()
         drawPerfometerReport(painter, pos, *m_report);
     }
 
-    drawStatusMessage(painter);
+    if (m_statusTextVisible)
+    {
+        drawStatusMessage(painter);
+    }
+    
     drawRuler(painter, pos);
 
     painter.setPen(Qt::darkGreen);
@@ -200,6 +215,11 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         case Qt::Key_PageDown:
         {
             scrollYBy(OffsetKeyboardPageStep);
+            break;
+        }
+        case Qt::Key_QuoteLeft:
+        {
+            m_statusTextVisible = !m_statusTextVisible;
             break;
         }
         case Qt::Key_Plus:
@@ -594,14 +614,35 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
     const auto thisWidth = width();
     const auto thisHeight = height();
 
-    constexpr size_t bufferSize = 64;
+    const int statusMessageHeight = thisHeight - 2 * StatusMessageDist;
+
+    const int posX = thisWidth - StatusMessageWidth - StatusMessageDist;
+    const int posY = StatusMessageDist;
+
+    painter.fillRect(posX, posY, StatusMessageWidth, statusMessageHeight, StatusMessageBackgroundColor);
+
+    constexpr size_t bufferSize = 256;
     char text[bufferSize];
     snprintf(text, bufferSize,
-             "%d %d %d %d %d",
-             m_mousePosition.x(), m_mousePosition.y(), m_zoom, m_offset.x(), m_offset.y());
+             "mouse: %d %d\n"
+             "zoom: %d\n"
+             "offset: %d %d\n"
+             "report time: [%s] - [%s]\n"
+             "pixel per second: %f",
+             m_mousePosition.x(), m_mousePosition.y(), 
+             m_zoom,
+             m_offset.x(), m_offset.y(),
+             formatTime(m_report ? m_report->getStartTime() : 0.f).c_str(),
+                formatTime(m_report ? m_report->getEndTime() : 0.f).c_str(),
+             pixelsPerSecond());
 
     painter.setPen(Qt::white);
-    painter.drawText(thisWidth - 250, thisHeight - 100, text);
+    painter.drawText(posX + StatusMessageTextDist,
+                     posY + StatusMessageTextDist,
+                     StatusMessageWidth - 2 * StatusMessageTextDist,
+                     statusMessageHeight - 2 * StatusMessageTextDist,
+                     Qt::AlignTop | Qt::AlignLeft,
+                     text);
 }
 
 void TimeLineView::layout()
