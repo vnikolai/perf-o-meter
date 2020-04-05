@@ -248,6 +248,7 @@ result flush()
 		}
 	}
 
+	scoped_lock lock(s_serializer_mutex);
 	return s_serializer.flush();
 }
 
