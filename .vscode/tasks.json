@@ -13,6 +13,9 @@
                 "command": "rm build, bin, lib -Force -Recurse -ErrorAction Ignore"
             },
             "group": "build",
+            "presentation": {
+                "clear": true
+            },
             "problemMatcher": []
         },
         {
@@ -24,7 +27,10 @@
                     "$gcc"
                 ]
             },
-            "group": "build"
+            "group": "build",
+            "presentation": {
+                "clear": true
+            }            
         }
     ]
 }
