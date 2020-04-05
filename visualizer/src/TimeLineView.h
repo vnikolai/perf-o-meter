@@ -88,8 +88,9 @@ namespace visualizer
         int getRecordHeight(const Record& record);
 
         void zoom(int zoomDelta);
-        void scrollBy(QPoint delta);
-        void scrollTo(QPoint pos);
+        void zoom(int zoomDelta, int pivot);
+        void scrollBy(QPointF delta);
+        void scrollTo(QPointF pos);
         void scrollXBy(int xDelta);
         void scrollYBy(int yDelta);
         void scrollXTo(int x);
@@ -109,7 +110,7 @@ namespace visualizer
 
         bool                                m_statusTextVisible;
 
-        QPoint                              m_offset;
+        QPointF                             m_offset;
 
         std::shared_ptr<RecordInfo>         m_highlightedRecordInfo;
         std::shared_ptr<RecordInfo>         m_selectedRecordInfo;

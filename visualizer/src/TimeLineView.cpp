@@ -76,7 +76,7 @@ TimeLineView::TimeLineView()
     , m_zoom(DefaultZoom)
     , m_reportHeightPx(0)
     , m_statusTextVisible(false)
-    , m_offset(0, 0)
+    , m_offset(0.0f, 0.0f)
 {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -307,7 +307,7 @@ void TimeLineView::wheelEvent(QWheelEvent* event)
 
     if (event->modifiers() & Qt::ControlModifier)
     {
-        zoom(delta);
+        zoom(delta, m_mousePosition.x());
     }
     else
     {
@@ -330,12 +330,13 @@ void TimeLineView::mouseDoubleClickEvent(QMouseEvent* event)
 
         m_zoom = pixPerSec / PixelsPerSecond * DefaultZoom;
 
+        layout();
+
         const auto midDuration = m_selectedRecordInfo->startTime + duration / 2;
         scrollXTo(midDuration * pixelsPerSecond() - thisWidth / 2);
     }
 
     update();
-    layout();
 }
 
 void TimeLineView::resizeEvent(QResizeEvent* event)
@@ -626,7 +627,7 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
     snprintf(text, bufferSize,
              "mouse: %d %d\n"
              "zoom: %d\n"
-             "offset: %d %d\n"
+             "offset: %f %f\n"
              "report time: [%s] - [%s]\n"
              "pixel per second: %f",
              m_mousePosition.x(), m_mousePosition.y(), 
@@ -673,8 +674,8 @@ void TimeLineView::layout()
             m_horizontalScrollBar.setMaximum(reportEndPx);
         }
 
-        m_offset.setX(std::max(m_offset.x(), reportStartPx));
-        m_offset.setX(std::min(m_offset.x(), reportEndPx));
+        m_offset.setX(std::max<qreal>(m_offset.x(), reportStartPx));
+        m_offset.setX(std::min<qreal>(m_offset.x(), reportEndPx));
     }
 
     int extraHeight = m_reportHeightPx + RecordInfoDist + 2 * RecordInfoHeight
@@ -685,8 +686,8 @@ void TimeLineView::layout()
     
     if (vertBarVisible)
     {
-        m_offset.setY(std::max(m_offset.y(), 0));
-        m_offset.setY(std::min(m_offset.y(), extraHeight));
+        m_offset.setY(std::max<qreal>(m_offset.y(), 0));
+        m_offset.setY(std::min<qreal>(m_offset.y(), extraHeight));
         
         m_verticalScrollBar.setMinimum(0);
         m_verticalScrollBar.setMaximum(extraHeight);
@@ -831,6 +832,12 @@ int TimeLineView::getRecordHeight(const Record& record)
 
 void TimeLineView::zoom(int zoomDelta)
 {
+    const auto thisWidth = width();
+    zoom(zoomDelta, thisWidth / 2);
+}
+
+void TimeLineView::zoom(int zoomDelta, int pivot)
+{
     int prevZoom = m_zoom;
     
     m_zoom += zoomDelta;
@@ -838,16 +845,17 @@ void TimeLineView::zoom(int zoomDelta)
 
     if (m_zoom != prevZoom)
     {
-        m_offset.setX((static_cast<double>(m_offset.x()) / prevZoom) * m_zoom);
+        double mid = m_offset.x() + pivot;
+        m_offset.setX((mid / prevZoom) * m_zoom - pivot);
     }
 }
 
-void TimeLineView::scrollBy(QPoint delta)
+void TimeLineView::scrollBy(QPointF delta)
 {
     scrollTo(m_offset + delta);
 }
 
-void TimeLineView::scrollTo(QPoint pos)
+void TimeLineView::scrollTo(QPointF pos)
 {
     m_offset = pos;
 
@@ -856,12 +864,12 @@ void TimeLineView::scrollTo(QPoint pos)
 }
 void TimeLineView::scrollXBy(int xDelta)
 {
-    scrollBy(QPoint(xDelta, 0));
+    scrollBy(QPointF(xDelta, 0));
 }
 
 void TimeLineView::scrollYBy(int yDelta)
 {
-    scrollBy(QPoint(0, yDelta));
+    scrollBy(QPointF(0, yDelta));
 }
 
 void TimeLineView::scrollXTo(int x)
