@@ -30,7 +30,6 @@ namespace perfometer
                                             // major minor and patch versions one byte each
 
     using string_id = uint16_t;
-    constexpr string_id invalid_string_id = 0;
 
 	enum record_type : uint8_t
 	{

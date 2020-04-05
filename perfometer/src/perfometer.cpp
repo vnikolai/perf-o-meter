@@ -29,6 +29,7 @@ SOFTWARE. */
 #include <queue>
 #include <thread>
 #include <atomic>
+#include <limits>
 
 namespace perfometer {
 
@@ -54,6 +55,8 @@ std::atomic<int>	s_numcalls {0};
 std::unordered_map<std::string, string_id> s_strings_map;
 mutex s_string_map_mutex;
 
+constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();
+
 using get_string_result = std::pair<string_id, bool>;
 
 get_string_result get_string_id(const char* string)
@@ -66,11 +69,10 @@ get_string_result get_string_id(const char* string)
 		return get_string_result(it->second, false);
 	}
 
-	static string_id s_unique_id = invalid_string_id + 1;
+	static string_id s_unique_id = 0;
 
 	if (s_unique_id == invalid_string_id)
 	{
-		// loop after overflow
 		return get_string_result(invalid_string_id, false);
 	}
 
@@ -143,6 +145,16 @@ result initialize(const char file_name[], bool running)
 	{
 		s_serializer.close();
 		return res;
+	}
+
+	// writing "UKNOWN" to string map first to ocupy zero ID
+	constexpr char unknown_tag[] = "UNKNOWN";
+	auto string_result = get_string_id(unknown_tag);
+	if (string_result.second)
+	{
+		s_serializer << record_type::string
+					 << string_result.first
+					 << unknown_tag;
 	}
 
 	s_serializer << record_type::string
