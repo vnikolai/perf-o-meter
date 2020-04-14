@@ -44,6 +44,12 @@ namespace visualizer
         {
         }
 
+        Thread(ThreadID _ID, const std::string& n)
+            : ID(_ID)
+            , name(n)
+        {
+        }
+
         ThreadID ID;
         std::string name;
         std::vector<Record> records;
@@ -54,7 +60,19 @@ namespace visualizer
     class PerfometerReport
     {
     public:
+        struct Traits
+        {
+            bool AllowIncompleteReport = true;
+            bool SkipEmptyRecords = true;
+            bool SkipRecordsIncorrectTime = true;
+            double EmptyRecordLimit = 0.000000001;
+            double RecordTimeMaxLimit = 24*60*60;
+        };
+
+    public:
         PerfometerReport();
+        PerfometerReport(const Traits&);
+        
         virtual ~PerfometerReport();
 
         bool loadFile(const std::string& fileName,
@@ -73,6 +91,7 @@ namespace visualizer
         double m_startTime;
         double m_endTime;
 
+        Traits  m_traits;
         Threads m_threads;
 
         ThreadID m_mainThreadID;

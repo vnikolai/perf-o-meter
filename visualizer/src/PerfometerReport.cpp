@@ -97,6 +97,12 @@ PerfometerReport::PerfometerReport()
 {
 }
 
+PerfometerReport::PerfometerReport(const Traits& traits)
+	: PerfometerReport()
+{
+	m_traits = traits;
+}
+
 PerfometerReport::~PerfometerReport()
 {
 }
@@ -229,6 +235,22 @@ bool PerfometerReport::loadFile(const std::string& fileName,
                 double start = static_cast<double>(startTime - initTime) / clockFrequency;
                 double end = static_cast<double>(endTime - initTime) / clockFrequency;
 
+				if (m_traits.SkipRecordsIncorrectTime)
+				{
+					if (start >= m_traits.RecordTimeMaxLimit || end >= m_traits.RecordTimeMaxLimit)
+					{
+						continue;
+					}
+				}
+
+				if (m_traits.SkipEmptyRecords)
+				{
+					if (end - start < m_traits.EmptyRecordLimit)
+					{
+						continue;
+					}
+				}
+
                 Thread& thread = getThread(threadID);
 				Record record({start, end, strings[stringID]});
 
@@ -255,17 +277,9 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 			default:
 			{
 				log("ERROR loading report: Unknown record type");
-				return false;
+				
+				return m_traits.AllowIncompleteReport;
 			}
-		}
-	}
-
-	for (auto& it : m_threads)
-    {
-        Thread& thread = it.second;
-		if (!thread.name.length())
-		{
-			thread.name = "UNKNOWN";
 		}
 	}
 
@@ -279,7 +293,7 @@ const Threads& PerfometerReport::getThreads() const
 
 Thread& PerfometerReport::getThread(ThreadID ID)
 {
-    auto pair = m_threads.emplace(ID, Thread(ID));
+    auto pair = m_threads.emplace(ID, Thread(ID, "UNKNOWN"));
 	Thread& thread = pair.first->second;
     return thread;
 }
