@@ -377,7 +377,7 @@ int TimeLineView::drawPerfometerRecords(QPainter& painter, QPoint& pos, const st
     return depth;
 }
 
-void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, const Thread& thread)
+void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, ConstThreadPtr thread)
 {
     const auto thisWidth = width();
     int threadHeight = getThreadHeight(thread);
@@ -393,14 +393,14 @@ void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, const Th
     painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
                      thisWidth, ThreadTitleHeight,
                      Qt::AlignVCenter | Qt::AlignLeft,
-                     text.fromStdString(thread.name));
+                     text.fromStdString(thread->name));
 
     pos.ry() += ThreadTitleHeight;
 
     srand(0);
 
     painter.setPen(Qt::black);
-    int depth = drawPerfometerRecords(painter, pos, thread.records);
+    int depth = drawPerfometerRecords(painter, pos, thread->records);
     pos.ry() += depth * RecordHeight;
 }
 
@@ -408,14 +408,14 @@ void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const Pe
 {
     const auto thisHeight = height();
 
-    std::multimap<std::string, const Thread*> threads;
+    std::multimap<std::string, ConstThreadPtr> threads;
     for (const auto& it : report.getThreads())
     {
-        const ThreadID tid = it.first;
+        const Thread::ID tid = it.first;
         if (tid != report.mainThreadID())
         {
-            const Thread& thread = it.second;
-            threads.emplace(thread.name, &thread);
+            ConstThreadPtr thread = it.second;
+            threads.emplace(thread->name, thread);
         }
     }
 
@@ -425,7 +425,7 @@ void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const Pe
     
     for (const auto& it : threads)
     {
-        const Thread& thread = *it.second;
+        ConstThreadPtr thread = it.second;
 
         drawPerfometerThread(painter, pos, thread);
 
@@ -675,7 +675,7 @@ int TimeLineView::getReportHeight(const PerfometerReport& report)
     int height = 0;
     for (const auto& it : report.getThreads())
     {
-        const Thread& thread = it.second;
+        ThreadPtr thread = it.second;
 
         height += getThreadHeight(thread);
     }
@@ -683,12 +683,12 @@ int TimeLineView::getReportHeight(const PerfometerReport& report)
     return height;
 }
 
-int TimeLineView::getThreadHeight(const Thread& thread)
+int TimeLineView::getThreadHeight(ConstThreadPtr thread)
 {
     int height = ThreadTitleHeight;
 
     int recordsHeight = 0;
-    for (auto record : thread.records)
+    for (auto record : thread->records)
     {
         recordsHeight = std::max(recordsHeight, getRecordHeight(record));
     }

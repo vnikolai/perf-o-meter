@@ -47,7 +47,7 @@ public:
 		return *this;
 	}
 
-	reader& operator >> (ThreadID& ID)
+	reader& operator >> (Thread::ID& ID)
 	{
 		ID = 0;
 		read(reinterpret_cast<char*>(&ID), m_threadIDSize);
@@ -210,20 +210,20 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 			}
 			case perfometer::record_type::thread_name:
 			{
-				ThreadID threadID = 0;
+				Thread::ID threadID = 0;
 				PerfStringID stringID = 0;
 
 				report >> threadID
 					   >> stringID;
 
-                getThread(threadID).name = strings[stringID];
+                getThread(threadID)->name = strings[stringID];
 
 				break;
 			}
 			case perfometer::record_type::work:
 			{
 				PerfStringID stringID = 0;
-				ThreadID threadID = 0;
+				Thread::ID threadID = 0;
 				PerfTime startTime = 0;
 				PerfTime endTime = 0;
 
@@ -251,23 +251,23 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 					}
 				}
 
-                Thread& thread = getThread(threadID);
+                ThreadPtr thread = getThread(threadID);
 				Record record({start, end, strings[stringID]});
 
-				size_t i = thread.records.size() - 1;
-				for (; i < thread.records.size(); i--)
+				size_t i = thread->records.size() - 1;
+				for (; i < thread->records.size(); i--)
 				{
-					Record& enclosed = thread.records[i];
+					Record& enclosed = thread->records[i];
 					if (enclosed.timeStart < record.timeStart || enclosed.timeEnd > record.timeEnd)
 					{
 						break;
 					}
 
-					record.enclosed.insert(record.enclosed.begin(), thread.records.back());
-					thread.records.pop_back();
+					record.enclosed.insert(record.enclosed.begin(), thread->records.back());
+					thread->records.pop_back();
 				}
 
-				thread.records.push_back(record);
+				thread->records.push_back(record);
 
 				m_startTime = std::min(m_startTime, record.timeStart);
 				m_endTime = std::max(m_endTime, record.timeEnd);
@@ -291,16 +291,16 @@ const Threads& PerfometerReport::getThreads() const
     return m_threads;
 }
 
-Thread& PerfometerReport::getThread(ThreadID ID)
+ThreadPtr PerfometerReport::getThread(Thread::ID ID)
 {
-    auto pair = m_threads.emplace(ID, Thread(ID, "UNKNOWN"));
-	Thread& thread = pair.first->second;
+    auto pair = m_threads.emplace(ID, std::make_shared<Thread>(ID, "UNKNOWN"));
+	ThreadPtr& thread = pair.first->second;
     return thread;
 }
 
-const Thread& PerfometerReport::getThread(ThreadID ID) const
+ConstThreadPtr PerfometerReport::getThread(Thread::ID ID) const
 {
-    static Thread emptyThread(-1);
+    static ThreadPtr emptyThread = std::make_shared<Thread>(-1, "EMPTY");
 
     auto it = m_threads.find(ID);
     return it != m_threads.end() ? it->second : emptyThread;

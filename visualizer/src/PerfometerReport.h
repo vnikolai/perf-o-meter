@@ -24,11 +24,10 @@ SOFTWARE. */
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
 
 namespace visualizer
 {
-    using ThreadID = int64_t;
-
     struct Record
     {
         double timeStart;
@@ -39,23 +38,28 @@ namespace visualizer
 
     struct Thread
     {
-        Thread(ThreadID _ID)
-            : ID(_ID)
+        using ID = int64_t;
+
+        Thread(ID _id)
+            : id(_id)
         {
         }
 
-        Thread(ThreadID _ID, const std::string& n)
-            : ID(_ID)
+        Thread(ID _id, const std::string& n)
+            : id(_id)
             , name(n)
         {
         }
 
-        ThreadID ID;
+        ID id;
         std::string name;
         std::vector<Record> records;
     };
 
-    using Threads = std::map<ThreadID, Thread>;
+    using ThreadPtr = std::shared_ptr<Thread>;
+    using ConstThreadPtr = std::shared_ptr<const Thread>;
+
+    using Threads = std::map<Thread::ID, ThreadPtr>;
 
     class PerfometerReport
     {
@@ -81,11 +85,11 @@ namespace visualizer
         double getStartTime() const { return m_startTime; }
         double getEndTime() const { return m_endTime; }
 
-        ThreadID mainThreadID() const { return m_mainThreadID; }
+        Thread::ID mainThreadID() const { return m_mainThreadID; }
 
         const Threads& getThreads() const;
-        Thread& getThread(ThreadID id);
-        const Thread& getThread(ThreadID id) const;
+        ThreadPtr getThread(Thread::ID id);
+        ConstThreadPtr getThread(Thread::ID id) const;
         
     private:
         double m_startTime;
@@ -94,7 +98,7 @@ namespace visualizer
         Traits  m_traits;
         Threads m_threads;
 
-        ThreadID m_mainThreadID;
+        Thread::ID m_mainThreadID;
     };
 
 } // namespace visualizer

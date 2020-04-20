@@ -70,7 +70,7 @@ namespace visualizer
         
         int drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record);
         int drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records);
-        void drawPerfometerThread(QPainter& painter, QPoint& pos, const Thread& thread);
+        void drawPerfometerThread(QPainter& painter, QPoint& pos, ConstThreadPtr thread);
         void drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report);
 
         void getRulerStep(int& rulerStep, int& timeStep);
@@ -82,7 +82,7 @@ namespace visualizer
         void layout();
 
         int getReportHeight(const PerfometerReport& report);
-        int getThreadHeight(const Thread& report);
+        int getThreadHeight(ConstThreadPtr report);
         int getRecordHeight(const Record& record);
 
         void zoom(int zoomDelta);
