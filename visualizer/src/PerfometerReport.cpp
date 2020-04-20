@@ -26,6 +26,7 @@ SOFTWARE. */
 #include <unordered_map>
 #include <perfometer/perfometer.h>
 #include <perfometer/format.h>
+#include <perfometer/helpers.h>
 
 namespace visualizer {
 
@@ -110,6 +111,8 @@ PerfometerReport::~PerfometerReport()
 bool PerfometerReport::loadFile(const std::string& fileName,
 								std::function<void(const std::string&)> logger)
 {
+	PERFOMETER_LOG_FUNCTION();
+	
 	auto log = [&logger](const std::string& text)
 	{
 		if (logger)

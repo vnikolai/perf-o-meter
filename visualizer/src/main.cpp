@@ -28,12 +28,37 @@ SOFTWARE. */
 #include <fstream>
 #include <perfometer/perfometer.h>
 
+struct options
+{
+	std::string reportFileName;
+	bool		profile = false;
+};
+
 static void log(const std::string& text)
 {
 	static std::ofstream logFile("perfometer.log", std::ios::trunc);
 	
 	logFile << text << std::endl;
 	logFile.flush();
+}
+
+void parseCommandline(options& opts, int argc, char* argv[])
+{
+	if (argc > 1)
+	{
+		opts.reportFileName = argv[1];
+
+		if (argc > 2)
+		{
+			for (int i = 2; i < argc; ++i)
+			{
+				if (strcmp(argv[i], "--profile") == 0)
+				{
+					opts.profile = true;
+				}
+			}
+		}
+	}
 }
 
 int main(int argc, char** argv)
@@ -56,25 +81,31 @@ int main(int argc, char** argv)
 	window.setCentralWidget(timeLineView);
 	window.show();
 
-	if (argc > 1)
+	options opts;
+	parseCommandline(opts, argc, argv);
+
+	if (opts.profile)
 	{
-		std::shared_ptr<visualizer::PerfometerReport> report = std::make_shared<visualizer::PerfometerReport>();
+		perfometer::initialize("visualizer.report");
+	}
 
-		const std::string reportFileName(argv[1]);
+	if (opts.reportFileName.length())
+	{
+		auto report = std::make_shared<visualizer::PerfometerReport>();
 
-		if (report->loadFile(reportFileName, log))
+		if (report->loadFile(opts.reportFileName, log))
 		{
 			timeLineView->setReport(report);
 
 			char titleWithFile[1024];
-			std::snprintf(titleWithFile, 1024, "%s - %s", title, reportFileName.c_str());
+			std::snprintf(titleWithFile, 1024, "%s - %s", title, opts.reportFileName.c_str());
 
 			window.setWindowTitle(titleWithFile);
 		}
 		else
 		{
 			QString text;
-			text = text.fromStdString(reportFileName);
+			text = text.fromStdString(opts.reportFileName);
 			text.prepend("Cannot open report file ");
 
 			QMessageBox messageBox;
@@ -83,5 +114,12 @@ int main(int argc, char** argv)
 		}
 	}
 
-	return app.exec();
+	int retval = app.exec();
+
+	if (opts.profile)
+	{
+		perfometer::shutdown();
+	}
+
+	return retval;
 }

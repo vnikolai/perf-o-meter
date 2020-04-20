@@ -28,6 +28,9 @@ SOFTWARE. */
 #include <QMouseEvent>
 #include <QWheelEvent>
 
+#include <perfometer/perfometer.h>
+#include <perfometer/helpers.h>
+
 namespace visualizer {
 
 TimeLineView::TimeLineView()
@@ -90,6 +93,8 @@ void TimeLineView::initializeGL()
 
 void TimeLineView::paintGL()
 {
+    PERFOMETER_LOG_FUNCTION();
+
     const auto thisWidth = width();
     const auto thisHeight = height();
 
@@ -316,6 +321,8 @@ double TimeLineView::pixelsPerSecond() const
 
 int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record)
 {
+    PERFOMETER_LOG_FUNCTION();
+    
     const auto thisWidth = width();
     const auto pixpersec = pixelsPerSecond();
     
@@ -364,6 +371,8 @@ int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Rec
 
 int TimeLineView::drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records)
 {
+    PERFOMETER_LOG_FUNCTION();
+
     int depth = 0;
     for (auto record : records)
     {
@@ -379,6 +388,8 @@ int TimeLineView::drawPerfometerRecords(QPainter& painter, QPoint& pos, const st
 
 void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, ConstThreadPtr thread)
 {
+    PERFOMETER_LOG_FUNCTION();
+    
     const auto thisWidth = width();
     int threadHeight = getThreadHeight(thread);
 
@@ -406,6 +417,8 @@ void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, ConstThr
 
 void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report)
 {
+    PERFOMETER_LOG_FUNCTION();
+
     const auto thisHeight = height();
 
     std::multimap<std::string, ConstThreadPtr> threads;
@@ -493,6 +506,8 @@ void TimeLineView::getRulerStep(int& rulerStep, int& timeStep)
 
 void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
 {
+    PERFOMETER_LOG_FUNCTION();
+
     const auto thisWidth = width();
     const auto thisHeight = height();
 
@@ -544,6 +559,8 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
 
 void TimeLineView::drawRecordInfo(QPainter& painter, const RecordInfo& info)
 {
+    PERFOMETER_LOG_FUNCTION();
+
     const auto thisWidth = width();
     const auto thisHeight = height();
 
@@ -575,6 +592,8 @@ void TimeLineView::drawRecordInfo(QPainter& painter, const RecordInfo& info)
 
 void TimeLineView::drawStatusMessage(QPainter& painter)
 {
+    PERFOMETER_LOG_FUNCTION();
+
     const auto thisWidth = width();
     const auto thisHeight = height();
 
@@ -611,6 +630,8 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
 
 void TimeLineView::layout()
 {
+    PERFOMETER_LOG_FUNCTION();
+    
     const auto thisWidth = width();
     const auto thisHeight = height();
     int reportWidth = 0;
@@ -685,6 +706,8 @@ int TimeLineView::getReportHeight(const PerfometerReport& report)
 
 int TimeLineView::getThreadHeight(ConstThreadPtr thread)
 {
+    PERFOMETER_LOG_FUNCTION();
+
     int height = ThreadTitleHeight;
 
     int recordsHeight = 0;
