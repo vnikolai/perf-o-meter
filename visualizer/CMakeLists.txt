@@ -2,10 +2,8 @@
 
 find_package(Qt5 COMPONENTS Core Gui OpenGL REQUIRED)
 
-add_executable(visualizer
-                src/main.cpp
-                src/TimeLineView.cpp
-                src/PerfometerReport.cpp)
+file(GLOB visualizer_sources "src/*.cpp")
+add_executable(visualizer ${visualizer_sources})
 
 target_link_libraries(
     visualizer

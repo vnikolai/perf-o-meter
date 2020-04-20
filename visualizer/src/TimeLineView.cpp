@@ -109,6 +109,25 @@ void TimeLineView::paintGL()
         drawPerfometerReport(painter, pos, *m_report);
     }
 
+    for (auto& component : m_components)
+    {
+        int componentHeight = component->height();
+
+        if (pos.ry() + componentHeight < RulerHeight + RulerDistReport)
+        {
+            pos.ry() += componentHeight;
+            continue;
+        }
+
+        component->render(painter, QRect(pos, QSize(width(), height())), pixelsPerSecond());
+
+        pos.ry() += componentHeight;
+        if (pos.ry() >= thisHeight)
+        {
+            break;
+        }
+    }
+
     if (m_statusTextVisible)
     {
         drawStatusMessage(painter);

@@ -25,6 +25,7 @@ SOFTWARE. */
 #include <QOpenGLFunctions>
 #include <QScrollBar>
 #include "PerfometerReport.h"
+#include "TimeLineComponent.h"
 #include <memory>
 
 namespace visualizer
@@ -97,6 +98,9 @@ namespace visualizer
     private:
         using super = QOpenGLWidget;
 
+        using ComponentPtr = std::shared_ptr<TimeLineComponent>;
+
+
         QScrollBar                          m_horizontalScrollBar;
         QScrollBar                          m_verticalScrollBar;
 
@@ -114,5 +118,7 @@ namespace visualizer
         std::shared_ptr<RecordInfo>         m_selectedRecordInfo;
 
         std::shared_ptr<PerfometerReport>   m_report;
+
+        std::vector<ComponentPtr>           m_components;
     };
 } // namespace visualizer
