@@ -81,8 +81,6 @@ namespace visualizer
 
         void layout();
 
-        std::string formatTime(double time);
-
         int getReportHeight(const PerfometerReport& report);
         int getThreadHeight(const Thread& report);
         int getRecordHeight(const Record& record);

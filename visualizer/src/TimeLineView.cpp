@@ -19,6 +19,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include "TimeLineView.h"
+#include "TimeLineConfig.h"
+#include "Utils.h"
 #include <cstring>
 #include <algorithm>
 #include <QPainter>
@@ -27,45 +29,6 @@ SOFTWARE. */
 #include <QWheelEvent>
 
 namespace visualizer {
-
-constexpr int       DefaultZoom             = 1000;
-constexpr double    VisibleMargin           = 0.1;  // 10% of report time each size
-constexpr int       RulerHeight             = 24;
-constexpr int       RulerDistReport         = 12;
-constexpr int       ThreadTitleHeight       = 32;
-constexpr int       TitleOffsetSmall        = 2;
-constexpr int       RecordHeight            = 16;
-constexpr int       ScrolBarThickness       = 24;
-constexpr int       MinZoom                 = 10;
-constexpr int       ZoomKeyboardStep        = 250;
-constexpr int       ZoomKeyboardLargeStep   = 5000;
-constexpr int       OffsetKeyboardStep      = 10;
-constexpr int       OffsetKeyboardPageStep  = 240;
-constexpr int       RecordMinTextWidth      = 10;
-constexpr int       PixelsPerSecond         = 128;
-
-constexpr int       RecordInfoHeight        = 32;
-constexpr int       RecordInfoDist          = 32;
-constexpr int       RecordInfoTextDist      = 12;
-constexpr int       RecordInfoTimeWidth     = 128;
-
-constexpr int       StatusMessageWidth      = 256;
-constexpr int       StatusMessageTextDist   = 12;
-constexpr int       StatusMessageDist       = 50;
-
-QColor              BackgroundColor                 (32, 32, 32, 255);
-QColor              StatusMessageBackgroundColor    (16, 16, 16, 128);
-QColor              RulerBackgroundColor            (228, 230, 241, 255);
-
-constexpr int NumColors = 8;
-QColor Colors[NumColors] = { Qt::darkRed,
-                             Qt::darkGreen,
-                             Qt::darkCyan,
-                             Qt::darkYellow,
-                             Qt::darkMagenta,
-                             Qt::gray,
-                             Qt::lightGray,
-                             Qt::darkGray };
 
 TimeLineView::TimeLineView()
     : QOpenGLWidget(nullptr)
@@ -705,90 +668,6 @@ void TimeLineView::layout()
 
     m_horizontalScrollBar.setVisible(horBarVisible);
     m_verticalScrollBar.setVisible(vertBarVisible);
-}
-
-std::string TimeLineView::formatTime(double time)
-{
-    std::string suffix;
-    double denom = 0;
-
-    int withFraction = 0;
-    bool showPart = false;
-
-    if (time < 1e-6)
-    {
-        if (abs(time) < std::numeric_limits<double>::epsilon())
-        {
-            return std::string("0");
-        }
-
-        // nanos
-        suffix = "ns";
-        denom = 1000000000;
-    }
-    else if (time < 1e-3)
-    {
-        // micros
-        suffix = "us";
-        denom = 1000000;
-    }
-    else if (time < 1)
-    {
-        // millis
-        suffix = "ms";
-        denom = 1000;
-    }
-    else if (time < 60)
-    {
-        // seconds
-        suffix = "s";
-        denom = 1;
-
-        withFraction = time < 10 ? 100 : 10;
-    }
-    else if (time < 3600)
-    {
-        // minutes
-        suffix = "m";
-        denom = 1.0/60;
-
-        showPart = true;
-    }
-    else
-    {
-        // hours
-        suffix = "h";
-        denom = 1.0/3600;
-
-        showPart = true;
-    }
-
-    std::string result;
-    if (withFraction)
-    {
-        int value = static_cast<int>(time * denom);
-        int fraction = static_cast<int>((time * denom - value) * withFraction);
-        if (fraction >= 1)
-        {
-            char text[16];
-            std::snprintf(text, 16, "%d.%d", value, fraction);
-
-            return std::string(text) + suffix;
-        }
-    }
-    
-    result = std::to_string(static_cast<int>(time * denom)) + suffix;
-
-    if (showPart)
-    {
-        double fract = time * denom - static_cast<int>(time * denom);
-        if (fract >= denom)
-        {
-            result += " " + formatTime(fract / denom);
-        }
-    }
-
-    return result;
 }
 
 int TimeLineView::getReportHeight(const PerfometerReport& report)
