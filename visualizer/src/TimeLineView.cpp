@@ -20,6 +20,7 @@ SOFTWARE. */
 
 #include "TimeLineView.h"
 #include "TimeLineConfig.h"
+#include "TimeLineThread.h"
 #include "Utils.h"
 #include <cstring>
 #include <algorithm>
@@ -62,7 +63,33 @@ void TimeLineView::setReport(std::shared_ptr<PerfometerReport> report)
 {
     m_report = report;
 
-    m_reportHeightPx = m_report ? getReportHeight(*m_report) : 0;
+    m_components.emplace_back(std::make_shared<TimeLineThread>(
+        *this, m_report->getThread(m_report->mainThreadID())
+    ));
+
+    std::multimap<std::string, std::shared_ptr<TimeLineThread>> threads;
+    for (const auto& it : m_report->getThreads())
+    {
+        const Thread::ID tid = it.first;
+        if (tid != m_report->mainThreadID())
+        {
+            auto thread = it.second;
+            threads.emplace(thread->name, std::make_shared<TimeLineThread>(*this, thread));
+        }
+    }
+
+    for (const auto& it : threads)
+    {
+        auto thread = it.second;
+        m_components.emplace_back(thread);
+    }
+
+    m_reportHeightPx = 0;
+
+    for (const auto& component : m_components)
+    {
+        m_reportHeightPx += component->height();
+    }
 
     layout();
 }
@@ -104,10 +131,6 @@ void TimeLineView::paintGL()
     painter.setFont(QFont("Helvetica", 10));
 
     QPoint pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
-    if (m_report)
-    {
-        drawPerfometerReport(painter, pos, *m_report);
-    }
 
     for (auto& component : m_components)
     {
@@ -119,13 +142,20 @@ void TimeLineView::paintGL()
             continue;
         }
 
-        component->render(painter, QRect(pos, QSize(width(), height())), pixelsPerSecond());
+        component->render(painter, QRect(pos, QSize(width(), height())));
 
         pos.ry() += componentHeight;
         if (pos.ry() >= thisHeight)
         {
             break;
         }
+    }
+
+    const int offset = RulerHeight + RulerDistReport;
+
+    for (auto& component : m_components)
+    {
+        component->renderOverlay(painter, QRect(0, offset, thisWidth, thisHeight - offset));
     }
 
     if (m_statusTextVisible)
@@ -211,12 +241,12 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         }
         case Qt::Key_Plus:
         {
-            zoom(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep);
+            zoomBy(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep);
             break;
         }
         case Qt::Key_Minus:
         {
-            zoom(-(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep));
+            zoomBy(-(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep));
             break;
         }
         case Qt::Key_Asterisk:
@@ -248,11 +278,19 @@ void TimeLineView::mousePressEvent(QMouseEvent* event)
     const bool alt = event->modifiers() & Qt::AltModifier;
     const bool modifier = ctrl || shift || alt;
 
-    m_selectedRecordInfo = m_highlightedRecordInfo;
-
     if (!modifier && event->button() == Qt::LeftButton)
     {
         m_mouseDragActive = true;
+    }
+
+    ComponentPtr component = getComponentUnderPoint(m_mousePosition);
+    if (m_componentWithFocus && m_componentWithFocus != component)
+    {
+        if (m_componentWithFocus)
+        {
+            m_componentWithFocus->focusLost();
+            m_componentWithFocus.reset();
+        }
     }
 
     update();
@@ -262,12 +300,20 @@ void TimeLineView::mouseReleaseEvent(QMouseEvent* event)
 {
     super::mouseReleaseEvent(event);
 
-    m_selectedRecordInfo = m_highlightedRecordInfo;
-
     if (event->button() == Qt::LeftButton)
     {
         m_mouseDragActive = false;
     }
+
+    QPoint pos;
+    ComponentPtr component = getComponentUnderPoint(m_mousePosition, &pos);
+    if (component)
+    {
+        QPoint localPosition = m_mousePosition - pos;
+        component->mouseClick(localPosition);
+    }
+
+    m_componentWithFocus = component;
 
     update();
 }
@@ -284,6 +330,14 @@ void TimeLineView::mouseMoveEvent(QMouseEvent* event)
 
     m_mousePosition = event->pos();
 
+    QPoint pos;
+    ComponentPtr component = getComponentUnderPoint(m_mousePosition, &pos);
+    if (component)
+    {
+        QPoint localPosition = m_mousePosition - pos;
+        component->mouseMove(localPosition);
+    }
+
     update();
     layout();
 }
@@ -294,7 +348,7 @@ void TimeLineView::wheelEvent(QWheelEvent* event)
 
     if (event->modifiers() & Qt::ControlModifier)
     {
-        zoom(delta, m_mousePosition.x());
+        zoomBy(delta, m_mousePosition.x());
     }
     else
     {
@@ -309,18 +363,12 @@ void TimeLineView::wheelEvent(QWheelEvent* event)
 
 void TimeLineView::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    if (m_selectedRecordInfo)
+    QPoint pos;
+    ComponentPtr component = getComponentUnderPoint(m_mousePosition, &pos);
+    if (component)
     {
-        const auto thisWidth = width();
-        const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
-        double pixPerSec = thisWidth * (1.0 - VisibleMargin) / duration;
-
-        m_zoom = pixPerSec / PixelsPerSecond * DefaultZoom;
-
-        layout();
-
-        const auto midDuration = m_selectedRecordInfo->startTime + duration / 2;
-        scrollXTo(midDuration * pixelsPerSecond() - thisWidth / 2);
+        QPoint localPosition = m_mousePosition - pos;
+        component->mouseDoubleClick(localPosition);
     }
 
     update();
@@ -336,147 +384,6 @@ void TimeLineView::resizeEvent(QResizeEvent* event)
 double TimeLineView::pixelsPerSecond() const
 {
     return static_cast<double>(PixelsPerSecond) * m_zoom / DefaultZoom;
-}
-
-int TimeLineView::drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record)
-{
-    PERFOMETER_LOG_FUNCTION();
-    
-    const auto thisWidth = width();
-    const auto pixpersec = pixelsPerSecond();
-    
-    int depth = 1;
-
-    int x = pos.x() + static_cast<int>(record.timeStart * pixpersec);
-    int y = pos.y();
-    int w = static_cast<int>((record.timeEnd - record.timeStart) * pixpersec);
-    int h = RecordHeight;
-    
-    const int colorIndex = rand() % NumColors;
-
-    const bool visible = x + w > 0 && x < thisWidth;
-    if (visible)
-    {
-        bool selected = false;
-        if (w > 2)
-        {
-            QRect bounds(x, y, w, h);
-            painter.fillRect(bounds, Colors[colorIndex]);
-
-            selected = bounds.contains(m_mousePosition);
-            if (selected)
-            {
-                RecordInfo info{bounds, record.name, record.timeStart, record.timeEnd };
-                m_highlightedRecordInfo = std::make_shared<RecordInfo>(info);
-            }
-        }
-
-        painter.drawRect(x, y, w, h);
-    
-        if (w >= RecordMinTextWidth)
-        {
-            QString text;
-            text = text.fromStdString(record.name + " " + formatTime(record.timeEnd - record.timeStart));
-            painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignLeft, text);
-        }
-    }
-
-    pos.ry() += RecordHeight;
-    depth += drawPerfometerRecords(painter, pos, record.enclosed);
-    pos.ry() -= RecordHeight;
-
-    return depth;
-}
-
-int TimeLineView::drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records)
-{
-    PERFOMETER_LOG_FUNCTION();
-
-    int depth = 0;
-    for (auto record : records)
-    {
-        bool inView = true;
-        if (inView)
-        {
-            depth = std::max(drawPerfometerRecord(painter, pos, record), depth);
-        }
-    }
-
-    return depth;
-}
-
-void TimeLineView::drawPerfometerThread(QPainter& painter, QPoint& pos, ConstThreadPtr thread)
-{
-    PERFOMETER_LOG_FUNCTION();
-    
-    const auto thisWidth = width();
-    int threadHeight = getThreadHeight(thread);
-
-    if (pos.ry() + threadHeight < RulerHeight + RulerDistReport)
-    {
-        pos.ry() += threadHeight;
-        return;
-    }
-
-    QString text;
-    painter.setPen(Qt::white);
-    painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
-                     thisWidth, ThreadTitleHeight,
-                     Qt::AlignVCenter | Qt::AlignLeft,
-                     text.fromStdString(thread->name));
-
-    pos.ry() += ThreadTitleHeight;
-
-    srand(0);
-
-    painter.setPen(Qt::black);
-    int depth = drawPerfometerRecords(painter, pos, thread->records);
-    pos.ry() += depth * RecordHeight;
-}
-
-void TimeLineView::drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report)
-{
-    PERFOMETER_LOG_FUNCTION();
-
-    const auto thisHeight = height();
-
-    std::multimap<std::string, ConstThreadPtr> threads;
-    for (const auto& it : report.getThreads())
-    {
-        const Thread::ID tid = it.first;
-        if (tid != report.mainThreadID())
-        {
-            ConstThreadPtr thread = it.second;
-            threads.emplace(thread->name, thread);
-        }
-    }
-
-    m_highlightedRecordInfo = nullptr;
-
-    drawPerfometerThread(painter, pos, report.getThread(report.mainThreadID()));
-    
-    for (const auto& it : threads)
-    {
-        ConstThreadPtr thread = it.second;
-
-        drawPerfometerThread(painter, pos, thread);
-
-        if (pos.ry() >= thisHeight )
-        {
-            break;
-        }
-    }
-
-    if (m_highlightedRecordInfo)
-    {
-        painter.setPen(Qt::green);
-        painter.drawRect(m_highlightedRecordInfo->bounds);
-    }
-
-    if (m_selectedRecordInfo)
-    {
-        drawRecordInfo(painter, *m_selectedRecordInfo);
-    }
 }
 
 void TimeLineView::getRulerStep(int& rulerStep, int& timeStep)
@@ -574,39 +481,6 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
         painter.setPen(Qt::darkRed);
         painter.drawLine(pos.x(), 0, pos.x(), thisHeight);
     }
-}
-
-void TimeLineView::drawRecordInfo(QPainter& painter, const RecordInfo& info)
-{
-    PERFOMETER_LOG_FUNCTION();
-
-    const auto thisWidth = width();
-    const auto thisHeight = height();
-
-    QString text;
-
-    painter.setPen(Qt::black);
-
-    QRect recordInfoBounds(
-        RecordInfoDist,
-        thisHeight - RecordInfoHeight - RecordInfoDist,
-        thisWidth - 2 * RecordInfoDist,
-        RecordInfoHeight
-    );
-
-    painter.fillRect(recordInfoBounds, RulerBackgroundColor);
-
-    recordInfoBounds.setLeft(recordInfoBounds.left() + RecordInfoTextDist);
-    recordInfoBounds.setWidth(recordInfoBounds.width() - 2 * RecordInfoTextDist - RecordInfoTimeWidth);
-
-    text = text.fromStdString(info.name);
-    painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignLeft, text);
-
-    recordInfoBounds.setRight(thisWidth - RecordInfoDist - RecordInfoTextDist);
-
-    const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
-    text = text.fromStdString(formatTime(duration));
-    painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
 }
 
 void TimeLineView::drawStatusMessage(QPainter& painter)
@@ -710,59 +584,58 @@ void TimeLineView::layout()
     m_verticalScrollBar.setVisible(vertBarVisible);
 }
 
-int TimeLineView::getReportHeight(const PerfometerReport& report)
+TimeLineView::ComponentPtr TimeLineView::getComponentUnderPoint(QPoint point, QPoint* outPos)
 {
-    int height = 0;
-    for (const auto& it : report.getThreads())
-    {
-        ThreadPtr thread = it.second;
+    QPoint pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
 
-        height += getThreadHeight(thread);
+    for (auto& component : m_components)
+    {
+        int componentHeight = component->height();
+
+        if (pos.ry() + componentHeight < RulerHeight + RulerDistReport)
+        {
+            pos.ry() += componentHeight;
+            continue;
+        }
+
+        QPoint localPosition = point - pos;
+        if (localPosition.y() < 0 || localPosition.y() > componentHeight)
+        {
+            pos.ry() += componentHeight;
+            continue;
+        }
+
+        if (outPos)
+        {
+            *outPos = pos;
+        }
+
+        return component;
     }
 
-    return height;
+    return ComponentPtr();
 }
 
-int TimeLineView::getThreadHeight(ConstThreadPtr thread)
+void TimeLineView::zoom(int z)
 {
-    PERFOMETER_LOG_FUNCTION();
+    z = std::max(z, MinZoom);
 
-    int height = ThreadTitleHeight;
-
-    int recordsHeight = 0;
-    for (auto record : thread->records)
+    if (m_zoom != z)
     {
-        recordsHeight = std::max(recordsHeight, getRecordHeight(record));
+        m_zoom = z;
+        layout();
     }
-
-    height += recordsHeight * RecordHeight;
-
-    return height;
 }
 
-int TimeLineView::getRecordHeight(const Record& record)
+void TimeLineView::zoomBy(int zoomDelta)
 {
-    int recordsHeight = 0;
-    for (auto record : record.enclosed)
-    {
-        recordsHeight = std::max(recordsHeight, getRecordHeight(record));
-    }
-
-    return recordsHeight + 1;
+    zoomBy(zoomDelta, width() / 2);
 }
 
-void TimeLineView::zoom(int zoomDelta)
-{
-    const auto thisWidth = width();
-    zoom(zoomDelta, thisWidth / 2);
-}
-
-void TimeLineView::zoom(int zoomDelta, int pivot)
+void TimeLineView::zoomBy(int zoomDelta, int pivot)
 {
     int prevZoom = m_zoom;
-    
-    m_zoom += zoomDelta;
-    m_zoom = std::max(m_zoom, MinZoom);
+    zoom(m_zoom + zoomDelta);
 
     if (m_zoom != prevZoom)
     {

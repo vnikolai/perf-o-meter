@@ -25,14 +25,21 @@ SOFTWARE. */
 
 namespace visualizer
 {
+    class TimeLineView;
+
     class TimeLineComponent
     {
     public:
-        TimeLineComponent();
+        TimeLineComponent(TimeLineView& view);
         int height() const;
 
-        virtual bool hitTest(QPoint pos, double pixelPerSecond);
-        virtual void render(QPainter& painter, QRect pos, double pixelPerSecond);
+        virtual void mouseMove(QPoint pos);
+        virtual void mouseClick(QPoint pos);
+        virtual void mouseDoubleClick(QPoint pos);
+        virtual void focusLost();
+
+        virtual void render(QPainter& painter, QRect pos);
+        virtual void renderOverlay(QPainter& painter, QRect pos);
 
         const std::string& name() const;
         void setName(const std::string& name);
@@ -43,6 +50,9 @@ namespace visualizer
     protected:
 
         void setHeight(int height);
+
+    protected:
+        TimeLineView&   m_view;
 
     private:
         std::string     m_name;

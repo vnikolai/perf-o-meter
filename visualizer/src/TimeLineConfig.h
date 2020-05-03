@@ -33,8 +33,8 @@ namespace visualizer {
     constexpr int       RecordHeight            = 16;
     constexpr int       ScrolBarThickness       = 24;
     constexpr int       MinZoom                 = 10;
-    constexpr int       ZoomKeyboardStep        = 250;
-    constexpr int       ZoomKeyboardLargeStep   = 5000;
+    constexpr int       ZoomKeyboardStep        = 1000;
+    constexpr int       ZoomKeyboardLargeStep   = 20000;
     constexpr int       OffsetKeyboardStep      = 10;
     constexpr int       OffsetKeyboardPageStep  = 240;
     constexpr int       RecordMinTextWidth      = 10;
@@ -54,11 +54,11 @@ namespace visualizer {
     static QColor       RulerBackgroundColor            (228, 230, 241, 255);
 
     constexpr int NumColors = 8;
-    static QColor Colors[NumColors] = { Qt::darkRed,
-                                        Qt::darkGreen,
+    static QColor Colors[NumColors] = { QColor(160, 96, 96, 255), // soft pink
+                                        QColor(96, 160, 96, 255), // light green
                                         Qt::darkCyan,
-                                        Qt::darkYellow,
-                                        Qt::darkMagenta,
+                                        QColor(160, 160, 96, 255), // soft yellow
+                                        QColor(160, 96, 160, 255), // soft magenta
                                         Qt::gray,
                                         Qt::lightGray,
                                         Qt::darkGray };

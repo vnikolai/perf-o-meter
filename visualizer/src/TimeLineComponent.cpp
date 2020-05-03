@@ -22,8 +22,9 @@ SOFTWARE. */
 
 namespace visualizer
 {
-TimeLineComponent::TimeLineComponent()
-    : m_collapsed(false)
+TimeLineComponent::TimeLineComponent(TimeLineView& view)
+    : m_view(view)
+    , m_collapsed(false)
     , m_height(0)
 {   
 }
@@ -33,12 +34,27 @@ int TimeLineComponent::height() const
     return m_height;
 }
 
-bool TimeLineComponent::hitTest(QPoint pos, double pixelPerSecond)
+void TimeLineComponent::mouseMove(QPoint pos)
 {
-    return false;
 }
 
-void TimeLineComponent::render(QPainter& painter, QRect pos, double pixelPerSecond)
+void TimeLineComponent::mouseClick(QPoint pos)
+{
+}
+
+void TimeLineComponent::mouseDoubleClick(QPoint pos)
+{
+}
+
+void TimeLineComponent::focusLost()
+{
+}
+
+void TimeLineComponent::render(QPainter& painter, QRect pos)
+{
+}
+
+void TimeLineComponent::renderOverlay(QPainter& painter, QRect pos)
 {
 }
 

@@ -33,19 +33,25 @@ namespace visualizer
     class TimeLineView : public QOpenGLWidget,
                                 QOpenGLFunctions
     {
-        struct RecordInfo
-        {
-            QRect bounds;
-            std::string name;
-            double startTime;
-            double endTime;
-        };
+        using ComponentPtr = std::shared_ptr<TimeLineComponent>;
 
     public:
         TimeLineView();
         virtual ~TimeLineView();
 
         void setReport(std::shared_ptr<PerfometerReport> report);
+
+        double pixelsPerSecond() const;
+
+        void zoom(int zoom);
+        void zoomBy(int zoomDelta);
+        void zoomBy(int zoomDelta, int pivot);
+        void scrollBy(QPointF delta);
+        void scrollTo(QPointF pos);
+        void scrollXBy(int xDelta);
+        void scrollYBy(int yDelta);
+        void scrollXTo(int x);
+        void scrollYTo(int y);
 
     public slots:
         void onHorizontalScrollBarValueChanged(int value);
@@ -67,39 +73,17 @@ namespace visualizer
         virtual void resizeEvent(QResizeEvent* event) override;
     
     private:
-        double pixelsPerSecond() const;
-        
-        int drawPerfometerRecord(QPainter& painter, QPoint& pos, const Record& record);
-        int drawPerfometerRecords(QPainter& painter, QPoint& pos, const std::vector<Record>& records);
-        void drawPerfometerThread(QPainter& painter, QPoint& pos, ConstThreadPtr thread);
-        void drawPerfometerReport(QPainter& painter, QPoint& pos, const PerfometerReport& report);
-
         void getRulerStep(int& rulerStep, int& timeStep);
         void drawRuler(QPainter& painter, QPoint& pos);
 
-        void drawRecordInfo(QPainter& painter, const RecordInfo& info);
         void drawStatusMessage(QPainter& painter);
 
         void layout();
 
-        int getReportHeight(const PerfometerReport& report);
-        int getThreadHeight(ConstThreadPtr report);
-        int getRecordHeight(const Record& record);
-
-        void zoom(int zoomDelta);
-        void zoom(int zoomDelta, int pivot);
-        void scrollBy(QPointF delta);
-        void scrollTo(QPointF pos);
-        void scrollXBy(int xDelta);
-        void scrollYBy(int yDelta);
-        void scrollXTo(int x);
-        void scrollYTo(int y);
+        ComponentPtr getComponentUnderPoint(QPoint point, QPoint* outPos = nullptr);
 
     private:
         using super = QOpenGLWidget;
-
-        using ComponentPtr = std::shared_ptr<TimeLineComponent>;
-
 
         QScrollBar                          m_horizontalScrollBar;
         QScrollBar                          m_verticalScrollBar;
@@ -114,11 +98,11 @@ namespace visualizer
 
         QPointF                             m_offset;
 
-        std::shared_ptr<RecordInfo>         m_highlightedRecordInfo;
-        std::shared_ptr<RecordInfo>         m_selectedRecordInfo;
-
         std::shared_ptr<PerfometerReport>   m_report;
 
         std::vector<ComponentPtr>           m_components;
+
+        ComponentPtr                        m_componentUnderMouse;
+        ComponentPtr                        m_componentWithFocus;
     };
 } // namespace visualizer

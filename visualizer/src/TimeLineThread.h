@@ -27,19 +27,39 @@ SOFTWARE. */
 
 namespace visualizer
 {
+    struct RecordInfo
+    {
+        QRect bounds;
+        std::string name;
+        double startTime;
+        double endTime;
+    };
+
     class TimeLineThread : public TimeLineComponent
     {
     public:
-        TimeLineThread(ConstThreadPtr thread);
+        TimeLineThread(TimeLineView& view, ConstThreadPtr thread);
 
-        void render(QPainter& painter, QRect pos, double pixelPerSecond) override;
+        void mouseMove(QPoint pos) override;
+        void mouseClick(QPoint pos) override;
+        void mouseDoubleClick(QPoint pos) override;
+        void focusLost() override;
+
+        void render(QPainter& painter, QRect pos) override;
+        void renderOverlay(QPainter& painter, QRect pos) override;
 
     private:
+
+        void drawPerfometerRecord(QPainter& painter, QRect pos, const Record& record);
+        void drawPerfometerRecords(QPainter& painter, QRect pos, const std::vector<Record>& records);
 
         int calculateThreadHeight();
         int calculateRecordHeight(const Record& record);
 
     private:
-        ConstThreadPtr  m_thread;
+        ConstThreadPtr                      m_thread;
+
+        std::shared_ptr<RecordInfo>         m_highlightedRecordInfo;
+        std::shared_ptr<RecordInfo>         m_selectedRecordInfo;
     };
 } // namespace visualizer
