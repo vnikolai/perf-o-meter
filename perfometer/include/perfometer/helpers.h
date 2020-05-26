@@ -69,6 +69,8 @@ namespace perfometer
 
 #define PERFOMETER_LOG_SCOPE(name)                                              \
         perfometer::work_logger<perfometer::zero_length_work_policy::skip>      \
-            PERFOMETER_CONCAT_WRAPPER(func_logger, __LINE__)( name )
+            PERFOMETER_CONCAT_WRAPPER(func_logger, __LINE__)(name)
         
 #define PERFOMETER_LOG_FUNCTION()           PERFOMETER_LOG_SCOPE(PERFOMETER_FUNCTION)
+
+#define PERFOMETER_EVENT(name)              perfometer::log_event(name, perfometer::get_time())

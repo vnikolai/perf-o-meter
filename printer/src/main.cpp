@@ -242,6 +242,23 @@ int main(int argc, const char** argv)
 
 				break;
 			}
+			case perfometer::record_type::event:
+			{
+				perf_string_id string_id = 0;
+				perf_thread_id thread_id = 0;
+				perf_time t = 0;
+				
+				report_file >> string_id
+							>> t
+							>> thread_id;
+
+				std::cout << "Event " << strings[string_id].c_str()
+						  << " on "  << strings[threads[thread_id]].c_str()
+						  << " fired " << static_cast<double>(t - init_time) / clock_frequency << " sec"
+						  << std::endl;
+
+				break;
+			}
 			default:
 			{
 				std::cout << "ERROR: Unknown record type " << record << std::endl;

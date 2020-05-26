@@ -12,6 +12,10 @@ add_executable(threads src/threads.cpp)
 target_link_libraries(threads perfometer)
 set_property(TARGET threads PROPERTY CXX_STANDARD 11)
 
+add_executable(events src/events.cpp)
+target_link_libraries(events perfometer)
+set_property(TARGET events PROPERTY CXX_STANDARD 11)
+
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(threads pthread)
 endif()

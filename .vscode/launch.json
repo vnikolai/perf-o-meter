@@ -83,6 +83,32 @@
             "externalConsole": false,
         },
         {
+            "name": "Events",
+            "type": "cppdbg",
+            "linux": {
+                "type": "cppdbg",
+                "program": "${workspaceFolder}/bin/events",
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            },
+            "windows": {
+                "type":"cppvsdbg",
+                "program": "${workspaceFolder}/bin/events.exe",
+            },
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false,
+        },
+        {
             "name": "Printer",
             "type": "cppdbg",
             "linux": {

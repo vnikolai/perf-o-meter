@@ -33,6 +33,8 @@ namespace perfometer
 
 	enum record_type : uint8_t
 	{
+        undefined = 0,              // Not defined
+
 		clock_configuration = 1,    // 8 bit record type
                                     // 8 bit time size
                                     // time size clock frequency value
@@ -51,10 +53,15 @@ namespace perfometer
                                     // thread id size thread id
                                     // 16 bit string id
 
-        work = 5                    // 8 bit record type
+        work = 5,                   // 8 bit record type
                                     // 16 bit name string id
                                     // time size time start
                                     // time size time end
+                                    // thread id size thread id
+
+        event = 6                   // 8 bit record type
+                                    // 16 bit name string id
+                                    // time size time
                                     // thread id size thread id
 	};
 

@@ -18,45 +18,32 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
-#pragma once
+#include <perfometer/perfometer.h>
+#include <perfometer/helpers.h>
+#include <iostream>
+#include <thread>
+#include <chrono>
 
-#include <perfometer/config.h>
-#include <perfometer/thread.h>
-#include <perfometer/time.h>
-#include <perfometer/format.h>
+// Log events with PERFOMETER_EVENT macro
 
-namespace perfometer {
-
-struct record
+int main(int argc, const char** argv)
 {
-	record_type	type;
-	const char* name;
-	time 		start;
-	time 		end;
-	thread_id	tid;
-};
+	auto result = perfometer::initialize("perfometer.report");
+	std::cout << "perfometer::initialize() returned " << result << std::endl;
+	
+	perfometer::log_thread_name("MAIN_THREAD");
 
-struct record_buffer
-{
-	record_buffer()
-	{
-		count = 0;
-		records = new record[records_cache_size];
-	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-	~record_buffer()
-	{
-		delete[] records;
-	}
+    // Log named event that will store time and thread id
+    PERFOMETER_EVENT("First Event");
 
-	void add_record(record&& record)
-	{
-		records[count] = std::move(record);
-		++count;
-	}
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
 
-	size_t 		count;
-	record*		records;
-};
+    PERFOMETER_EVENT("Second Event");
 
-} // namespace perfometer
+	result = perfometer::shutdown();
+	std::cout << "perfometer::shutdown() returned " << result << std::endl;
+
+	return 0;
+}

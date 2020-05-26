@@ -277,6 +277,35 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				break;
 			}
+			case perfometer::record_type::event:
+			{
+				PerfStringID stringID = 0;
+				Thread::ID threadID = 0;
+				PerfTime time = 0;
+				PerfTime endTime = 0;
+
+                report >> stringID
+					   >> time
+					   >> threadID;
+
+                double event_time = static_cast<double>(time - initTime) / clockFrequency;
+				if (m_traits.SkipRecordsIncorrectTime)
+				{
+					if (event_time >= m_traits.RecordTimeMaxLimit)
+					{
+						continue;
+					}
+				}
+
+                ThreadPtr thread = getThread(threadID);
+
+				thread->events.push_back(Event({event_time, strings[stringID]}));
+
+				m_startTime = std::min(m_startTime, event_time);
+				m_endTime = std::max(m_endTime, event_time);
+
+				break;
+			}
 			default:
 			{
 				log("ERROR loading report: Unknown record type");

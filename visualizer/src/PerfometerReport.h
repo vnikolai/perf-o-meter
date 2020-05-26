@@ -36,6 +36,12 @@ namespace visualizer
         std::vector<Record> enclosed;
     };
 
+    struct Event
+    {
+        double time;
+        std::string name;
+    };
+
     struct Thread
     {
         using ID = int64_t;
@@ -54,6 +60,7 @@ namespace visualizer
         ID id;
         std::string name;
         std::vector<Record> records;
+        std::vector<Event> events;
     };
 
     using ThreadPtr = std::shared_ptr<Thread>;

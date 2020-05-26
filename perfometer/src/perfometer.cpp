@@ -100,7 +100,7 @@ void logger_thread()
 		{
 			for (size_t i = 0; i < buffer->count; ++i)
 			{
-				const work_record& record = buffer->records[i];
+				const record& record = buffer->records[i];
 
 				auto string_result = get_string_id(record.name);
 
@@ -112,11 +112,30 @@ void logger_thread()
 								<< record.name;
 				}
 
-				s_serializer << record_type::work
-							 << string_result.first
-							 << record.start
-							 << record.end
-							 << record.tid;
+				switch (record.type)
+				{
+					case record_type::work:
+					{
+						s_serializer << record_type::work
+									 << string_result.first
+									 << record.start
+									 << record.end
+									 << record.tid;
+						break;
+					}
+					case record_type::event:
+					{
+						s_serializer << record_type::event
+									 << string_result.first
+									 << record.start
+									 << record.tid;
+						break;
+					}
+					default:
+					{
+						break;
+					}
+				}
 			}
 
 			delete buffer;
@@ -362,7 +381,41 @@ result log_work(const char tag_name[], time start_time, time end_time)
 		return res;
 	}
 
-	s_record_cache->add_record(std::move(work_record({tag_name, start_time, end_time, get_thread_id()})));
+	s_record_cache->add_record(std::move(
+		record({ record_type::work, tag_name, start_time, end_time, get_thread_id()}) ));
+	
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+	s_overhead += get_time() - start;
+	s_numcalls++;
+#endif
+
+	return result::ok;
+}
+
+result log_event(const char tag_name[], time t)
+{
+	if (!s_logging_enabled)
+	{
+		return result::not_running;
+	}
+
+	if (tag_name == nullptr)
+	{
+		return result::invalid_arguments;
+	}
+
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+	time start = get_time();
+#endif
+
+	result res = ensure_buffer();
+	if (res != result::ok)
+	{
+		return res;
+	}
+
+	s_record_cache->add_record(std::move(
+		record({ record_type::event, tag_name, t, time(0), get_thread_id()}) ));
 	
 #if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
 	s_overhead += get_time() - start;
