@@ -43,6 +43,7 @@ namespace perfometer
 	result pause();
 	result resume();
 
+	result flush_thread_cache();
 	result flush();
 
 	result log_thread_name(const char thread_name[], thread_id id);

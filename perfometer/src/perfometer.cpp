@@ -258,6 +258,24 @@ result resume()
 	return result::ok;
 }
 
+result flush_thread_cache()
+{
+	if (!s_initialized)
+	{
+		return result::not_initialized;
+	}
+
+	if (s_record_cache)
+	{
+		scoped_lock lock(s_records_mutex);
+		s_logger_records_queue.push(s_record_cache);
+	}
+
+	s_record_cache = nullptr;
+
+	return result::ok;
+}
+
 result flush()
 {
 	if (!s_initialized)
@@ -290,12 +308,7 @@ result ensure_buffer()
 #endif
 	if (s_record_cache && s_record_cache->count == records_cache_size)
     {
-		{
-			scoped_lock lock(s_records_mutex);
-			s_logger_records_queue.push(s_record_cache);
-		}
-
-		s_record_cache = nullptr;
+		flush_thread_cache();
     }
 
 	if (s_record_cache == nullptr)
