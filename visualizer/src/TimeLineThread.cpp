@@ -74,8 +74,10 @@ bool hitTestRecord(QPoint pos,
 TimeLineThread::TimeLineThread(TimeLineView& view, ConstThreadPtr thread)
     : TimeLineComponent(view)
     , m_thread(thread)
+    , m_recordsHeight(0)
 {
-    setHeight(calculateThreadHeight());
+    int thisHeight = calculateThreadHeight(&m_recordsHeight);
+    setHeight(thisHeight);
 }
 
 void TimeLineThread::mouseMove(QPoint pos)
@@ -154,28 +156,9 @@ void TimeLineThread::render(QPainter& painter, QRect pos)
 
     QRect childPos(pos);
     childPos.translate(0, ThreadTitleHeight);
-    drawPerfometerRecords(painter, childPos, m_thread->records);
+    drawRecords(painter, childPos, m_thread->records);
 
-    painter.setPen(Qt::cyan);
-
-    for (const auto& event : m_thread->events)
-    {
-        int x = pos.x() + static_cast<int>(event.time * pixpersec);
-        if (x < 0)
-        {
-            continue;
-        }
-
-        if (x > viewportWidth)
-        {
-            break;
-        }
-        
-        painter.drawLine(x,
-                         childPos.y() - ThreadTitleHeight / 4,
-                         x,
-                         pos.y() + height() + ThreadTitleHeight / 4);
-    }
+    drawEvents(painter, childPos, m_recordsHeight, m_thread->events);
 
     if (m_highlightedRecordInfo)
     {
@@ -222,7 +205,7 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRect pos)
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
 }
 
-void TimeLineThread::drawPerfometerRecord(QPainter& painter, QRect pos, const Record& record)
+void TimeLineThread::drawRecord(QPainter& painter, QRect pos, const Record& record)
 {
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
@@ -252,10 +235,10 @@ void TimeLineThread::drawPerfometerRecord(QPainter& painter, QRect pos, const Re
     }
 
     pos.translate(0, RecordHeight);
-    drawPerfometerRecords(painter, pos, record.enclosed);
+    drawRecords(painter, pos, record.enclosed);
 }
 
-void TimeLineThread::drawPerfometerRecords(QPainter& painter, QRect pos, const std::vector<Record>& records)
+void TimeLineThread::drawRecords(QPainter& painter, QRect pos, const std::vector<Record>& records)
 {
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
@@ -275,11 +258,45 @@ void TimeLineThread::drawPerfometerRecords(QPainter& painter, QRect pos, const s
             break;
         }
 
-        drawPerfometerRecord(painter, pos, record);
+        drawRecord(painter, pos, record);
     }
 }
 
-int TimeLineThread::calculateThreadHeight()
+void TimeLineThread::drawEvents(QPainter& painter, QRect pos, int recordsHeight, const std::vector<Event>& events)
+{
+    const auto viewportWidth = pos.width();
+    const auto pixpersec = m_view.pixelsPerSecond();
+
+    QString text;
+
+    for (const auto& event : m_thread->events)
+    {
+        int x = pos.x() + static_cast<int>(event.time * pixpersec);
+        if (x < 0)
+        {
+            continue;
+        }
+
+        if (x > viewportWidth)
+        {
+            break;
+        }
+
+        painter.setPen(Qt::cyan);
+        painter.drawLine(x,
+                         pos.y() - ThreadTitleHeight / 4,
+                         x,
+                         pos.y() + height() - ThreadTitleHeight);
+        
+        painter.setPen(Qt::darkCyan);
+        painter.drawText(x  + TitleOffsetSmall, pos.y() + recordsHeight,
+                         viewportWidth, RecordHeight,
+                         Qt::AlignVCenter | Qt::AlignLeft,
+                         text.fromStdString(event.name));
+    }
+}
+
+int TimeLineThread::calculateThreadHeight(int* oRecordsHeight)
 {
     PERFOMETER_LOG_FUNCTION();
 
@@ -293,7 +310,12 @@ int TimeLineThread::calculateThreadHeight()
 
     height += recordsHeight * RecordHeight;
 
-    if (m_thread->records.size() == 0 && m_thread->events.size() > 0)
+    if (oRecordsHeight)
+    {
+        *oRecordsHeight = recordsHeight * RecordHeight;
+    }
+
+    if (m_thread->events.size() > 0)
     {
         height += RecordHeight;
     }

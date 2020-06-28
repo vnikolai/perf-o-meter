@@ -51,14 +51,16 @@ namespace visualizer
 
     private:
 
-        void drawPerfometerRecord(QPainter& painter, QRect pos, const Record& record);
-        void drawPerfometerRecords(QPainter& painter, QRect pos, const std::vector<Record>& records);
+        void drawRecord(QPainter& painter, QRect pos, const Record& record);
+        void drawRecords(QPainter& painter, QRect pos, const std::vector<Record>& records);
+        void drawEvents(QPainter& painter, QRect pos, int recordsHeight, const std::vector<Event>& events);
 
-        int calculateThreadHeight();
+        int calculateThreadHeight(int* oRecordsHeight);
         int calculateRecordHeight(const Record& record);
 
     private:
         ConstThreadPtr                      m_thread;
+        int                                 m_recordsHeight;
 
         std::shared_ptr<RecordInfo>         m_highlightedRecordInfo;
         std::shared_ptr<RecordInfo>         m_selectedRecordInfo;
