@@ -18,18 +18,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
-#include "Utils.h"
+#include <utils/time.h>
+#include <cmath>
 
 namespace visualizer {
 
-std::string formatTime(double time)
+std::string format_time(double time)
 {
     if (time < 0)
     {
-        return std::string("-") + formatTime(-time);
+        return std::string("-") + format_time(-time);
     }
 
-    constexpr double precision = 1.0 / 10000000; // 0.1 nanosec precision    
+    const double precision = 1.0 / 10000000000; // 0.1 nanosec precision    
     std::string suffix;
     double denom = 0;
 
@@ -38,7 +39,7 @@ std::string formatTime(double time)
 
     if (time < 1e-6)
     {
-        if (abs(time) < precision)
+        if (std::abs(time) < precision)
         {
             return std::string("0");
         }
@@ -88,7 +89,7 @@ std::string formatTime(double time)
     if (withFraction)
     {
         int value = static_cast<int>(time * denom + precision);
-        int fraction = static_cast<int>((time * denom - value) * withFraction);
+        int fraction = static_cast<int>((time * denom - value + precision) * withFraction);
         if (fraction >= 1)
         {
             char text[16];
@@ -105,7 +106,7 @@ std::string formatTime(double time)
         double fract = time * denom - static_cast<int>(time * denom + precision);
         if (fract + precision >= denom)
         {
-            result += " " + formatTime(fract / denom);
+            result += " " + format_time(fract / denom);
         }
     }
 

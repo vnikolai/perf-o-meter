@@ -109,6 +109,32 @@
             "externalConsole": false,
         },
         {
+            "name": "Test utils",
+            "type": "cppdbg",
+            "linux": {
+                "type": "cppdbg",
+                "program": "${workspaceFolder}/bin/test_utils",
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            },
+            "windows": {
+                "type":"cppvsdbg",
+                "program": "${workspaceFolder}/bin/test_utils.exe",
+            },
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false,
+        },
+        {
             "name": "Printer",
             "type": "cppdbg",
             "linux": {

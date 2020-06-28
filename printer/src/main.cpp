@@ -24,6 +24,7 @@ SOFTWARE. */
 #include <algorithm>
 #include <unordered_map>
 #include <fstream>
+#include <utils/time.h>
 
 using perf_thread_id = int64_t;		// holding at least 8 bytes
 using perf_time = uint64_t;			// holding at least 8 bytes
@@ -236,8 +237,8 @@ int main(int argc, const char** argv)
 
 				std::cout << "Work " << strings[string_id].c_str()
 						  << " on "  << strings[threads[thread_id]].c_str()
-						  << " started " << static_cast<double>(time_start - init_time) / clock_frequency << " sec"
-						  << " duration " << static_cast<double>(time_end - time_start) / clock_frequency << " sec"
+						  << " started " << visualizer::format_time(static_cast<double>(time_start - init_time) / clock_frequency) 
+						  << " duration " << visualizer::format_time(static_cast<double>(time_end - time_start) / clock_frequency) 
 						  << std::endl;
 
 				break;

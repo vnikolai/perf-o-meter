@@ -21,7 +21,7 @@ SOFTWARE. */
 #include "TimeLineView.h"
 #include "TimeLineConfig.h"
 #include "TimeLineThread.h"
-#include "Utils.h"
+#include <utils/time.h>
 #include <cstring>
 #include <algorithm>
 #include <QPainter>
@@ -172,7 +172,7 @@ void TimeLineView::paintGL()
     painter.setPen(RulerBackgroundColor);
     painter.drawText(m_mousePosition.x() + TitleOffsetSmall, RulerHeight, 200, 50,
                      Qt::AlignTop | Qt::AlignLeft,
-                     text.fromStdString(formatTime(timeAtPoint(m_mousePosition.x()))));
+                     text.fromStdString(format_time(timeAtPoint(m_mousePosition.x()))));
 
     painter.end();
 }
@@ -492,7 +492,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
             double rulerTime = idx * static_cast<double>(timeStep) / 1000000;
             painter.drawText(x + TitleOffsetSmall, 0, 64, RulerHeight,
                              Qt::AlignVCenter | Qt::AlignLeft,
-                             text.fromStdString(formatTime(rulerTime)));
+                             text.fromStdString(format_time(rulerTime)));
         }
     }
 
@@ -528,8 +528,8 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
              m_mousePosition.x(), m_mousePosition.y(), 
              m_zoom,
              m_offset.x(), m_offset.y(),
-             formatTime(m_report ? m_report->getStartTime() : 0.f).c_str(),
-                formatTime(m_report ? m_report->getEndTime() : 0.f).c_str(),
+             format_time(m_report ? m_report->getStartTime() : 0.f).c_str(),
+             format_time(m_report ? m_report->getEndTime() : 0.f).c_str(),
              pixelsPerSecond());
 
     painter.setPen(Qt::white);

@@ -24,5 +24,5 @@ SOFTWARE. */
 
 namespace visualizer
 {
-    std::string formatTime(double time);
+    std::string format_time(double time);
 } // namespace visualizer

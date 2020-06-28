@@ -9,6 +9,7 @@ target_link_libraries(
     visualizer
     
     perfometer
+    utils
     Qt5::Core
     Qt5::Gui
     Qt5::OpenGL)

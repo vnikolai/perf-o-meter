@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.1)
 option (BUILD_PRINTER "Build printer" ON)
 option (BUILD_SAMPLES "Build printer" ON)
 option (BUILD_VISUALIZER "Build visualizer" ON)
+option (BUILD_TESTS "Build tests" ON)
 
 project (perf-o-meter)
 
@@ -25,6 +26,10 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 add_subdirectory (perfometer)
 
+if (BUILD_PRINTER OR BUILD_VISUALIZER)
+    add_subdirectory (utils)
+endif()
+
 if (BUILD_PRINTER)
     add_subdirectory (printer)
 endif()
@@ -35,4 +40,8 @@ endif()
 
 if (BUILD_VISUALIZER)
     add_subdirectory (visualizer)
+endif()
+
+if (BUILD_TESTS)
+    add_subdirectory (test)
 endif()

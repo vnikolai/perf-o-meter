@@ -20,11 +20,12 @@ SOFTWARE. */
 
 #include "TimeLineThread.h"
 #include "TimeLineConfig.h"
-#include "Utils.h"
 #include "TimeLineView.h"
 
 #include <perfometer/perfometer.h>
 #include <perfometer/helpers.h>
+
+#include <utils/time.h>
 
 #include <thread>
 #include <chrono>
@@ -201,7 +202,7 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRect pos)
     recordInfoBounds.setRight(pos.width() - RecordInfoDist - RecordInfoTextDist);
 
     const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
-    text = text.fromStdString(formatTime(duration));
+    text = text.fromStdString(format_time(duration));
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
 }
 
@@ -230,7 +231,7 @@ void TimeLineThread::drawRecord(QPainter& painter, QRect pos, const Record& reco
     if (w >= RecordMinTextWidth)
     {
         QString text;
-        text = text.fromStdString(record.name + " " + formatTime(record.timeEnd - record.timeStart));
+        text = text.fromStdString(record.name + " " + format_time(record.timeEnd - record.timeStart));
         painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignLeft, text);
     }
 
