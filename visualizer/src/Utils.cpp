@@ -24,6 +24,11 @@ namespace visualizer {
 
 std::string formatTime(double time)
 {
+    if (time < 0)
+    {
+        return std::string("-") + formatTime(-time);
+    }
+    
     std::string suffix;
     double denom = 0;
 

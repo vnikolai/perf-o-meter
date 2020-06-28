@@ -102,6 +102,11 @@ void TimeLineThread::mouseMove(QPoint pos)
     }
 }
 
+void TimeLineThread::mouseLeft()
+{
+    m_highlightedRecordInfo.reset();
+}
+
 void TimeLineThread::mouseClick(QPoint pos)
 {
     m_selectedRecordInfo = m_highlightedRecordInfo;

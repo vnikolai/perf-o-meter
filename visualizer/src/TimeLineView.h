@@ -42,6 +42,7 @@ namespace visualizer
         void setReport(std::shared_ptr<PerfometerReport> report);
 
         double pixelsPerSecond() const;
+        double secondsPerPixel() const;
 
         void zoom(int zoom);
         void zoomBy(int zoomDelta);
@@ -81,6 +82,8 @@ namespace visualizer
         void layout();
 
         ComponentPtr getComponentUnderPoint(QPoint point, QPoint* outPos = nullptr);
+
+        double timeAtPoint(int x);
 
     private:
         using super = QOpenGLWidget;

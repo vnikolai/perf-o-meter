@@ -38,6 +38,10 @@ void TimeLineComponent::mouseMove(QPoint pos)
 {
 }
 
+void TimeLineComponent::mouseLeft()
+{    
+}
+
 void TimeLineComponent::mouseClick(QPoint pos)
 {
 }

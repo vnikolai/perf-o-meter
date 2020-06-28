@@ -41,6 +41,7 @@ namespace visualizer
         TimeLineThread(TimeLineView& view, ConstThreadPtr thread);
 
         void mouseMove(QPoint pos) override;
+        void mouseLeft() override;
         void mouseClick(QPoint pos) override;
         void mouseDoubleClick(QPoint pos) override;
         void focusLost() override;

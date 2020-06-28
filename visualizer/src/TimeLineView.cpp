@@ -168,6 +168,12 @@ void TimeLineView::paintGL()
     painter.setPen(Qt::darkGreen);
     painter.drawLine(m_mousePosition.x(), 0, m_mousePosition.x(), thisHeight);
 
+    QString text;
+    painter.setPen(RulerBackgroundColor);
+    painter.drawText(m_mousePosition.x() + TitleOffsetSmall, RulerHeight, 200, 50,
+                     Qt::AlignTop | Qt::AlignLeft,
+                     text.fromStdString(formatTime(timeAtPoint(m_mousePosition.x()))));
+
     painter.end();
 }
 
@@ -332,11 +338,19 @@ void TimeLineView::mouseMoveEvent(QMouseEvent* event)
 
     QPoint pos;
     ComponentPtr component = getComponentUnderPoint(m_mousePosition, &pos);
+
+    if (m_componentUnderMouse != component && m_componentUnderMouse)
+    {
+        m_componentUnderMouse->mouseLeft();
+    }
+
     if (component)
     {
         QPoint localPosition = m_mousePosition - pos;
         component->mouseMove(localPosition);
     }
+
+    m_componentUnderMouse = component;
 
     update();
     layout();
@@ -348,7 +362,7 @@ void TimeLineView::wheelEvent(QWheelEvent* event)
 
     if (event->modifiers() & Qt::ControlModifier)
     {
-        zoomBy(delta, m_mousePosition.x());
+        zoomBy(delta / 10, m_mousePosition.x());
     }
     else
     {
@@ -384,6 +398,11 @@ void TimeLineView::resizeEvent(QResizeEvent* event)
 double TimeLineView::pixelsPerSecond() const
 {
     return static_cast<double>(PixelsPerSecond) * m_zoom / DefaultZoom;
+}
+
+double TimeLineView::secondsPerPixel() const
+{
+    return static_cast<double>(DefaultZoom) / (PixelsPerSecond * m_zoom);
 }
 
 void TimeLineView::getRulerStep(int& rulerStep, int& timeStep)
@@ -453,7 +472,6 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     QString text;
 
     const auto pixpersec = pixelsPerSecond();
-    const double secondsPerPixel = 1.0f * DefaultZoom / (PixelsPerSecond * m_zoom);
     const int rulerCount = thisWidth / rulerStep;
 
     for (int i = 0; i < rulerCount + 2; ++i)
@@ -635,11 +653,12 @@ void TimeLineView::zoomBy(int zoomDelta)
 void TimeLineView::zoomBy(int zoomDelta, int pivot)
 {
     int prevZoom = m_zoom;
+    double mid = m_offset.x() + pivot;
+
     zoom(m_zoom + zoomDelta);
 
     if (m_zoom != prevZoom)
     {
-        double mid = m_offset.x() + pivot;
         m_offset.setX((mid / prevZoom) * m_zoom - pivot);
     }
 }
@@ -674,6 +693,12 @@ void TimeLineView::scrollXTo(int x)
 void TimeLineView::scrollYTo(int y)
 {
     scrollTo(QPoint(m_offset.x(), y));
+}
+
+double TimeLineView::timeAtPoint(int x)
+{
+    float rulerX = x + m_offset.x();
+    return secondsPerPixel() * rulerX;    
 }
 
 } // namespace visualizer

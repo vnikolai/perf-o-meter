@@ -34,6 +34,7 @@ namespace visualizer
         int height() const;
 
         virtual void mouseMove(QPoint pos);
+        virtual void mouseLeft();
         virtual void mouseClick(QPoint pos);
         virtual void mouseDoubleClick(QPoint pos);
         virtual void focusLost();
