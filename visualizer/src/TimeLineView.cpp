@@ -405,7 +405,7 @@ double TimeLineView::secondsPerPixel() const
     return static_cast<double>(DefaultZoom) / (PixelsPerSecond * m_zoom);
 }
 
-void TimeLineView::getRulerStep(int& rulerStep, int& timeStep)
+void TimeLineView::getRulerStep(double& rulerStep, int& timeStep)
 {
     constexpr int NumSteps = 22;
     constexpr int RulerTimeSteps[NumSteps]
@@ -431,7 +431,7 @@ void TimeLineView::getRulerStep(int& rulerStep, int& timeStep)
         10000000,
         20000000,
         50000000,
-        10000000,
+        100000000,
     };
 
     static_assert(
@@ -444,7 +444,7 @@ void TimeLineView::getRulerStep(int& rulerStep, int& timeStep)
     do
     {
         timeStep = RulerTimeSteps[idx++];
-        rulerStep = timeStep * (pixpersec / 1000000);
+        rulerStep = (timeStep * pixpersec) / 1000000;
         
     } while (rulerStep < 32 && idx < NumSteps);
 }
@@ -465,7 +465,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     painter.drawRect(1, 0, thisWidth - 1, RulerHeight);
     painter.drawLine(0, RulerHeight, thisWidth, RulerHeight);
 
-    int rulerStep = 0;
+    double rulerStep = 0;
     int timeStep = 0;
     getRulerStep(rulerStep, timeStep);
 
@@ -474,9 +474,11 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     const auto pixpersec = pixelsPerSecond();
     const int rulerCount = thisWidth / rulerStep;
 
+    int rulerOffset = static_cast<int>(pos.x() / (rulerStep * 2));
+
     for (int i = 0; i < rulerCount + 2; ++i)
     {
-        int x = i * rulerStep + (pos.x() > 0 ? pos.x() : pos.x() % (2 * rulerStep));
+        int x = i * rulerStep + (pos.x() > 0 ? pos.x() : pos.x() - rulerOffset * 2 * rulerStep);
 
         if (i % 2)
         {
@@ -486,7 +488,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
         {
             painter.drawLine(x, 0, x, PrimaryStrokeLength);
 
-            int idx = i + 2 * (pos.x() < 0 ? -pos.x() / (2 * rulerStep) : 0);
+            int idx = i + 2 * (pos.x() < 0 ? -rulerOffset : 0);
             double rulerTime = idx * static_cast<double>(timeStep) / 1000000;
             painter.drawText(x + TitleOffsetSmall, 0, 64, RulerHeight,
                              Qt::AlignVCenter | Qt::AlignLeft,

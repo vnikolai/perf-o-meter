@@ -28,7 +28,8 @@ std::string formatTime(double time)
     {
         return std::string("-") + formatTime(-time);
     }
-    
+
+    constexpr double precision = 1.0 / 10000000; // 0.1 nanosec precision    
     std::string suffix;
     double denom = 0;
 
@@ -37,7 +38,7 @@ std::string formatTime(double time)
 
     if (time < 1e-6)
     {
-        if (abs(time) < std::numeric_limits<double>::epsilon())
+        if (abs(time) < precision)
         {
             return std::string("0");
         }
@@ -46,19 +47,19 @@ std::string formatTime(double time)
         suffix = "ns";
         denom = 1000000000;
     }
-    else if (time < 1e-3)
+    else if (time < 1e-3 - precision)
     {
         // micros
         suffix = "us";
         denom = 1000000;
     }
-    else if (time < 1)
+    else if (time < 1 - precision)
     {
         // millis
         suffix = "ms";
         denom = 1000;
     }
-    else if (time < 60)
+    else if (time < 60 - precision)
     {
         // seconds
         suffix = "s";
@@ -66,7 +67,7 @@ std::string formatTime(double time)
 
         withFraction = time < 10 ? 100 : 10;
     }
-    else if (time < 3600)
+    else if (time < 3600 - precision)
     {
         // minutes
         suffix = "m";
@@ -78,7 +79,7 @@ std::string formatTime(double time)
     {
         // hours
         suffix = "h";
-        denom = 1.0/3600;
+        denom = 1.0/3600.0;
 
         showPart = true;
     }
@@ -86,7 +87,7 @@ std::string formatTime(double time)
     std::string result;
     if (withFraction)
     {
-        int value = static_cast<int>(time * denom);
+        int value = static_cast<int>(time * denom + precision);
         int fraction = static_cast<int>((time * denom - value) * withFraction);
         if (fraction >= 1)
         {
@@ -97,12 +98,12 @@ std::string formatTime(double time)
         }
     }
     
-    result = std::to_string(static_cast<int>(time * denom)) + suffix;
+    result = std::to_string(static_cast<int>(time * denom + precision)) + suffix;
 
     if (showPart)
     {
-        double fract = time * denom - static_cast<int>(time * denom);
-        if (fract >= denom)
+        double fract = time * denom - static_cast<int>(time * denom + precision);
+        if (fract + precision >= denom)
         {
             result += " " + formatTime(fract / denom);
         }

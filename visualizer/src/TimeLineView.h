@@ -74,7 +74,7 @@ namespace visualizer
         virtual void resizeEvent(QResizeEvent* event) override;
     
     private:
-        void getRulerStep(int& rulerStep, int& timeStep);
+        void getRulerStep(double& rulerStep, int& timeStep);
         void drawRuler(QPainter& painter, QPoint& pos);
 
         void drawStatusMessage(QPainter& painter);
