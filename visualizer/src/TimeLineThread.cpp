@@ -215,6 +215,8 @@ void TimeLineThread::drawRecord(QPainter& painter, QRect pos, const Record& reco
     int y = pos.y();
     int w = static_cast<int>((record.timeEnd - record.timeStart) * pixpersec);
     int h = RecordHeight;
+
+    clampWidth(x, w, viewportWidth);
     
     bool selected = false;
     if (w > 2)
@@ -294,6 +296,20 @@ void TimeLineThread::drawEvents(QPainter& painter, QRect pos, int recordsHeight,
                          viewportWidth, RecordHeight,
                          Qt::AlignVCenter | Qt::AlignLeft,
                          text.fromStdString(event.name));
+    }
+}
+
+void TimeLineThread::clampWidth(int& x, int& w, int width)
+{
+    if (x < 0)
+    {
+        w -= -x;
+        x = 0;
+    }
+
+    if (x + w > width)
+    {
+        w -= x + w - width;
     }
 }
 

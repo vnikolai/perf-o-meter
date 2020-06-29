@@ -25,6 +25,7 @@ SOFTWARE. */
 namespace visualizer {
 
     constexpr int       DefaultZoom             = 1000;
+    constexpr double    ZoomWheelCoef           = 1.25;
     constexpr double    VisibleMargin           = 0.1;  // 10% of report time each size
     constexpr int       RulerHeight             = 24;
     constexpr int       RulerDistReport         = 12;
@@ -33,8 +34,8 @@ namespace visualizer {
     constexpr int       RecordHeight            = 16;
     constexpr int       ScrolBarThickness       = 24;
     constexpr int       MinZoom                 = 10;
-    constexpr int       ZoomKeyboardStep        = 1000;
-    constexpr int       ZoomKeyboardLargeStep   = 20000;
+    constexpr int       ZoomKeyboardStep        = 2;
+    constexpr int       ZoomKeyboardLargeStep   = 5;
     constexpr int       OffsetKeyboardStep      = 10;
     constexpr int       OffsetKeyboardPageStep  = 240;
     constexpr int       RecordMinTextWidth      = 10;

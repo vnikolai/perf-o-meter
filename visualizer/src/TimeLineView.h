@@ -45,6 +45,7 @@ namespace visualizer
         double secondsPerPixel() const;
 
         void zoom(int zoom);
+        void zoom(int zoom, int pivot);
         void zoomBy(int zoomDelta);
         void zoomBy(int zoomDelta, int pivot);
         void scrollBy(QPointF delta);
@@ -94,7 +95,7 @@ namespace visualizer
         QPoint                              m_mousePosition;
         bool                                m_mouseDragActive;
 
-        int                                 m_zoom;
+        long int                            m_zoom;
         int                                 m_reportHeightPx;
 
         bool                                m_statusTextVisible;

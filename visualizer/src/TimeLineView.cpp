@@ -247,12 +247,12 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         }
         case Qt::Key_Plus:
         {
-            zoomBy(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep);
+            zoom(m_zoom * (ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep), width() / 2);
             break;
         }
         case Qt::Key_Minus:
         {
-            zoomBy(-(ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep));
+            zoom(m_zoom / (ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep), width() / 2);
             break;
         }
         case Qt::Key_Asterisk:
@@ -362,7 +362,7 @@ void TimeLineView::wheelEvent(QWheelEvent* event)
 
     if (event->modifiers() & Qt::ControlModifier)
     {
-        zoomBy(delta / 10, m_mousePosition.x());
+        zoom(delta > 0 ? m_zoom * ZoomWheelCoef : m_zoom / ZoomWheelCoef, m_mousePosition.x());
     }
     else
     {
@@ -521,7 +521,7 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
     char text[bufferSize];
     snprintf(text, bufferSize,
              "mouse: %d %d\n"
-             "zoom: %d\n"
+             "zoom: %ld\n"
              "offset: %f %f\n"
              "report time: [%s] - [%s]\n"
              "pixel per second: %f",
@@ -647,6 +647,19 @@ void TimeLineView::zoom(int z)
     }
 }
 
+void TimeLineView::zoom(int z, int pivot)
+{
+    int prevZoom = m_zoom;
+    double mid = m_offset.x() + pivot;
+
+    zoom(z);
+
+    if (m_zoom != prevZoom)
+    {
+        m_offset.setX((mid / prevZoom) * m_zoom - pivot);
+    }
+}
+
 void TimeLineView::zoomBy(int zoomDelta)
 {
     zoomBy(zoomDelta, width() / 2);
@@ -700,7 +713,7 @@ void TimeLineView::scrollYTo(int y)
 double TimeLineView::timeAtPoint(int x)
 {
     float rulerX = x + m_offset.x();
-    return secondsPerPixel() * rulerX;    
+    return secondsPerPixel() * rulerX;
 }
 
 } // namespace visualizer

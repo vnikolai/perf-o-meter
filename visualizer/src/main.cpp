@@ -27,6 +27,7 @@ SOFTWARE. */
 #include <memory>
 #include <fstream>
 #include <perfometer/perfometer.h>
+#include <iostream>
 
 struct options
 {
@@ -40,6 +41,8 @@ static void log(const std::string& text)
 	
 	logFile << text << std::endl;
 	logFile.flush();
+
+	std::cerr << text << std::endl;
 }
 
 void parseCommandline(options& opts, int argc, char* argv[])
