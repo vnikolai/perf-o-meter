@@ -77,6 +77,8 @@ TimeLineThread::TimeLineThread(TimeLineView& view, ConstThreadPtr thread)
     , m_thread(thread)
     , m_recordsHeight(0)
 {
+    setName(m_thread->name);
+
     int thisHeight = calculateThreadHeight(&m_recordsHeight);
     setHeight(thisHeight);
 }
@@ -84,6 +86,8 @@ TimeLineThread::TimeLineThread(TimeLineView& view, ConstThreadPtr thread)
 void TimeLineThread::mouseMove(QPoint pos)
 {
     PERFOMETER_LOG_FUNCTION();
+
+    TimeLineComponent::mouseMove(pos);
 
     const auto pixelPerSecond = m_view.pixelsPerSecond();
 
@@ -107,16 +111,22 @@ void TimeLineThread::mouseMove(QPoint pos)
 
 void TimeLineThread::mouseLeft()
 {
+    TimeLineComponent::mouseLeft();
+
     m_highlightedRecordInfo.reset();
 }
 
 void TimeLineThread::mouseClick(QPoint pos)
 {
+    TimeLineComponent::mouseClick(pos);
+
     m_selectedRecordInfo = m_highlightedRecordInfo;
 }
 
 void TimeLineThread::mouseDoubleClick(QPoint pos)
 {
+    TimeLineComponent::mouseDoubleClick(pos);
+
     if (m_selectedRecordInfo)
     {
         const auto thisWidth = m_view.width();
@@ -133,25 +143,24 @@ void TimeLineThread::mouseDoubleClick(QPoint pos)
 
 void TimeLineThread::focusLost()
 {
+    TimeLineComponent::focusLost();
+
     m_selectedRecordInfo.reset();
 }
 
 void TimeLineThread::render(QPainter& painter, QRect pos)
 {
     PERFOMETER_LOG_FUNCTION();
-
-    //painter.setPen(Qt::green);
-    //painter.fillRect(QRect(0, pos.y(), pos.width(), height()), QColor(37, 37, 37, 255));
     
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
-    QString text;
-    painter.setPen(Qt::white);
-    painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
-                     viewportWidth, ThreadTitleHeight,
-                     Qt::AlignVCenter | Qt::AlignLeft,
-                     text.fromStdString(m_thread->name));
+    TimeLineComponent::render(painter, pos);
+
+    if (collapsed())
+    {
+        return;
+    }
 
     painter.setPen(Qt::black);
 

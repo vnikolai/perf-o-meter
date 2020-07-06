@@ -52,6 +52,7 @@ namespace visualizer {
 
     static QColor       BackgroundColor                 (32, 32, 32, 255);
     static QColor       StatusMessageBackgroundColor    (16, 16, 16, 128);
+    static QColor       ComponentHighlightColor         (48, 48, 48, 128);
     static QColor       RulerBackgroundColor            (228, 230, 241, 255);
 
     constexpr int NumColors = 8;

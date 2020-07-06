@@ -43,6 +43,7 @@ TimeLineView::TimeLineView()
     , m_zoom(DefaultZoom)
     , m_reportHeightPx(0)
     , m_statusTextVisible(false)
+    , m_collapseAll(true)
     , m_offset(0.0f, 0.0f)
 {
     setMouseTracking(true);
@@ -82,13 +83,6 @@ void TimeLineView::setReport(std::shared_ptr<PerfometerReport> report)
     {
         auto thread = it.second;
         m_components.emplace_back(thread);
-    }
-
-    m_reportHeightPx = 0;
-
-    for (const auto& component : m_components)
-    {
-        m_reportHeightPx += component->height();
     }
 
     layout();
@@ -260,6 +254,16 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
             m_zoom = DefaultZoom;
             break;
         }
+        case Qt::Key_T:
+        {
+            for (const auto& component : m_components)
+            {
+                component->collapse(m_collapseAll);
+            }
+
+            m_collapseAll = !m_collapseAll;
+            break;
+        }
         default:
             break;
     }
@@ -322,6 +326,7 @@ void TimeLineView::mouseReleaseEvent(QMouseEvent* event)
     m_componentWithFocus = component;
 
     update();
+    layout();
 }
 
 void TimeLineView::mouseMoveEvent(QMouseEvent* event)
@@ -551,6 +556,8 @@ void TimeLineView::layout()
 
     if (m_report)
     {
+        m_reportHeightPx = calculateReportHeight(m_report);
+        
         const auto pixpersec = pixelsPerSecond();
         int reportStartPx = m_report->getStartTime() * pixpersec;
         int reportEndPx = m_report->getEndTime() * pixpersec;
@@ -602,6 +609,18 @@ void TimeLineView::layout()
 
     m_horizontalScrollBar.setVisible(horBarVisible);
     m_verticalScrollBar.setVisible(vertBarVisible);
+}
+
+int TimeLineView::calculateReportHeight(std::shared_ptr<PerfometerReport> report)
+{
+    int height = 0;
+
+    for (const auto& component : m_components)
+    {
+        height += component->height();
+    }
+    
+    return height;
 }
 
 TimeLineView::ComponentPtr TimeLineView::getComponentUnderPoint(QPoint point, QPoint* outPos)

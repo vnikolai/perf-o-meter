@@ -19,6 +19,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */ 
 
 #include "TimeLineComponent.h"
+#include "TimeLineConfig.h"
 
 namespace visualizer
 {
@@ -26,24 +27,31 @@ TimeLineComponent::TimeLineComponent(TimeLineView& view)
     : m_view(view)
     , m_collapsed(false)
     , m_height(0)
+    , m_highlightTitle(false)
 {   
 }
 
 int TimeLineComponent::height() const
 {
-    return m_height;
+    return !collapsed() ? m_height : ThreadTitleHeight;
 }
 
 void TimeLineComponent::mouseMove(QPoint pos)
 {
+    m_highlightTitle = pos.y() < ThreadTitleHeight;
 }
 
 void TimeLineComponent::mouseLeft()
-{    
+{
+    m_highlightTitle = false;
 }
 
 void TimeLineComponent::mouseClick(QPoint pos)
 {
+    if (pos.y() < ThreadTitleHeight)
+    {
+        collapse(!collapsed());
+    }
 }
 
 void TimeLineComponent::mouseDoubleClick(QPoint pos)
@@ -56,6 +64,24 @@ void TimeLineComponent::focusLost()
 
 void TimeLineComponent::render(QPainter& painter, QRect pos)
 {
+    const auto viewportWidth = pos.width();
+
+    if (collapsed())
+    {
+        painter.fillRect(QRect(0, pos.y(), pos.width(), ThreadTitleHeight), StatusMessageBackgroundColor);
+    }
+
+    if (m_highlightTitle)
+    {
+        painter.fillRect(QRect(0, pos.y(), pos.width(), ThreadTitleHeight), ComponentHighlightColor);
+    }
+
+    QString text;
+    painter.setPen(Qt::white);
+    painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
+                     viewportWidth, ThreadTitleHeight,
+                     Qt::AlignVCenter | Qt::AlignLeft,
+                     text.fromStdString(name()));
 }
 
 void TimeLineComponent::renderOverlay(QPainter& painter, QRect pos)

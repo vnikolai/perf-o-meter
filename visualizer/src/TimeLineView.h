@@ -82,6 +82,8 @@ namespace visualizer
 
         void layout();
 
+        int calculateReportHeight(std::shared_ptr<PerfometerReport> report);
+
         ComponentPtr getComponentUnderPoint(QPoint point, QPoint* outPos = nullptr);
 
         double timeAtPoint(int x);
@@ -99,6 +101,7 @@ namespace visualizer
         int                                 m_reportHeightPx;
 
         bool                                m_statusTextVisible;
+        bool                                m_collapseAll;
 
         QPointF                             m_offset;
 

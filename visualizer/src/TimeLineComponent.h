@@ -59,5 +59,6 @@ namespace visualizer
         std::string     m_name;
         bool            m_collapsed;
         int             m_height;
+        bool            m_highlightTitle;
     };
 } // namespace visualizer
