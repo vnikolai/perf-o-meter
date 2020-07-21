@@ -352,9 +352,9 @@ int TimeLineThread::calculateThreadHeight(int* oRecordsHeight)
 int TimeLineThread::calculateRecordHeight(const Record& record)
 {
     int recordsHeight = 0;
-    for (const auto& record : record.enclosed)
+    for (const auto& enclosedRecord : record.enclosed)
     {
-        recordsHeight = std::max(recordsHeight, calculateRecordHeight(record));
+        recordsHeight = std::max(recordsHeight, calculateRecordHeight(enclosedRecord));
     }
 
     return recordsHeight + 1;
