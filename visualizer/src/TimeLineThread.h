@@ -53,11 +53,12 @@ namespace visualizer
 
         void drawRecord(QPainter& painter, QRect pos, const Record& record);
         void drawRecords(QPainter& painter, QRect pos, const std::vector<Record>& records);
-        void drawEvents(QPainter& painter, QRect pos, int recordsHeight, const std::vector<Event>& events);
+        void drawEvents(QPainter& painter, QRect pos, int textYOffset, const std::vector<Event>& events);
 
         void clampWidth(int& x, int& w, int width);
 
         int calculateThreadHeight(int* oRecordsHeight);
+        int calculateRecordsHeight(const std::vector<Record>& records);
         int calculateRecordHeight(const Record& record);
 
     private:

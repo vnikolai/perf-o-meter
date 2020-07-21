@@ -114,7 +114,7 @@ void TimeLineView::initializeGL()
 
 void TimeLineView::paintGL()
 {
-    PERFOMETER_LOG_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
     const auto thisWidth = width();
     const auto thisHeight = height();
@@ -456,7 +456,7 @@ void TimeLineView::getRulerStep(double& rulerStep, int& timeStep)
 
 void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
 {
-    PERFOMETER_LOG_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
     const auto thisWidth = width();
     const auto thisHeight = height();
@@ -464,9 +464,8 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     constexpr int PrimaryStrokeLength = 16;
     constexpr int SecondaryStrokeLength = 12;
 
-    painter.fillRect(0, 0, thisWidth, RulerHeight, RulerBackgroundColor);
-
     painter.setPen(Qt::black);
+    painter.setBrush(RulerBackgroundColor);
     painter.drawRect(1, 0, thisWidth - 1, RulerHeight);
     painter.drawLine(0, RulerHeight, thisWidth, RulerHeight);
 
@@ -510,7 +509,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
 
 void TimeLineView::drawStatusMessage(QPainter& painter)
 {
-    PERFOMETER_LOG_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
     const auto thisWidth = width();
     const auto thisHeight = height();
@@ -548,7 +547,7 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
 
 void TimeLineView::layout()
 {
-    PERFOMETER_LOG_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
     
     const auto thisWidth = width();
     const auto thisHeight = height();

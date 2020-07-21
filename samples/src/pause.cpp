@@ -23,7 +23,7 @@ SOFTWARE. */
 #include <thread>
 #include <chrono>
 
-// Using log_work functions directoy in contrast with PERFOMETER_LOG_FUNCTION heler macro
+// Using log_work functions directoy in contrast with PERFOMETER_LOG_WORK_FUNCTION helper macro
 // Starting reporting paused, and using perfometer::pause()/perfometer::resume() to control logging
 
 void my_func_to_trace()

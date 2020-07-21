@@ -142,9 +142,9 @@ int main(int argc, const char** argv)
 	std::unordered_map<perf_string_id, std::string>		strings;
 	std::unordered_map<perf_thread_id, perf_string_id>	threads;
 
-	perfometer::record_type record;
+	perfometer::record_type record_type;
 
-	while ((report_file >> record) && !report_file.eof())
+	while ((report_file >> record_type) && !report_file.eof())
 	{
 		if (report_file.fail())
 		{
@@ -152,7 +152,7 @@ int main(int argc, const char** argv)
 			return -1;
 		}
 
-		switch (record)
+		switch (record_type)
 		{
 			case perfometer::record_type::clock_configuration:
 			{
@@ -224,6 +224,7 @@ int main(int argc, const char** argv)
 				break;
 			}
 			case perfometer::record_type::work:
+			case perfometer::record_type::wait:
 			{
 				perf_string_id string_id = 0;
 				perf_thread_id thread_id = 0;
@@ -235,7 +236,14 @@ int main(int argc, const char** argv)
 							>> time_end
 							>> thread_id;
 
-				std::cout << "Work " << strings[string_id].c_str()
+				switch (record_type)
+				{
+					case perfometer::record_type::work: std::cout << "Work"; break;
+					case perfometer::record_type::wait: std::cout << "Wait"; break;
+						break;
+				}
+
+				std::cout << " " << strings[string_id].c_str()
 						  << " on "  << strings[threads[thread_id]].c_str()
 						  << " started " << visualizer::format_time(static_cast<double>(time_start - init_time) / clock_frequency) 
 						  << " duration " << visualizer::format_time(static_cast<double>(time_end - time_start) / clock_frequency) 
@@ -262,7 +270,7 @@ int main(int argc, const char** argv)
 			}
 			default:
 			{
-				std::cout << "ERROR: Unknown record type " << record << std::endl;
+				std::cout << "ERROR: Unknown record type " << record_type << std::endl;
 				return -1;
 			}
 		}

@@ -31,19 +31,28 @@ std::thread threads[num_threads];
 const char* thread_names[num_threads] = { "job01", "job02", "job03", "job04", "job05",
 										  "job06", "job07", "job08", "job09", "job10" };
 
+void wait(unsigned int millisec)
+{
+	PERFOMETER_LOG_WAIT_FUNCTION();
+	
+	std::this_thread::sleep_for(std::chrono::milliseconds(millisec));
+}
+
 void sub_task()
 {
-	PERFOMETER_LOG_FUNCTION();
+	PERFOMETER_LOG_WORK_FUNCTION();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 void task()
 {
-	PERFOMETER_LOG_FUNCTION();
+	PERFOMETER_LOG_WORK_FUNCTION();
 
 	sub_task();
-	std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+	wait(50);
+
 	sub_task();
 }
 
@@ -51,7 +60,7 @@ void job(int num_tasks)
 {
 	perfometer::log_thread_name(thread_names[num_tasks]);
 	
-	PERFOMETER_LOG_FUNCTION();
+	PERFOMETER_LOG_WORK_FUNCTION();
 
 	for (int i = 0; i < num_tasks; ++i)
 	{

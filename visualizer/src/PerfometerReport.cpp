@@ -111,7 +111,7 @@ PerfometerReport::~PerfometerReport()
 bool PerfometerReport::loadFile(const std::string& fileName,
 								std::function<void(const std::string&)> logger)
 {
-	PERFOMETER_LOG_FUNCTION();
+	PERFOMETER_LOG_WORK_FUNCTION();
 	
 	auto log = [&logger](const std::string& text)
 	{
@@ -153,9 +153,9 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 	std::unordered_map<PerfStringID, std::string>	strings;
 
-	perfometer::record_type record;
+	perfometer::record_type record_type;
 
-	while ((report >> record) && !report.eof())
+	while ((report >> record_type) && !report.eof())
 	{
 		if (report.fail())
 		{
@@ -163,7 +163,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 			return false;
 		}
 
-		switch (record)
+		switch (record_type)
 		{
 			case perfometer::record_type::clock_configuration:
 			{
@@ -224,6 +224,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 				break;
 			}
 			case perfometer::record_type::work:
+			case perfometer::record_type::wait:
 			{
 				PerfStringID stringID = 0;
 				Thread::ID threadID = 0;
@@ -255,22 +256,24 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 				}
 
                 ThreadPtr thread = getThread(threadID);
-				Record record({start, end, strings[stringID]});
+				Record record({start, end, strings[stringID], record_type == perfometer::record_type::wait});
 
-				size_t i = thread->records.size() - 1;
-				for (; i < thread->records.size(); i--)
+				std::vector<Record>& records = thread->records;
+
+				size_t i = records.size() - 1;
+				for (; i < records.size(); i--)
 				{
-					Record& enclosed = thread->records[i];
+					Record& enclosed = records[i];
 					if (enclosed.timeStart < record.timeStart || enclosed.timeEnd > record.timeEnd)
 					{
 						break;
 					}
 
-					record.enclosed.insert(record.enclosed.begin(), thread->records.back());
-					thread->records.pop_back();
+					record.enclosed.insert(record.enclosed.begin(), records.back());
+					records.pop_back();
 				}
 
-				thread->records.push_back(record);
+				records.push_back(record);
 
 				m_startTime = std::min(m_startTime, record.timeStart);
 				m_endTime = std::max(m_endTime, record.timeEnd);

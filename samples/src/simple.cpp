@@ -24,25 +24,25 @@ SOFTWARE. */
 #include <thread>
 #include <chrono>
 
-// Simple starting report and using PERFOMETER_LOG_FUNCTION macro to trace functions performance
+// Simple starting report and using PERFOMETER_LOG_WORK_FUNCTION macro to trace functions performance
 
 void my_func_to_trace()
 {
-	PERFOMETER_LOG_FUNCTION();
+	PERFOMETER_LOG_WORK_FUNCTION();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
 }
 
 void my_enclosed_func()
 {
-	PERFOMETER_LOG_FUNCTION();
+	PERFOMETER_LOG_WORK_FUNCTION();
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(350));
 }
 
 void my_another_func()
 {
-	PERFOMETER_LOG_FUNCTION();
+	PERFOMETER_LOG_WORK_FUNCTION();
 
 	my_enclosed_func();
 }

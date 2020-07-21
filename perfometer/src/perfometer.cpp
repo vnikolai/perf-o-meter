@@ -115,8 +115,9 @@ void logger_thread()
 				switch (record.type)
 				{
 					case record_type::work:
+					case record_type::wait:
 					{
-						s_serializer << record_type::work
+						s_serializer << record.type
 									 << string_result.first
 									 << record.start
 									 << record.end
@@ -396,6 +397,39 @@ result log_work(const char tag_name[], time start_time, time end_time)
 
 	s_record_cache->add_record(std::move(
 		record({ record_type::work, tag_name, start_time, end_time, get_thread_id()}) ));
+	
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+	s_overhead += get_time() - start;
+	s_numcalls++;
+#endif
+
+	return result::ok;
+}
+
+result log_wait(const char tag_name[], time start_time, time end_time)
+{
+	if (!s_logging_enabled)
+	{
+		return result::not_running;
+	}
+
+	if (tag_name == nullptr)
+	{
+		return result::invalid_arguments;
+	}
+
+#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
+	time start = get_time();
+#endif
+
+	result res = ensure_buffer();
+	if (res != result::ok)
+	{
+		return res;
+	}
+
+	s_record_cache->add_record(std::move(
+		record({ record_type::wait, tag_name, start_time, end_time, get_thread_id()}) ));
 	
 #if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
 	s_overhead += get_time() - start;

@@ -33,6 +33,7 @@ namespace visualizer
         double timeStart;
         double timeEnd;
         std::string name;
+        bool wait;
         std::vector<Record> enclosed;
     };
 

@@ -59,9 +59,15 @@ namespace perfometer
                                     // time size time end
                                     // thread id size thread id
 
-        event = 6                   // 8 bit record type
+        event = 6,                  // 8 bit record type
                                     // 16 bit name string id
                                     // time size time
+                                    // thread id size thread id
+
+        wait = 7                    // 8 bit record type
+                                    // 16 bit name string id
+                                    // time size time start
+                                    // time size time end
                                     // thread id size thread id
 	};
 
