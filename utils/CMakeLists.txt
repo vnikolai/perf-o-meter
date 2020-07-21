@@ -7,6 +7,6 @@ add_library (utils
 target_include_directories (utils PUBLIC include)
 
 file(GLOB_RECURSE headers "include/utils/*.h")
-set_target_properties(perfometer PROPERTIES PUBLIC_HEADER "${headers}")
+set_target_properties(utils PROPERTIES PUBLIC_HEADER "${headers}")
 
-set_property(TARGET perfometer PROPERTY CXX_STANDARD 11)
+set_property(TARGET utils PROPERTY CXX_STANDARD 11)
