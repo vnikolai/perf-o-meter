@@ -30,7 +30,7 @@ std::string format_time(double time)
         return std::string("-") + format_time(-time);
     }
 
-    const double precision = 1.0 / 10000000000; // 0.1 nanosec precision    
+    const double precision = 1.0 / 10000000000; // 0.1 nanosec precision
     std::string suffix;
     double denom = 0;
 
@@ -98,7 +98,7 @@ std::string format_time(double time)
             return std::string(text) + suffix;
         }
     }
-    
+
     result = std::to_string(static_cast<int>(time * denom + precision)) + suffix;
 
     if (showPart)

@@ -30,7 +30,7 @@ int main(int argc, const char** argv)
 {
 	auto result = perfometer::initialize("perfometer.report");
 	std::cout << "perfometer::initialize() returned " << result << std::endl;
-	
+
 	perfometer::log_thread_name("MAIN_THREAD");
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));

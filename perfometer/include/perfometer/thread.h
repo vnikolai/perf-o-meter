@@ -25,7 +25,7 @@ SOFTWARE. */
 namespace perfometer
 {
     using thread_id = std::thread::id;
-    
+
     inline thread_id get_thread_id()
     {
         return std::this_thread::get_id();

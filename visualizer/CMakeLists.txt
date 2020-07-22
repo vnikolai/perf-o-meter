@@ -7,7 +7,7 @@ add_executable(visualizer ${visualizer_sources})
 
 target_link_libraries(
     visualizer
-    
+
     perfometer
     utils
     Qt5::Core

@@ -34,7 +34,7 @@ const char* thread_names[num_threads] = { "job01", "job02", "job03", "job04", "j
 void wait(unsigned int millisec)
 {
 	PERFOMETER_LOG_WAIT_FUNCTION();
-	
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(millisec));
 }
 
@@ -59,7 +59,7 @@ void task()
 void job(int num_tasks)
 {
 	perfometer::log_thread_name(thread_names[num_tasks]);
-	
+
 	PERFOMETER_LOG_WORK_FUNCTION();
 
 	for (int i = 0; i < num_tasks; ++i)

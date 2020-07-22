@@ -84,7 +84,7 @@ namespace visualizer
     public:
         PerfometerReport();
         PerfometerReport(const Traits&);
-        
+
         virtual ~PerfometerReport();
 
         bool loadFile(const std::string& fileName,
@@ -98,7 +98,7 @@ namespace visualizer
         const Threads& getThreads() const;
         ThreadPtr getThread(Thread::ID id);
         ConstThreadPtr getThread(Thread::ID id) const;
-        
+
     private:
         double m_startTime;
         double m_endTime;

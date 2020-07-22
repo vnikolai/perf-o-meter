@@ -185,9 +185,9 @@ result initialize(const char file_name[], bool running)
 	s_logger_thread = std::thread(logger_thread);
 
 	s_logging_enabled = running;
-	
+
 	s_initialized = true;
-	
+
 	return result::ok;
 }
 
@@ -224,7 +224,7 @@ result shutdown()
 	scoped_lock lock(s_serializer_mutex);
 
 	s_serializer.close();
-	
+
 	s_initialized = false;
 
 #if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
@@ -335,7 +335,7 @@ result ensure_buffer()
 		log_work(__FUNCTION__, start_time, end_time);
 	}
 #endif
-	
+
 	return result::ok;
 }
 
@@ -352,7 +352,7 @@ result log_thread_name(const char thread_name[], thread_id tid)
 	}
 
 	scoped_lock lock(s_serializer_mutex);
-	
+
 	auto string_result = get_string_id(thread_name);
 	if (string_result.second)
 	{
@@ -397,7 +397,7 @@ result log_work(const char tag_name[], time start_time, time end_time)
 
 	s_record_cache->add_record(std::move(
 		record({ record_type::work, tag_name, start_time, end_time, get_thread_id()}) ));
-	
+
 #if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
 	s_overhead += get_time() - start;
 	s_numcalls++;
@@ -430,7 +430,7 @@ result log_wait(const char tag_name[], time start_time, time end_time)
 
 	s_record_cache->add_record(std::move(
 		record({ record_type::wait, tag_name, start_time, end_time, get_thread_id()}) ));
-	
+
 #if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
 	s_overhead += get_time() - start;
 	s_numcalls++;
@@ -463,7 +463,7 @@ result log_event(const char tag_name[], time t)
 
 	s_record_cache->add_record(std::move(
 		record({ record_type::event, tag_name, t, time(0), get_thread_id()}) ));
-	
+
 #if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
 	s_overhead += get_time() - start;
 	s_numcalls++;

@@ -164,7 +164,7 @@ int main(int argc, const char** argv)
 					std::cout << "ERROR: Time size too large" << std::endl;
 					return -1;
 				}
-				
+
 				report_file.set_time_size(time_size);
 
 				report_file >> clock_frequency
@@ -173,7 +173,7 @@ int main(int argc, const char** argv)
 				std::cout << "Time size " << int(time_size) << " bytes" << std::endl;
 				std::cout << "Clock frequency " << clock_frequency << std::endl;
 				std::cout << "Start time " << init_time << std::endl;
-				
+
 				break;
 			}
 			case perfometer::record_type::thread_info:
@@ -186,14 +186,14 @@ int main(int argc, const char** argv)
 					std::cout << "ERROR: Thread id size too large" << std::endl;
 					return -1;
 				}
-				
+
 				report_file.set_thread_id_size(thread_id_size);
-				
+
 				report_file >> main_thread_id;
 
 				std::cout << "Thread ID size " << int(thread_id_size) << " bytes" << std::endl;
 				std::cout << "Main thread " << main_thread_id << std::endl;
-				
+
 				break;
 			}
 			case perfometer::record_type::string:
@@ -230,7 +230,7 @@ int main(int argc, const char** argv)
 				perf_thread_id thread_id = 0;
 				perf_time time_start = 0;
 				perf_time time_end = 0;
-				
+
 				report_file >> string_id
 							>> time_start
 							>> time_end
@@ -245,8 +245,8 @@ int main(int argc, const char** argv)
 
 				std::cout << " " << strings[string_id].c_str()
 						  << " on "  << strings[threads[thread_id]].c_str()
-						  << " started " << visualizer::format_time(static_cast<double>(time_start - init_time) / clock_frequency) 
-						  << " duration " << visualizer::format_time(static_cast<double>(time_end - time_start) / clock_frequency) 
+						  << " started " << visualizer::format_time(static_cast<double>(time_start - init_time) / clock_frequency)
+						  << " duration " << visualizer::format_time(static_cast<double>(time_end - time_start) / clock_frequency)
 						  << std::endl;
 
 				break;
@@ -256,7 +256,7 @@ int main(int argc, const char** argv)
 				perf_string_id string_id = 0;
 				perf_thread_id thread_id = 0;
 				perf_time t = 0;
-				
+
 				report_file >> string_id
 							>> t
 							>> thread_id;

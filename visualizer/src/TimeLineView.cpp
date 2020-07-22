@@ -156,7 +156,7 @@ void TimeLineView::paintGL()
     {
         drawStatusMessage(painter);
     }
-    
+
     drawRuler(painter, pos);
 
     painter.setPen(Qt::darkGreen);
@@ -450,7 +450,7 @@ void TimeLineView::getRulerStep(double& rulerStep, int& timeStep)
     {
         timeStep = RulerTimeSteps[idx++];
         rulerStep = (timeStep * pixpersec) / 1000000;
-        
+
     } while (rulerStep < 32 && idx < NumSteps);
 }
 
@@ -548,7 +548,7 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
 void TimeLineView::layout()
 {
     PERFOMETER_LOG_WORK_FUNCTION();
-    
+
     const auto thisWidth = width();
     const auto thisHeight = height();
     int reportWidth = 0;
@@ -556,12 +556,12 @@ void TimeLineView::layout()
     if (m_report)
     {
         m_reportHeightPx = calculateReportHeight(m_report);
-        
+
         const auto pixpersec = pixelsPerSecond();
         int reportStartPx = m_report->getStartTime() * pixpersec;
         int reportEndPx = m_report->getEndTime() * pixpersec;
         reportWidth = (reportEndPx - reportStartPx);
-    
+
         if (reportWidth <= thisWidth)
         {
             m_offset.setX(0);
@@ -569,7 +569,7 @@ void TimeLineView::layout()
         else
         {
             int extraWidth = reportWidth - thisWidth;
-            
+
             reportEndPx = reportStartPx + extraWidth * (1 + VisibleMargin / 2);
             reportStartPx = reportStartPx - extraWidth * VisibleMargin / 2;
 
@@ -586,12 +586,12 @@ void TimeLineView::layout()
 
     bool vertBarVisible = extraHeight > 0;
     bool horBarVisible = reportWidth > thisWidth;
-    
+
     if (vertBarVisible)
     {
         m_offset.setY(std::max<qreal>(m_offset.y(), 0));
         m_offset.setY(std::min<qreal>(m_offset.y(), extraHeight));
-        
+
         m_verticalScrollBar.setMinimum(0);
         m_verticalScrollBar.setMaximum(extraHeight);
     }
@@ -618,7 +618,7 @@ int TimeLineView::calculateReportHeight(std::shared_ptr<PerfometerReport> report
     {
         height += component->height();
     }
-    
+
     return height;
 }
 

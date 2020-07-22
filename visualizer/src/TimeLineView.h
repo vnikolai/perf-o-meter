@@ -73,7 +73,7 @@ namespace visualizer
         virtual void mouseDoubleClickEvent(QMouseEvent* event) override;
 
         virtual void resizeEvent(QResizeEvent* event) override;
-    
+
     private:
         void getRulerStep(double& rulerStep, int& timeStep);
         void drawRuler(QPainter& painter, QPoint& pos);

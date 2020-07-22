@@ -112,7 +112,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 								std::function<void(const std::string&)> logger)
 {
 	PERFOMETER_LOG_WORK_FUNCTION();
-	
+
 	auto log = [&logger](const std::string& text)
 	{
 		if (logger)
@@ -175,7 +175,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 					log("ERROR loading report: Time size too large");
 					return false;
 				}
-				
+
 				report.setTimeSize(timeSize);
 
 				report >> clockFrequency
@@ -193,11 +193,11 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 					log("ERROR loading report: Thread ID size too large");
 					return false;
 				}
-				
+
 				report.setThreadIDSize(threadIDSize);
-				
+
 				report >> m_mainThreadID;
-				
+
 				break;
 			}
 			case perfometer::record_type::string:
@@ -312,7 +312,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 			default:
 			{
 				log("ERROR loading report: Unknown record type");
-				
+
 				return m_traits.AllowIncompleteReport;
 			}
 		}

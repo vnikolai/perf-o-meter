@@ -32,7 +32,7 @@ namespace perfometer
     public:
         serializer();
         ~serializer();
-        
+
         result open_file_stream(const char fileName[]);
         result flush();
         result close();

@@ -43,7 +43,7 @@ bool hitTestRecord(QPoint pos,
     int x = static_cast<int>(record.timeStart * pixelPerSecond);
     int w = static_cast<int>((record.timeEnd - record.timeStart) * pixelPerSecond);
     int h = RecordHeight;
-    
+
     if (x > pos.x() || x + w < pos.x())
     {
         return false;
@@ -151,7 +151,7 @@ void TimeLineThread::focusLost()
 void TimeLineThread::render(QPainter& painter, QRect pos)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
-    
+
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
@@ -220,14 +220,14 @@ void TimeLineThread::drawRecord(QPainter& painter, QRect pos, const Record& reco
 {
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
-    
+
     int x = pos.x() + static_cast<int>(record.timeStart * pixpersec);
     int y = pos.y();
     int w = static_cast<int>((record.timeEnd - record.timeStart) * pixpersec);
     int h = RecordHeight;
 
     clampWidth(x, w, viewportWidth);
-    
+
     bool selected = false;
     if (w > 2)
     {
@@ -308,7 +308,7 @@ void TimeLineThread::drawEvents(QPainter& painter, QRect pos, int textYOffset, c
                          pos.y() - ThreadTitleHeight / 4,
                          x,
                          pos.y() + height() - ThreadTitleHeight);
-        
+
         painter.setPen(Qt::darkCyan);
         painter.drawText(x  + TitleOffsetSmall, pos.y() + textYOffset,
                          viewportWidth, RecordHeight,

@@ -38,7 +38,7 @@ struct options
 static void log(const std::string& text)
 {
 	static std::ofstream logFile("perfometer.log", std::ios::trunc);
-	
+
 	logFile << text << std::endl;
 	logFile.flush();
 

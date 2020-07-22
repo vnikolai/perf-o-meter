@@ -57,7 +57,7 @@ int main(int argc, const char** argv)
 {
 	auto result = perfometer::initialize("perfometer.report", false);
 	std::cout << "perfometer::initialize() returned " << result << std::endl;
-	
+
 	// perfometer started in paused mode, my_func_to_trace will not be logged
 	my_func_to_trace();
 
