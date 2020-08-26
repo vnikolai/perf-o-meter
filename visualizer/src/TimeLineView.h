@@ -34,6 +34,7 @@ namespace visualizer
                                 QOpenGLFunctions
     {
         using ComponentPtr = std::shared_ptr<TimeLineComponent>;
+        using zoom_t = unsigned long int;
 
     public:
         TimeLineView();
@@ -44,16 +45,16 @@ namespace visualizer
         double pixelsPerSecond() const;
         double secondsPerPixel() const;
 
-        void zoom(int zoom);
-        void zoom(int zoom, int pivot);
-        void zoomBy(int zoomDelta);
-        void zoomBy(int zoomDelta, int pivot);
+        void zoom(zoom_t zoom);
+        void zoom(zoom_t zoom, int pivot);
+        void zoomBy(zoom_t zoomDelta);
+        void zoomBy(zoom_t zoomDelta, int pivot);
         void scrollBy(QPointF delta);
         void scrollTo(QPointF pos);
-        void scrollXBy(int xDelta);
-        void scrollYBy(int yDelta);
-        void scrollXTo(int x);
-        void scrollYTo(int y);
+        void scrollXBy(qreal xDelta);
+        void scrollYBy(qreal yDelta);
+        void scrollXTo(qreal x);
+        void scrollYTo(qreal y);
 
     public slots:
         void onHorizontalScrollBarValueChanged(int value);
@@ -75,7 +76,7 @@ namespace visualizer
         virtual void resizeEvent(QResizeEvent* event) override;
 
     private:
-        void getRulerStep(double& rulerStep, int& timeStep);
+        void getRulerStep(double& rulerStep, long unsigned int& timeStep);
         void drawRuler(QPainter& painter, QPoint& pos);
 
         void drawStatusMessage(QPainter& painter);
@@ -97,7 +98,7 @@ namespace visualizer
         QPoint                              m_mousePosition;
         bool                                m_mouseDragActive;
 
-        long int                            m_zoom;
+        zoom_t                              m_zoom;
         int                                 m_reportHeightPx;
 
         bool                                m_statusTextVisible;

@@ -410,10 +410,10 @@ double TimeLineView::secondsPerPixel() const
     return static_cast<double>(DefaultZoom) / (PixelsPerSecond * m_zoom);
 }
 
-void TimeLineView::getRulerStep(double& rulerStep, int& timeStep)
+void TimeLineView::getRulerStep(double& rulerStep, long unsigned int& timeStep)
 {
-    constexpr int NumSteps = 22;
-    constexpr int RulerTimeSteps[NumSteps]
+    constexpr int NumSteps = 31;
+    constexpr zoom_t RulerTimeSteps[NumSteps]
     {
         10,
         20,
@@ -437,10 +437,19 @@ void TimeLineView::getRulerStep(double& rulerStep, int& timeStep)
         20000000,
         50000000,
         100000000,
+        200000000,
+        500000000,
+        1000000000,
+        2000000000,
+        5000000000,
+        10000000000,
+        20000000000,
+        50000000000,
+        100000000000,
     };
 
     static_assert(
-        sizeof(RulerTimeSteps) == NumSteps * sizeof(int),
+        sizeof(RulerTimeSteps) == NumSteps * sizeof(zoom_t),
         "RulerTimeSteps elements number check failed");
 
     const auto pixpersec = pixelsPerSecond();
@@ -449,7 +458,7 @@ void TimeLineView::getRulerStep(double& rulerStep, int& timeStep)
     do
     {
         timeStep = RulerTimeSteps[idx++];
-        rulerStep = (timeStep * pixpersec) / 1000000;
+        rulerStep = (timeStep * pixpersec) / 1000000000;
 
     } while (rulerStep < 32 && idx < NumSteps);
 }
@@ -470,7 +479,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     painter.drawLine(0, RulerHeight, thisWidth, RulerHeight);
 
     double rulerStep = 0;
-    int timeStep = 0;
+    long unsigned int timeStep = 0;
     getRulerStep(rulerStep, timeStep);
 
     QString text;
@@ -493,7 +502,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
             painter.drawLine(x, 0, x, PrimaryStrokeLength);
 
             int idx = i + 2 * (pos.x() < 0 ? -rulerOffset : 0);
-            double rulerTime = idx * static_cast<double>(timeStep) / 1000000;
+            double rulerTime = idx * static_cast<double>(timeStep) / 1000000000;
             painter.drawText(x + TitleOffsetSmall, 0, 64, RulerHeight,
                              Qt::AlignVCenter | Qt::AlignLeft,
                              text.fromStdString(format_time(rulerTime)));
@@ -525,7 +534,7 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
     char text[bufferSize];
     snprintf(text, bufferSize,
              "mouse: %d %d\n"
-             "zoom: %ld\n"
+             "zoom: %lu\n"
              "offset: %f %f\n"
              "report time: [%s] - [%s]\n"
              "pixel per second: %f",
@@ -551,15 +560,15 @@ void TimeLineView::layout()
 
     const auto thisWidth = width();
     const auto thisHeight = height();
-    int reportWidth = 0;
+    long int reportWidth = 0;
 
     if (m_report)
     {
         m_reportHeightPx = calculateReportHeight(m_report);
 
         const auto pixpersec = pixelsPerSecond();
-        int reportStartPx = m_report->getStartTime() * pixpersec;
-        int reportEndPx = m_report->getEndTime() * pixpersec;
+        long int reportStartPx = m_report->getStartTime() * pixpersec;
+        long int reportEndPx = m_report->getEndTime() * pixpersec;
         reportWidth = (reportEndPx - reportStartPx);
 
         if (reportWidth <= thisWidth)
@@ -568,7 +577,7 @@ void TimeLineView::layout()
         }
         else
         {
-            int extraWidth = reportWidth - thisWidth;
+            long int extraWidth = reportWidth - thisWidth;
 
             reportEndPx = reportStartPx + extraWidth * (1 + VisibleMargin / 2);
             reportStartPx = reportStartPx - extraWidth * VisibleMargin / 2;
@@ -654,9 +663,9 @@ TimeLineView::ComponentPtr TimeLineView::getComponentUnderPoint(QPoint point, QP
     return ComponentPtr();
 }
 
-void TimeLineView::zoom(int z)
+void TimeLineView::zoom(zoom_t z)
 {
-    z = std::max(z, MinZoom);
+    z = std::max<zoom_t>(z, MinZoom);
 
     if (m_zoom != z)
     {
@@ -665,9 +674,9 @@ void TimeLineView::zoom(int z)
     }
 }
 
-void TimeLineView::zoom(int z, int pivot)
+void TimeLineView::zoom(zoom_t z, int pivot)
 {
-    int prevZoom = m_zoom;
+    zoom_t prevZoom = m_zoom;
     double mid = m_offset.x() + pivot;
 
     zoom(z);
@@ -678,14 +687,14 @@ void TimeLineView::zoom(int z, int pivot)
     }
 }
 
-void TimeLineView::zoomBy(int zoomDelta)
+void TimeLineView::zoomBy(zoom_t zoomDelta)
 {
     zoomBy(zoomDelta, width() / 2);
 }
 
-void TimeLineView::zoomBy(int zoomDelta, int pivot)
+void TimeLineView::zoomBy(zoom_t zoomDelta, int pivot)
 {
-    int prevZoom = m_zoom;
+    zoom_t prevZoom = m_zoom;
     double mid = m_offset.x() + pivot;
 
     zoom(m_zoom + zoomDelta);
@@ -708,22 +717,22 @@ void TimeLineView::scrollTo(QPointF pos)
     m_horizontalScrollBar.setValue(m_offset.x());
     m_verticalScrollBar.setValue(m_offset.y());
 }
-void TimeLineView::scrollXBy(int xDelta)
+void TimeLineView::scrollXBy(qreal xDelta)
 {
     scrollBy(QPointF(xDelta, 0));
 }
 
-void TimeLineView::scrollYBy(int yDelta)
+void TimeLineView::scrollYBy(qreal yDelta)
 {
     scrollBy(QPointF(0, yDelta));
 }
 
-void TimeLineView::scrollXTo(int x)
+void TimeLineView::scrollXTo(qreal x)
 {
     scrollTo(QPoint(x, m_offset.y()));
 }
 
-void TimeLineView::scrollYTo(int y)
+void TimeLineView::scrollYTo(qreal y)
 {
     scrollTo(QPoint(m_offset.x(), y));
 }
