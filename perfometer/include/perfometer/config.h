@@ -27,8 +27,8 @@ SOFTWARE. */
 
 namespace perfometer
 {
-    constexpr unsigned char major_version = 0;
-    constexpr unsigned char minor_version = 2;
+    constexpr unsigned char major_version = 1;
+    constexpr unsigned char minor_version = 0;
     constexpr unsigned char patch_version = 0;
 
     constexpr size_t records_cache_size = 1024;
