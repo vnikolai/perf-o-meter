@@ -47,11 +47,6 @@ static std::unordered_map<thread_id, record_buffer*> s_records_inprogress;
 static mutex s_records_mutex;
 static thread_local record_buffer* s_record_cache = nullptr;
 
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-std::atomic<time>	s_overhead {0};
-std::atomic<int>	s_numcalls {0};
-#endif
-
 std::unordered_map<std::string, string_id> s_strings_map;
 mutex s_string_map_mutex;
 
@@ -227,11 +222,6 @@ result shutdown()
 
 	s_initialized = false;
 
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-	std::cout << "Perf-o-meter log_work numcalls: " << s_numcalls << std::endl;
-	std::cout << "Perf-o-meter log_work overhead: " << s_overhead << std::endl;
-#endif
-
 	return res;
 }
 
@@ -385,10 +375,6 @@ result log_work(const char tag_name[], time start_time, time end_time)
 		return result::invalid_arguments;
 	}
 
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-	time start = get_time();
-#endif
-
 	result res = ensure_buffer();
 	if (res != result::ok)
 	{
@@ -397,11 +383,6 @@ result log_work(const char tag_name[], time start_time, time end_time)
 
 	s_record_cache->add_record(std::move(
 		record({ record_type::work, tag_name, start_time, end_time, get_thread_id()}) ));
-
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-	s_overhead += get_time() - start;
-	s_numcalls++;
-#endif
 
 	return result::ok;
 }
@@ -418,10 +399,6 @@ result log_wait(const char tag_name[], time start_time, time end_time)
 		return result::invalid_arguments;
 	}
 
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-	time start = get_time();
-#endif
-
 	result res = ensure_buffer();
 	if (res != result::ok)
 	{
@@ -430,11 +407,6 @@ result log_wait(const char tag_name[], time start_time, time end_time)
 
 	s_record_cache->add_record(std::move(
 		record({ record_type::wait, tag_name, start_time, end_time, get_thread_id()}) ));
-
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-	s_overhead += get_time() - start;
-	s_numcalls++;
-#endif
 
 	return result::ok;
 }
@@ -451,10 +423,6 @@ result log_event(const char tag_name[], time t)
 		return result::invalid_arguments;
 	}
 
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-	time start = get_time();
-#endif
-
 	result res = ensure_buffer();
 	if (res != result::ok)
 	{
@@ -463,11 +431,6 @@ result log_event(const char tag_name[], time t)
 
 	s_record_cache->add_record(std::move(
 		record({ record_type::event, tag_name, t, time(0), get_thread_id()}) ));
-
-#if defined(PERFOMETER_PRINT_WORKLOG_OVERHEAD)
-	s_overhead += get_time() - start;
-	s_numcalls++;
-#endif
 
 	return result::ok;
 }

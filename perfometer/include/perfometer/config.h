@@ -23,7 +23,6 @@ SOFTWARE. */
 #include <cstddef>
 
 //#define PERFOMETER_LOG_RECORD_SWAP_OVERHEAD
-//#define PERFOMETER_PRINT_WORKLOG_OVERHEAD
 
 namespace perfometer
 {
