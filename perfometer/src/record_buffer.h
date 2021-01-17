@@ -25,38 +25,40 @@ SOFTWARE. */
 #include <perfometer/time.h>
 #include <perfometer/format.h>
 
-namespace perfometer {
-
-struct record
+namespace perfometer
 {
-	record_type	type;
-	const char* name;
-	time 		start;
-	time 		end;
-	thread_id	tid;
-};
-
-struct record_buffer
-{
-	record_buffer()
+	struct record
 	{
-		count = 0;
-		records = new record[records_cache_size];
-	}
+		format::record_type	type;
+		const char* 		name;
+		time 				start;
+		time 				end;
+		thread_id			tid;
+	};
 
-	~record_buffer()
+	struct record_buffer
 	{
-		delete[] records;
-	}
+		record_buffer()
+		{
+			count = 0;
+			records = new record[records_cache_size];
+		}
 
-	void add_record(record&& record)
-	{
-		records[count] = std::move(record);
-		++count;
-	}
+		~record_buffer()
+		{
+			delete[] records;
+		}
 
-	size_t 		count;
-	record*		records;
-};
+		record_buffer& operator << (record&& record)
+		{
+			records[count] = std::move(record);
+			++count;
+
+			return *this;
+		}
+
+		size_t 		count;
+		record*		records;
+	};
 
 } // namespace perfometer

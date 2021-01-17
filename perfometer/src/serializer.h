@@ -42,7 +42,7 @@ namespace perfometer
         serializer& operator << (const unsigned char byte);
         serializer& operator << (const char* string);
         serializer& operator << (const string_id& id);
-        serializer& operator << (const record_type type);
+        serializer& operator << (const format::record_type type);
         serializer& operator << (const thread_id& id);
         serializer& operator << (const time& time);
 

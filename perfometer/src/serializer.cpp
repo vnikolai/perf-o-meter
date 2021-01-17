@@ -26,12 +26,12 @@ SOFTWARE. */
 namespace perfometer {
 
 serializer::serializer()
-{    
+{
 }
 
 serializer::~serializer()
 {
-    close();    
+    close();
 }
 
 result serializer::open_file_stream(const char file_name[])
@@ -82,7 +82,7 @@ serializer& serializer::operator << (const string_id& value)
 	return *this;
 }
 
-serializer& serializer::operator << (const record_type type)
+serializer& serializer::operator << (const format::record_type type)
 {
 	m_report_file << type;
 	return *this;
@@ -102,11 +102,11 @@ serializer& serializer::operator << (const time& time)
 
 result serializer::write_header()
 {
-	m_report_file << header;
+	m_report_file << format::header;
 
-	*this << major_version
-		  << minor_version
-		  << patch_version;
+	*this << format::major_version
+		  << format::minor_version
+		  << format::patch_version;
 
 	if (m_report_file.fail())
 	{
@@ -123,9 +123,9 @@ result serializer::write_clock_config()
 {
 	unsigned char time_size = sizeof(time);
 	auto start_time = get_time();
-	auto clock_frequency = get_clock_frequency();	
+	auto clock_frequency = get_clock_frequency();
 
-	*this << record_type::clock_configuration
+	*this << format::record_type::clock_configuration
 		  << time_size
 		  << clock_frequency
 		  << start_time;
@@ -138,7 +138,7 @@ result serializer::write_thread_info()
 	unsigned char thread_id_size = sizeof(thread_id);
 	thread_id id = get_thread_id();
 
-	*this << record_type::thread_info	
+	*this << format::record_type::thread_info
 		  << thread_id_size
 		  << id;
 

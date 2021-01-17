@@ -131,7 +131,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 	char header[16];
 	report.read(header, 11);
 
-	if (report.fail() || std::strncmp(header, perfometer::header, 11))
+	if (report.fail() || std::strncmp(header, perfometer::format::header, 11))
 	{
 		log("ERROR loading report: wrong file format");
 		return false;
@@ -153,7 +153,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 	std::unordered_map<PerfStringID, std::string>	strings;
 
-	perfometer::record_type record_type;
+	perfometer::format::record_type record_type;
 
 	while ((report >> record_type) && !report.eof())
 	{
@@ -165,7 +165,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 		switch (record_type)
 		{
-			case perfometer::record_type::clock_configuration:
+			case perfometer::format::record_type::clock_configuration:
 			{
 				unsigned char timeSize = 0;
 				report >> timeSize;
@@ -180,10 +180,10 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				report >> clockFrequency
 					   >> initTime;
-                				
+
 				break;
 			}
-			case perfometer::record_type::thread_info:
+			case perfometer::format::record_type::thread_info:
 			{
 				unsigned char threadIDSize = 0;
 				report >> threadIDSize;
@@ -200,7 +200,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				break;
 			}
-			case perfometer::record_type::string:
+			case perfometer::format::record_type::string:
 			{
 				PerfStringID ID = 0;
 				report >> ID;
@@ -211,7 +211,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				break;
 			}
-			case perfometer::record_type::thread_name:
+			case perfometer::format::record_type::thread_name:
 			{
 				Thread::ID threadID = 0;
 				PerfStringID stringID = 0;
@@ -223,8 +223,8 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				break;
 			}
-			case perfometer::record_type::work:
-			case perfometer::record_type::wait:
+			case perfometer::format::record_type::work:
+			case perfometer::format::record_type::wait:
 			{
 				PerfStringID stringID = 0;
 				Thread::ID threadID = 0;
@@ -256,7 +256,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 				}
 
                 ThreadPtr thread = getThread(threadID);
-				Record record({start, end, strings[stringID], record_type == perfometer::record_type::wait});
+				Record record{start, end, strings[stringID], record_type == perfometer::format::record_type::wait};
 
 				std::vector<Record>& records = thread->records;
 
@@ -280,7 +280,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				break;
 			}
-			case perfometer::record_type::event:
+			case perfometer::format::record_type::event:
 			{
 				PerfStringID stringID = 0;
 				Thread::ID threadID = 0;

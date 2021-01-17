@@ -21,6 +21,7 @@ SOFTWARE. */
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 
 //#define PERFOMETER_LOG_RECORD_SWAP_OVERHEAD
 
@@ -31,5 +32,7 @@ namespace perfometer
     constexpr unsigned char patch_version = 0;
 
     constexpr size_t records_cache_size = 1024;
+
+    using string_id = uint16_t;
 
 } // namespace perfometer

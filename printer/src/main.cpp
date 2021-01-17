@@ -114,7 +114,7 @@ int main(int argc, const char** argv)
 	report_file.read(header, 11);
 	header[11] = 0;
 
-	if (report_file.fail() || std::strncmp(header, perfometer::header, 11))
+	if (report_file.fail() || std::strncmp(header, perfometer::format::header, 11))
 	{
 		std::cout << "Wrong file format " << argv[1] << std::endl;
 		return -1;
@@ -128,8 +128,10 @@ int main(int argc, const char** argv)
 				>> minor_version
 				>> patch_version;
 
-	std::snprintf(header, 16, "%d.%d.%d", int(major_version), int(minor_version), int(patch_version));
-	std::cout << "File version " << header << std::endl;
+	std::cout << "File version "
+			  << int(major_version) << "."
+			  << int(minor_version) << "."
+			  << int(patch_version) << std::endl;
 
 	constexpr size_t buffer_size = 1024;
 	char buffer[buffer_size];
@@ -142,7 +144,7 @@ int main(int argc, const char** argv)
 	std::unordered_map<perf_string_id, std::string>		strings;
 	std::unordered_map<perf_thread_id, perf_string_id>	threads;
 
-	perfometer::record_type record_type;
+	perfometer::format::record_type record_type;
 
 	while ((report_file >> record_type) && !report_file.eof())
 	{
@@ -154,7 +156,7 @@ int main(int argc, const char** argv)
 
 		switch (record_type)
 		{
-			case perfometer::record_type::clock_configuration:
+			case perfometer::format::record_type::clock_configuration:
 			{
 				unsigned char time_size = 0;
 				report_file >> time_size;
@@ -176,7 +178,7 @@ int main(int argc, const char** argv)
 
 				break;
 			}
-			case perfometer::record_type::thread_info:
+			case perfometer::format::record_type::thread_info:
 			{
 				unsigned char thread_id_size = 0;
 				report_file >> thread_id_size;
@@ -196,7 +198,7 @@ int main(int argc, const char** argv)
 
 				break;
 			}
-			case perfometer::record_type::string:
+			case perfometer::format::record_type::string:
 			{
 				perf_string_id id = 0;
 				report_file >> id;
@@ -209,7 +211,7 @@ int main(int argc, const char** argv)
 
 				break;
 			}
-			case perfometer::record_type::thread_name:
+			case perfometer::format::record_type::thread_name:
 			{
 				perf_thread_id thread_id = 0;
 				perf_string_id string_id = 0;
@@ -223,8 +225,8 @@ int main(int argc, const char** argv)
 
 				break;
 			}
-			case perfometer::record_type::work:
-			case perfometer::record_type::wait:
+			case perfometer::format::record_type::work:
+			case perfometer::format::record_type::wait:
 			{
 				perf_string_id string_id = 0;
 				perf_thread_id thread_id = 0;
@@ -238,8 +240,8 @@ int main(int argc, const char** argv)
 
 				switch (record_type)
 				{
-					case perfometer::record_type::work: std::cout << "Work"; break;
-					case perfometer::record_type::wait: std::cout << "Wait"; break;
+					case perfometer::format::record_type::work: std::cout << "Work"; break;
+					case perfometer::format::record_type::wait: std::cout << "Wait"; break;
 						break;
 				}
 
@@ -251,7 +253,7 @@ int main(int argc, const char** argv)
 
 				break;
 			}
-			case perfometer::record_type::event:
+			case perfometer::format::record_type::event:
 			{
 				perf_string_id string_id = 0;
 				perf_thread_id thread_id = 0;

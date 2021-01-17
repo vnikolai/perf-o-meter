@@ -21,15 +21,18 @@ SOFTWARE. */
 #pragma once
 
 #include <perfometer/config.h>
-#include <cstdint>
 #include <iostream>
 
 namespace perfometer
 {
+namespace format
+{
     const char header[] = "PERFOMETER.";    // PERFOMETER.VER - VER is version composed from
                                             // major minor and patch versions one byte each
 
-    using string_id = uint16_t;
+    constexpr unsigned char major_version = 1;
+    constexpr unsigned char minor_version = 0;
+    constexpr unsigned char patch_version = 0;
 
 	enum record_type : uint8_t
 	{
@@ -83,4 +86,5 @@ namespace perfometer
 		return stream;
 	}
 
+} // namespace format
 } // namespace perfometer

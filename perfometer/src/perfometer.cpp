@@ -102,15 +102,15 @@ void logger_thread()
 				scoped_lock lock(s_serializer_mutex);
 				if (string_result.second)
 				{
-					s_serializer << record_type::string
+					s_serializer << format::record_type::string
 								<< string_result.first
 								<< record.name;
 				}
 
 				switch (record.type)
 				{
-					case record_type::work:
-					case record_type::wait:
+					case format::record_type::work:
+					case format::record_type::wait:
 					{
 						s_serializer << record.type
 									 << string_result.first
@@ -119,9 +119,9 @@ void logger_thread()
 									 << record.tid;
 						break;
 					}
-					case record_type::event:
+					case format::record_type::event:
 					{
-						s_serializer << record_type::event
+						s_serializer << format::record_type::event
 									 << string_result.first
 									 << record.start
 									 << record.tid;
@@ -167,12 +167,12 @@ result initialize(const char file_name[], bool running)
 	auto string_result = get_string_id(unknown_tag);
 	if (string_result.second)
 	{
-		s_serializer << record_type::string
+		s_serializer << format::record_type::string
 					 << string_result.first
 					 << unknown_tag;
 	}
 
-	s_serializer << record_type::string
+	s_serializer << format::record_type::string
 				 << string_id(invalid_string_id)
 				 << "String limit overflow";
 
@@ -346,12 +346,12 @@ result log_thread_name(const char thread_name[], thread_id tid)
 	auto string_result = get_string_id(thread_name);
 	if (string_result.second)
 	{
-		s_serializer << record_type::string
+		s_serializer << format::record_type::string
 					 << string_result.first
 					 << thread_name;
 	}
 
-	s_serializer << record_type::thread_name
+	s_serializer << format::record_type::thread_name
 				 << tid
 				 << string_result.first;
 
@@ -381,10 +381,14 @@ result log_work(const char tag_name[], time start_time, time end_time)
 		return res;
 	}
 
-	s_record_cache->add_record(std::move(
-		record({ record_type::work, tag_name, start_time, end_time, get_thread_id()}) ));
+        *s_record_cache << record{
+			format::record_type::work,
+			tag_name,
+            start_time,
+			end_time,
+            get_thread_id()};
 
-	return result::ok;
+        return result::ok;
 }
 
 result log_wait(const char tag_name[], time start_time, time end_time)
@@ -405,8 +409,12 @@ result log_wait(const char tag_name[], time start_time, time end_time)
 		return res;
 	}
 
-	s_record_cache->add_record(std::move(
-		record({ record_type::wait, tag_name, start_time, end_time, get_thread_id()}) ));
+	*s_record_cache << record{
+		format::record_type::wait,
+		tag_name,
+		start_time,
+		end_time,
+		get_thread_id()};
 
 	return result::ok;
 }
@@ -429,8 +437,12 @@ result log_event(const char tag_name[], time t)
 		return res;
 	}
 
-	s_record_cache->add_record(std::move(
-		record({ record_type::event, tag_name, t, time(0), get_thread_id()}) ));
+	*s_record_cache << record{
+		format::record_type::event,
+		tag_name,
+		t,
+		time(0),
+		get_thread_id()};
 
 	return result::ok;
 }
