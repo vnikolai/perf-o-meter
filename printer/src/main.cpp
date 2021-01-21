@@ -245,8 +245,8 @@ int main(int argc, const char** argv)
 						break;
 				}
 
-				std::cout << " " << strings[string_id].c_str()
-						  << " on "  << strings[threads[thread_id]].c_str()
+				std::cout << " " << string_id << ":" << strings[string_id].c_str()
+						  << " on "  << thread_id << ":" << strings[threads[thread_id]].c_str()
 						  << " started " << visualizer::format_time(static_cast<double>(time_start - init_time) / clock_frequency)
 						  << " duration " << visualizer::format_time(static_cast<double>(time_end - time_start) / clock_frequency)
 						  << std::endl;

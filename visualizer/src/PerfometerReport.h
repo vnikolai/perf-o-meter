@@ -28,11 +28,13 @@ SOFTWARE. */
 
 namespace visualizer
 {
+    using StringID = size_t;
+
     struct Record
     {
         double timeStart;
         double timeEnd;
-        std::string name;
+        const std::string& name;
         bool wait;
         std::vector<Record> enclosed;
     };
@@ -40,17 +42,12 @@ namespace visualizer
     struct Event
     {
         double time;
-        std::string name;
+        const std::string& name;
     };
 
     struct Thread
     {
         using ID = int64_t;
-
-        Thread(ID _id)
-            : id(_id)
-        {
-        }
 
         Thread(ID _id, const std::string& n)
             : id(_id)
@@ -59,7 +56,7 @@ namespace visualizer
         }
 
         ID id;
-        std::string name;
+        const std::string& name;
         std::vector<Record> records;
         std::vector<Event> events;
     };
@@ -105,6 +102,9 @@ namespace visualizer
 
         Traits  m_traits;
         Threads m_threads;
+
+        std::map<StringID, std::string> m_strings;
+        std::map<Thread::ID, std::string> m_thread_names;
 
         Thread::ID m_mainThreadID;
     };
