@@ -24,39 +24,31 @@ SOFTWARE. */
 
 namespace perfometer
 {
-    // scope_log expects global lifetime string as name
+    using log_functor = result (*)(string_id, time, time);
 
-    using log_functor = result (*)(const char[], time, time);
-
-    enum zero_length_work_policy
-    {
-        allow,
-        skip
-    };
-
-    template <log_functor log, zero_length_work_policy zero_length_policy>
+    template <log_functor functor>
     class scope_log
     {
     public:
-        scope_log(const char name[])
+        scope_log(string_id s_id)
+            : m_name(s_id)
         {
             m_start_time = get_time();
-            m_name = name;
+            m_name = s_id;
         }
 
         ~scope_log()
         {
             time end_time = get_time();
 
-            if (zero_length_policy == zero_length_work_policy::allow ||
-                m_start_time != end_time )
+            if (m_start_time != end_time )
             {
-                log(m_name, m_start_time, end_time);
+                functor(m_name, m_start_time, end_time);
             }
         }
 
     private:
-        const char* m_name;
+        string_id m_name;
         time m_start_time;
     };
 }
@@ -67,25 +59,31 @@ namespace perfometer
 #   define PERFOMETER_FUNCTION     __FUNCTION__
 #endif
 
-#define PERFOMETER_CONCAT(x, y)             x##y
-#define PERFOMETER_CONCAT_WRAPPER(x, y)     PERFOMETER_CONCAT(x, y)
+#define PERFOMETER_CONCAT_WRAPPER(x, y)     x##y
+#define PERFOMETER_CONCAT(x, y)             PERFOMETER_CONCAT_WRAPPER(x, y)
+#define PERFOMETER_UNIQUE( x )              PERFOMETER_CONCAT( x, __LINE__ )
 
-#define PERFOMETER_LOG_WORK_SCOPE(name)                                         \
-        perfometer::scope_log<                                                  \
-            perfometer::log_work,                                               \
-            perfometer::zero_length_work_policy::skip>                          \
-                        PERFOMETER_CONCAT_WRAPPER(func_logger, __LINE__)(name)
+#define PERFOMETER_LOG_WORK_SCOPE(name)                                     \
+        static perfometer::string_id PERFOMETER_UNIQUE(s_id) =              \
+            perfometer::register_string(name);                              \
+        perfometer::scope_log<perfometer::log_work>                         \
+            PERFOMETER_UNIQUE(logger)(PERFOMETER_UNIQUE(s_id))
 
-#define PERFOMETER_LOG_WAIT_SCOPE(name)                                         \
-        perfometer::scope_log<                                                  \
-            perfometer::log_wait,                                               \
-            perfometer::zero_length_work_policy::skip>                          \
-                        PERFOMETER_CONCAT_WRAPPER(func_logger, __LINE__)(name)
+#define PERFOMETER_LOG_WAIT_SCOPE(name)                                     \
+        static perfometer::string_id PERFOMETER_UNIQUE(s_id) =              \
+            perfometer::register_string(name);                              \
+        perfometer::scope_log<perfometer::log_wait>                         \
+            PERFOMETER_UNIQUE(logger)(PERFOMETER_UNIQUE(s_id))
+
+#define PERFOMETER_LOG_THREAD_NAME(name)                                    \
+        static perfometer::string_id PERFOMETER_UNIQUE(s_id) =              \
+            perfometer::register_string(name);                              \
+        perfometer::log_thread_name(PERFOMETER_UNIQUE(s_id));
+
+#define PERFOMETER_LOG_EVENT(name)                                          \
+        static perfometer::string_id PERFOMETER_UNIQUE(s_id) =              \
+            perfometer::register_string(name);                              \
+        perfometer::log_event(PERFOMETER_UNIQUE(s_id), perfometer::get_time())
 
 #define PERFOMETER_LOG_WORK_FUNCTION()      PERFOMETER_LOG_WORK_SCOPE(PERFOMETER_FUNCTION)
 #define PERFOMETER_LOG_WAIT_FUNCTION()      PERFOMETER_LOG_WAIT_SCOPE(PERFOMETER_FUNCTION)
-
-#define PERFOMETER_EVENT(name)              perfometer::log_event(name, perfometer::get_time())
-
-// backward compatibility
-#define PERFOMETER_LOG_SCOPE(name)          PERFOMETER_LOG_WORK_SCOPE(name) 

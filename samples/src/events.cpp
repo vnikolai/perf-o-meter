@@ -31,16 +31,16 @@ int main(int argc, const char** argv)
 	auto result = perfometer::initialize("perfometer.report");
 	std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	perfometer::log_thread_name("MAIN_THREAD");
+	PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
     // Log named event that will store time and thread id
-    PERFOMETER_EVENT("First Event");
+    PERFOMETER_LOG_EVENT("First Event");
 
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
 
-    PERFOMETER_EVENT("Second Event");
+    PERFOMETER_LOG_EVENT("Second Event");
 
 	result = perfometer::shutdown();
 	std::cout << "perfometer::shutdown() returned " << result << std::endl;

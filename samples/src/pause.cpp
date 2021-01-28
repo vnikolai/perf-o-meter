@@ -23,7 +23,7 @@ SOFTWARE. */
 #include <thread>
 #include <chrono>
 
-// Using log_work functions directoy in contrast with PERFOMETER_LOG_WORK_FUNCTION helper macro
+// Using log_work functions directly in contrast with PERFOMETER_LOG_WORK_FUNCTION helper macro
 // Starting reporting paused, and using perfometer::pause()/perfometer::resume() to control logging
 
 void my_func_to_trace()
@@ -32,7 +32,8 @@ void my_func_to_trace()
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
+	static auto s_id = perfometer::register_string(__FUNCTION__);
+	perfometer::log_work(s_id, start, perfometer::get_time());
 }
 
 void my_enclosed_func()
@@ -41,7 +42,8 @@ void my_enclosed_func()
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
+	static auto s_id = perfometer::register_string(__FUNCTION__);
+	perfometer::log_work(s_id, start, perfometer::get_time());
 }
 
 void my_another_func()
@@ -50,7 +52,8 @@ void my_another_func()
 
 	my_enclosed_func();
 
-	perfometer::log_work(__FUNCTION__, start, perfometer::get_time());
+	static auto s_id = perfometer::register_string(__FUNCTION__);
+	perfometer::log_work(s_id, start, perfometer::get_time());
 }
 
 int main(int argc, const char** argv)
@@ -62,7 +65,8 @@ int main(int argc, const char** argv)
 	my_func_to_trace();
 
 	// thread name will be logged even while work logging paused
-	perfometer::log_thread_name("MAIN_THREAD");
+	auto s_id = perfometer::register_string("MAIN_THREAD");
+	perfometer::log_thread_name(s_id);
 
 	result = perfometer::resume();
 	std::cout << "perfometer::resume() returned " << result << std::endl;

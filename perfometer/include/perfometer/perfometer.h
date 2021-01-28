@@ -34,7 +34,8 @@ namespace perfometer
 		no_memory_available,
 		not_initialized,
 		not_running,
-		not_implemented
+		not_implemented,
+		overflow
 	};
 
 	result initialize(const char file_name[] = "perfometer.report", bool running = true);
@@ -46,12 +47,15 @@ namespace perfometer
 	result flush_thread_cache();
 	result flush();
 
-	result log_thread_name(const char thread_name[], thread_id id);
-	result log_thread_name(const char thread_name[]);
+	string_id register_string(const char string[]);
+	string_id register_string(std::string&& string);
 
-	result log_work(const char tag_name[], time start_time, time end_time);
-	result log_wait(const char tag_name[], time start_time, time end_time);
+	result log_thread_name(string_id s_id, thread_id t_id);
+	result log_thread_name(string_id s_id);
 
-	result log_event(const char tag_name[], time t);
+	result log_work(string_id s_id, time start_time, time end_time);
+	result log_wait(string_id s_id, time start_time, time end_time);
+
+	result log_event(string_id s_id, time t);
 
 } // namespace perfometer

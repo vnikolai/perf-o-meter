@@ -58,7 +58,8 @@ void task()
 
 void job(int num_tasks)
 {
-	perfometer::log_thread_name(thread_names[num_tasks]);
+	auto id = perfometer::register_string(thread_names[num_tasks]);
+	perfometer::log_thread_name(id);
 
 	PERFOMETER_LOG_WORK_FUNCTION();
 
@@ -70,6 +71,8 @@ void job(int num_tasks)
 
 void start_threads()
 {
+	PERFOMETER_LOG_WORK_FUNCTION();
+
 	for (int i = 0; i < num_threads; ++i)
 	{
 		threads[i] = std::thread(job, i);
@@ -78,8 +81,10 @@ void start_threads()
 	}
 }
 
-void waith_threads()
+void wait_threads()
 {
+	PERFOMETER_LOG_WAIT_FUNCTION();
+
 	for (int i = 0; i < num_threads; ++i)
 	{
 		std::thread& thread = threads[i];
@@ -95,11 +100,11 @@ int main(int argc, const char** argv)
 	auto result = perfometer::initialize();
 	std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	perfometer::log_thread_name("MAIN_THREAD");
+	PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
-	start_threads();	
+	start_threads();
 
-	waith_threads();
+	wait_threads();
 
 	result = perfometer::shutdown();
 	std::cout << "perfometer::shutdown() returned " << result << std::endl;

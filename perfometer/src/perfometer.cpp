@@ -47,34 +47,9 @@ static std::unordered_map<thread_id, record_buffer*> s_records_inprogress;
 static mutex s_records_mutex;
 static thread_local record_buffer* s_record_cache = nullptr;
 
-std::unordered_map<std::string, string_id> s_strings_map;
-mutex s_string_map_mutex;
-
+static mutex s_strings_mutex;
+static std::vector<std::string> s_strings;
 constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();
-
-using get_string_result = std::pair<string_id, bool>;
-
-get_string_result get_string_id(const char* string)
-{
-	scoped_lock lock(s_string_map_mutex);
-
-	auto it = s_strings_map.find(string);
-	if (it != s_strings_map.end())
-	{
-		return get_string_result(it->second, false);
-	}
-
-	static string_id s_unique_id = 0;
-
-	if (s_unique_id == invalid_string_id)
-	{
-		return get_string_result(invalid_string_id, false);
-	}
-
-	s_strings_map.emplace(string, s_unique_id);
-
-	return get_string_result(s_unique_id++, true);
-}
 
 void logger_thread()
 {
@@ -96,35 +71,42 @@ void logger_thread()
 			for (size_t i = 0; i < buffer->count; ++i)
 			{
 				const record& record = buffer->records[i];
-
-				auto string_result = get_string_id(record.name);
-
 				scoped_lock lock(s_serializer_mutex);
-				if (string_result.second)
-				{
-					s_serializer << format::record_type::string
-								<< string_result.first
-								<< record.name;
-				}
 
 				switch (record.type)
 				{
+					case format::record_type::string:
+					{
+						s_strings_mutex.lock();
+						s_serializer << format::record_type::string
+									 << record.s_id
+									 << s_strings[record.s_id].c_str();
+						s_strings_mutex.unlock();
+						break;
+					}
+					case format::record_type::thread_name:
+					{
+						s_serializer << format::record_type::thread_name
+				 					 << record.t_id
+				 					 << record.s_id;
+						break;
+					}
 					case format::record_type::work:
 					case format::record_type::wait:
 					{
 						s_serializer << record.type
-									 << string_result.first
+									 << record.s_id
 									 << record.start
 									 << record.end
-									 << record.tid;
+									 << record.t_id;
 						break;
 					}
 					case format::record_type::event:
 					{
 						s_serializer << format::record_type::event
-									 << string_result.first
+									 << record.s_id
 									 << record.start
-									 << record.tid;
+									 << record.t_id;
 						break;
 					}
 					default:
@@ -164,16 +146,14 @@ result initialize(const char file_name[], bool running)
 
 	// writing "UKNOWN" to string map first to ocupy zero ID
 	constexpr char unknown_tag[] = "UNKNOWN";
-	auto string_result = get_string_id(unknown_tag);
-	if (string_result.second)
-	{
-		s_serializer << format::record_type::string
-					 << string_result.first
-					 << unknown_tag;
-	}
+	string_id s_id = register_string(unknown_tag);
 
 	s_serializer << format::record_type::string
-				 << string_id(invalid_string_id)
+				 << s_id
+				 << unknown_tag;
+
+	s_serializer << format::record_type::string
+				 << invalid_string_id
 				 << "String limit overflow";
 
 	s_logger_thread_running = true;
@@ -313,9 +293,9 @@ result ensure_buffer()
 			return result::no_memory_available;
 		}
 
-		auto tid = get_thread_id();
+		auto t_id = get_thread_id();
 		scoped_lock lock(s_records_mutex);
-		s_records_inprogress[tid] = s_record_cache;
+		s_records_inprogress[t_id] = s_record_cache;
 	}
 
 #if defined(PERFOMETER_LOG_RECORD_SWAP_OVERHEAD)
@@ -329,48 +309,14 @@ result ensure_buffer()
 	return result::ok;
 }
 
-result log_thread_name(const char thread_name[], thread_id tid)
+result log_thread_name(string_id s_id, thread_id t_id)
 {
 	if (!s_initialized)
 	{
 		return result::not_initialized;
 	}
 
-	if (thread_name == nullptr)
-	{
-		return result::invalid_arguments;
-	}
-
-	scoped_lock lock(s_serializer_mutex);
-
-	auto string_result = get_string_id(thread_name);
-	if (string_result.second)
-	{
-		s_serializer << format::record_type::string
-					 << string_result.first
-					 << thread_name;
-	}
-
-	s_serializer << format::record_type::thread_name
-				 << tid
-				 << string_result.first;
-
-	return s_serializer.status();
-}
-
-result log_thread_name(const char thread_name[])
-{
-	return log_thread_name(thread_name, get_thread_id());
-}
-
-result log_work(const char tag_name[], time start_time, time end_time)
-{
-	if (!s_logging_enabled)
-	{
-		return result::not_running;
-	}
-
-	if (tag_name == nullptr)
+	if (s_id == invalid_string_id)
 	{
 		return result::invalid_arguments;
 	}
@@ -381,24 +327,57 @@ result log_work(const char tag_name[], time start_time, time end_time)
 		return res;
 	}
 
-        *s_record_cache << record{
-			format::record_type::work,
-			tag_name,
-            start_time,
-			end_time,
-            get_thread_id()};
+	*s_record_cache << record{
+		format::record_type::thread_name,
+		s_id,
+		0,
+		0,
+		t_id};
 
-        return result::ok;
+	return result::ok;
 }
 
-result log_wait(const char tag_name[], time start_time, time end_time)
+result log_thread_name(string_id s_id)
+{
+	return log_thread_name(s_id, get_thread_id());
+}
+
+result log_work(string_id s_id, time start_time, time end_time)
 {
 	if (!s_logging_enabled)
 	{
 		return result::not_running;
 	}
 
-	if (tag_name == nullptr)
+	if (s_id == invalid_string_id)
+	{
+		return result::invalid_arguments;
+	}
+
+	result res = ensure_buffer();
+	if (res != result::ok)
+	{
+		return res;
+	}
+
+	*s_record_cache << record{
+		format::record_type::work,
+		s_id,
+		start_time,
+		end_time,
+		get_thread_id()};
+
+	return result::ok;
+}
+
+result log_wait(string_id s_id, time start_time, time end_time)
+{
+	if (!s_logging_enabled)
+	{
+		return result::not_running;
+	}
+
+	if (s_id == invalid_string_id)
 	{
 		return result::invalid_arguments;
 	}
@@ -411,7 +390,7 @@ result log_wait(const char tag_name[], time start_time, time end_time)
 
 	*s_record_cache << record{
 		format::record_type::wait,
-		tag_name,
+		s_id,
 		start_time,
 		end_time,
 		get_thread_id()};
@@ -419,14 +398,14 @@ result log_wait(const char tag_name[], time start_time, time end_time)
 	return result::ok;
 }
 
-result log_event(const char tag_name[], time t)
+result log_event(string_id s_id, time t)
 {
 	if (!s_logging_enabled)
 	{
 		return result::not_running;
 	}
 
-	if (tag_name == nullptr)
+	if (s_id == invalid_string_id)
 	{
 		return result::invalid_arguments;
 	}
@@ -439,12 +418,52 @@ result log_event(const char tag_name[], time t)
 
 	*s_record_cache << record{
 		format::record_type::event,
-		tag_name,
+		s_id,
 		t,
 		time(0),
 		get_thread_id()};
 
 	return result::ok;
+}
+
+string_id register_string(const char thread_name[])
+{
+	return register_string(std::string(thread_name));
+}
+
+string_id register_string(std::string&& string)
+{
+	static std::atomic<string_id> s_unique_id(0);
+	s_strings.reserve(1024);
+
+	string_id s_id = s_unique_id;
+	if (s_unique_id == invalid_string_id)
+	{
+		return invalid_string_id;
+	}
+
+	{
+		s_strings_mutex.lock();
+		s_strings.push_back(string);
+		s_strings_mutex.unlock();
+	}
+
+	s_unique_id++;
+
+	result res = ensure_buffer();
+	if (res != result::ok)
+	{
+		return res;
+	}
+	
+	*s_record_cache << record{
+		format::record_type::string,
+		s_id,
+		0,
+		0,
+		thread_id()};
+
+	return s_id;
 }
 
 } // namespace perfometer

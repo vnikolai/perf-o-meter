@@ -30,10 +30,10 @@ namespace perfometer
 	struct record
 	{
 		format::record_type	type;
-		const char* 		name;
+		string_id 			s_id;
 		time 				start;
 		time 				end;
-		thread_id			tid;
+		thread_id			t_id;
 	};
 
 	struct record_buffer

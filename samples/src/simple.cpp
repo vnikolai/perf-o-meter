@@ -52,7 +52,7 @@ int main(int argc, const char** argv)
 	auto result = perfometer::initialize();
 	std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	perfometer::log_thread_name("MAIN_THREAD");
+	PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
 	my_func_to_trace();
 
