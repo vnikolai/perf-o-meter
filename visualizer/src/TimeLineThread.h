@@ -29,7 +29,7 @@ namespace visualizer
 {
     struct RecordInfo
     {
-        QRect bounds;
+        QRectF bounds;
         std::string name;
         double startTime;
         double endTime;
@@ -46,24 +46,22 @@ namespace visualizer
         void mouseDoubleClick(QPoint pos) override;
         void focusLost() override;
 
-        void render(QPainter& painter, QRect pos) override;
-        void renderOverlay(QPainter& painter, QRect pos) override;
+        void render(QPainter& painter, QRectF pos) override;
+        void renderOverlay(QPainter& painter, QRectF pos) override;
 
     private:
 
-        void drawRecord(QPainter& painter, QRect pos, const Record& record);
-        void drawRecords(QPainter& painter, QRect pos, const std::vector<Record>& records);
-        void drawEvents(QPainter& painter, QRect pos, int textYOffset, const std::vector<Event>& events);
+        void drawRecord(QPainter& painter, QRectF pos, const Record& record);
+        void drawRecords(QPainter& painter, QRectF pos, const std::vector<Record>& records);
+        void drawEvents(QPainter& painter, QRectF pos, coord_t textYOffset, const std::vector<Event>& events);
 
-        void clampWidth(int& x, int& w, int width);
-
-        int calculateThreadHeight(int* oRecordsHeight);
-        int calculateRecordsHeight(const std::vector<Record>& records);
-        int calculateRecordHeight(const Record& record);
+        coord_t calculateThreadHeight(coord_t* oRecordsHeight);
+        coord_t calculateRecordsHeight(const std::vector<Record>& records);
+        coord_t calculateRecordHeight(const Record& record);
 
     private:
         ConstThreadPtr                      m_thread;
-        int                                 m_recordsHeight;
+        coord_t                             m_recordsHeight;
 
         std::shared_ptr<RecordInfo>         m_highlightedRecordInfo;
         std::shared_ptr<RecordInfo>         m_selectedRecordInfo;

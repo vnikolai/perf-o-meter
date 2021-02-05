@@ -21,6 +21,7 @@ SOFTWARE. */
 #pragma once
 
 #include "PerfometerReport.h"
+#include "TimeLineConfig.h"
 #include <QPainter>
 
 namespace visualizer
@@ -31,7 +32,7 @@ namespace visualizer
     {
     public:
         TimeLineComponent(TimeLineView& view);
-        int height() const;
+        coord_t height() const;
 
         virtual void mouseMove(QPoint pos);
         virtual void mouseLeft();
@@ -39,8 +40,8 @@ namespace visualizer
         virtual void mouseDoubleClick(QPoint pos);
         virtual void focusLost();
 
-        virtual void render(QPainter& painter, QRect pos);
-        virtual void renderOverlay(QPainter& painter, QRect pos);
+        virtual void render(QPainter& painter, QRectF pos);
+        virtual void renderOverlay(QPainter& painter, QRectF pos);
 
         const std::string& name() const;
         void setName(const std::string& name);
@@ -50,7 +51,7 @@ namespace visualizer
 
     protected:
 
-        void setHeight(int height);
+        void setHeight(coord_t height);
 
     protected:
         TimeLineView&   m_view;
@@ -58,7 +59,7 @@ namespace visualizer
     private:
         std::string     m_name;
         bool            m_collapsed;
-        int             m_height;
+        coord_t         m_height;
         bool            m_highlightTitle;
     };
 } // namespace visualizer

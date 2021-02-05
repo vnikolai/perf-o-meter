@@ -24,6 +24,7 @@ SOFTWARE. */
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QScrollBar>
+#include "TimeLineConfig.h"
 #include "PerfometerReport.h"
 #include "TimeLineComponent.h"
 #include <memory>
@@ -34,7 +35,6 @@ namespace visualizer
                                 QOpenGLFunctions
     {
         using ComponentPtr = std::shared_ptr<TimeLineComponent>;
-        using zoom_t = unsigned long int;
 
     public:
         TimeLineView();
@@ -46,9 +46,9 @@ namespace visualizer
         double secondsPerPixel() const;
 
         void zoom(zoom_t zoom);
-        void zoom(zoom_t zoom, int pivot);
+        void zoom(zoom_t zoom, qreal pivot);
         void zoomBy(zoom_t zoomDelta);
-        void zoomBy(zoom_t zoomDelta, int pivot);
+        void zoomBy(zoom_t zoomDelta, qreal pivot);
         void scrollBy(QPointF delta);
         void scrollTo(QPointF pos);
         void scrollXBy(qreal xDelta);
@@ -76,18 +76,18 @@ namespace visualizer
         virtual void resizeEvent(QResizeEvent* event) override;
 
     private:
-        void getRulerStep(double& rulerStep, long unsigned int& timeStep);
-        void drawRuler(QPainter& painter, QPoint& pos);
+        void getRulerStep(double& rulerStep, coord_t& timeStep);
+        void drawRuler(QPainter& painter, QPointF& pos);
 
         void drawStatusMessage(QPainter& painter);
 
         void layout();
 
-        int calculateReportHeight(std::shared_ptr<PerfometerReport> report);
+        coord_t calculateReportHeight(std::shared_ptr<PerfometerReport> report);
 
         ComponentPtr getComponentUnderPoint(QPoint point, QPoint* outPos = nullptr);
 
-        double timeAtPoint(int x);
+        double timeAtPoint(coord_t x);
 
     private:
         using super = QOpenGLWidget;
@@ -99,7 +99,7 @@ namespace visualizer
         bool                                m_mouseDragActive;
 
         zoom_t                              m_zoom;
-        int                                 m_reportHeightPx;
+        coord_t                             m_reportHeightPx;
 
         bool                                m_statusTextVisible;
         bool                                m_collapseAll;

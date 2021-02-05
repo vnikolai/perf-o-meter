@@ -34,22 +34,37 @@ namespace visualizer {
 
 namespace {
 
-bool hitTestRecord(QPoint pos,
+template<typename T>
+    void clampWidth(T& x, T& w, T width)
+{
+    if (x < 0)
+    {
+        w -= -x;
+        x = 0;
+    }
+
+    if (x + w > width)
+    {
+        w -= x + w - width;
+    }
+}
+
+bool hitTestRecord(QPointF pos,
                     double pixelPerSecond,
                     const Record& record,
-                    int y,
+                    coord_t y,
                     std::shared_ptr<RecordInfo>& result)
 {
-    int x = static_cast<int>(record.timeStart * pixelPerSecond);
-    int w = static_cast<int>((record.timeEnd - record.timeStart) * pixelPerSecond);
-    int h = RecordHeight;
+    qreal x = record.timeStart * pixelPerSecond;
+    qreal w = (record.timeEnd - record.timeStart) * pixelPerSecond;
+    coord_t h = RecordHeight;
 
     if (x > pos.x() || x + w < pos.x())
     {
         return false;
     }
 
-    QRect bounds(x, y, w, h);
+    QRectF bounds(x, y, w, h);
     if (bounds.contains(pos))
     {
         RecordInfo info{bounds, record.name, record.timeStart, record.timeEnd };
@@ -79,7 +94,7 @@ TimeLineThread::TimeLineThread(TimeLineView& view, ConstThreadPtr thread)
 {
     setName(m_thread->name);
 
-    int thisHeight = calculateThreadHeight(&m_recordsHeight);
+    auto thisHeight = calculateThreadHeight(&m_recordsHeight);
     setHeight(thisHeight);
 }
 
@@ -148,7 +163,7 @@ void TimeLineThread::focusLost()
     m_selectedRecordInfo.reset();
 }
 
-void TimeLineThread::render(QPainter& painter, QRect pos)
+void TimeLineThread::render(QPainter& painter, QRectF pos)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
@@ -164,7 +179,7 @@ void TimeLineThread::render(QPainter& painter, QRect pos)
 
     painter.setPen(Qt::black);
 
-    QRect childPos(pos);
+    QRectF childPos(pos);
     childPos.translate(0, ThreadTitleHeight);
     drawRecords(painter, childPos, m_thread->records);
 
@@ -172,7 +187,7 @@ void TimeLineThread::render(QPainter& painter, QRect pos)
 
     if (m_highlightedRecordInfo)
     {
-        QRect bounds(m_highlightedRecordInfo->bounds);
+        QRectF bounds(m_highlightedRecordInfo->bounds);
         bounds.translate(pos.topLeft());
 
         painter.setPen(Qt::green);
@@ -181,7 +196,7 @@ void TimeLineThread::render(QPainter& painter, QRect pos)
     }
 }
 
-void TimeLineThread::renderOverlay(QPainter& painter, QRect pos)
+void TimeLineThread::renderOverlay(QPainter& painter, QRectF pos)
 {
     if (!m_selectedRecordInfo)
     {
@@ -192,7 +207,7 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRect pos)
 
     QString text;
 
-    QRect recordInfoBounds(
+    QRectF recordInfoBounds(
         RecordInfoDist,
         pos.height() - RecordInfoHeight - RecordInfoDist,
         pos.width() - 2 * RecordInfoDist,
@@ -216,17 +231,17 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRect pos)
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
 }
 
-void TimeLineThread::drawRecord(QPainter& painter, QRect pos, const Record& record)
+void TimeLineThread::drawRecord(QPainter& painter, QRectF pos, const Record& record)
 {
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
-    int x = pos.x() + static_cast<int>(record.timeStart * pixpersec);
-    int y = pos.y();
-    int w = static_cast<int>((record.timeEnd - record.timeStart) * pixpersec);
-    int h = RecordHeight;
+    coord_t x = pos.x() + record.timeStart * pixpersec;
+    coord_t y = pos.y();
+    coord_t w = (record.timeEnd - record.timeStart) * pixpersec;
+    coord_t h = RecordHeight;
 
-    clampWidth(x, w, viewportWidth);
+    clampWidth<coord_t>(x, w, viewportWidth);
 
     bool selected = false;
     if (w > 2)
@@ -259,15 +274,15 @@ void TimeLineThread::drawRecord(QPainter& painter, QRect pos, const Record& reco
     drawRecords(painter, pos, record.enclosed);
 }
 
-void TimeLineThread::drawRecords(QPainter& painter, QRect pos, const std::vector<Record>& records)
+void TimeLineThread::drawRecords(QPainter& painter, QRectF pos, const std::vector<Record>& records)
 {
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
     for (const auto& record : records)
     {
-        int x = pos.x() + static_cast<int>(record.timeStart * pixpersec);
-        int w = static_cast<int>((record.timeEnd - record.timeStart) * pixpersec);
+        coord_t x = pos.x() + record.timeStart * pixpersec;
+        coord_t w = (record.timeEnd - record.timeStart) * pixpersec;
 
         if (x + w < 0)
         {
@@ -283,7 +298,7 @@ void TimeLineThread::drawRecords(QPainter& painter, QRect pos, const std::vector
     }
 }
 
-void TimeLineThread::drawEvents(QPainter& painter, QRect pos, int textYOffset, const std::vector<Event>& events)
+void TimeLineThread::drawEvents(QPainter& painter, QRectF pos, coord_t textYOffset, const std::vector<Event>& events)
 {
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
@@ -292,7 +307,7 @@ void TimeLineThread::drawEvents(QPainter& painter, QRect pos, int textYOffset, c
 
     for (const auto& event : m_thread->events)
     {
-        int x = pos.x() + static_cast<int>(event.time * pixpersec);
+        coord_t x = pos.x() + event.time * pixpersec;
         if (x < 0)
         {
             continue;
@@ -317,27 +332,13 @@ void TimeLineThread::drawEvents(QPainter& painter, QRect pos, int textYOffset, c
     }
 }
 
-void TimeLineThread::clampWidth(int& x, int& w, int width)
-{
-    if (x < 0)
-    {
-        w -= -x;
-        x = 0;
-    }
-
-    if (x + w > width)
-    {
-        w -= x + w - width;
-    }
-}
-
-int TimeLineThread::calculateThreadHeight(int* oRecordsHeight)
+coord_t TimeLineThread::calculateThreadHeight(coord_t* oRecordsHeight)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    int height = ThreadTitleHeight;
+    coord_t height = ThreadTitleHeight;
 
-    int recordsHeight = calculateRecordsHeight(m_thread->records) * RecordHeight;
+    coord_t recordsHeight = calculateRecordsHeight(m_thread->records) * RecordHeight;
 
     height += recordsHeight;
 
@@ -354,9 +355,9 @@ int TimeLineThread::calculateThreadHeight(int* oRecordsHeight)
     return height;
 }
 
-int TimeLineThread::calculateRecordsHeight(const std::vector<Record>& records)
+coord_t TimeLineThread::calculateRecordsHeight(const std::vector<Record>& records)
 {
-    int recordsHeight = 0;
+    coord_t recordsHeight = 0;
     for (const auto& record : records)
     {
         recordsHeight = std::max(recordsHeight, calculateRecordHeight(record));
@@ -364,9 +365,9 @@ int TimeLineThread::calculateRecordsHeight(const std::vector<Record>& records)
     return recordsHeight;
 }
 
-int TimeLineThread::calculateRecordHeight(const Record& record)
+coord_t TimeLineThread::calculateRecordHeight(const Record& record)
 {
-    int recordsHeight = 0;
+    coord_t recordsHeight = 0;
     for (const auto& enclosedRecord : record.enclosed)
     {
         recordsHeight = std::max(recordsHeight, calculateRecordHeight(enclosedRecord));

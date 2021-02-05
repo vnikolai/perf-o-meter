@@ -19,7 +19,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include "TimeLineView.h"
-#include "TimeLineConfig.h"
 #include "TimeLineThread.h"
 #include <utils/time.h>
 #include <cstring>
@@ -124,11 +123,11 @@ void TimeLineView::paintGL()
     QPainter painter(this);
     painter.setFont(QFont("Helvetica", 10));
 
-    QPoint pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
+    QPointF pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
 
     for (auto& component : m_components)
     {
-        int componentHeight = component->height();
+        coord_t componentHeight = component->height();
 
         if (pos.ry() + componentHeight < RulerHeight + RulerDistReport)
         {
@@ -136,7 +135,7 @@ void TimeLineView::paintGL()
             continue;
         }
 
-        component->render(painter, QRect(pos, QSize(width(), height())));
+        component->render(painter, QRectF(pos, QSizeF(width(), height())));
 
         pos.ry() += componentHeight;
         if (pos.ry() >= thisHeight)
@@ -145,11 +144,11 @@ void TimeLineView::paintGL()
         }
     }
 
-    const int offset = RulerHeight + RulerDistReport;
+    const coord_t offset = RulerHeight + RulerDistReport;
 
     for (auto& component : m_components)
     {
-        component->renderOverlay(painter, QRect(0, offset, thisWidth, thisHeight - offset));
+        component->renderOverlay(painter, QRectF(0, offset, thisWidth, thisHeight - offset));
     }
 
     if (m_statusTextVisible)
@@ -206,11 +205,11 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         {
             if (ctrl)
             {
-                scrollYTo(std::numeric_limits<int>::max());
+                scrollYTo(std::numeric_limits<coord_t>::max());
             }
             else
             {
-                scrollXTo(std::numeric_limits<int>::max());
+                scrollXTo(std::numeric_limits<coord_t>::max());
             }
             break;
         }
@@ -363,7 +362,7 @@ void TimeLineView::mouseMoveEvent(QMouseEvent* event)
 
 void TimeLineView::wheelEvent(QWheelEvent* event)
 {
-    int delta = event->angleDelta().y();
+    coord_t delta = event->angleDelta().y();
 
     if (event->modifiers() & Qt::ControlModifier)
     {
@@ -410,7 +409,7 @@ double TimeLineView::secondsPerPixel() const
     return static_cast<double>(DefaultZoom) / (PixelsPerSecond * m_zoom);
 }
 
-void TimeLineView::getRulerStep(double& rulerStep, long unsigned int& timeStep)
+void TimeLineView::getRulerStep(double& rulerStep, coord_t& timeStep)
 {
     constexpr int NumSteps = 31;
     constexpr zoom_t RulerTimeSteps[NumSteps]
@@ -463,15 +462,15 @@ void TimeLineView::getRulerStep(double& rulerStep, long unsigned int& timeStep)
     } while (rulerStep < 32 && idx < NumSteps);
 }
 
-void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
+void TimeLineView::drawRuler(QPainter& painter, QPointF& pos)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
     const auto thisWidth = width();
     const auto thisHeight = height();
 
-    constexpr int PrimaryStrokeLength = 16;
-    constexpr int SecondaryStrokeLength = 12;
+    constexpr coord_t PrimaryStrokeLength = 16;
+    constexpr coord_t SecondaryStrokeLength = 12;
 
     painter.setPen(Qt::black);
     painter.setBrush(RulerBackgroundColor);
@@ -479,19 +478,19 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
     painter.drawLine(0, RulerHeight, thisWidth, RulerHeight);
 
     double rulerStep = 0;
-    long unsigned int timeStep = 0;
+    coord_t timeStep = 0;
     getRulerStep(rulerStep, timeStep);
 
     QString text;
 
     const auto pixpersec = pixelsPerSecond();
-    const int rulerCount = thisWidth / rulerStep;
+    const long int rulerCount = thisWidth / rulerStep;
 
-    int rulerOffset = static_cast<int>(pos.x() / (rulerStep * 2));
+    coord_t rulerOffset = static_cast<coord_t>(pos.x() / (rulerStep * 2));
 
-    for (int i = 0; i < rulerCount + 2; ++i)
+    for (long int i = 0; i < rulerCount + 2; ++i)
     {
-        int x = i * rulerStep + (pos.x() > 0 ? pos.x() : pos.x() - rulerOffset * 2 * rulerStep);
+        coord_t x = i * rulerStep + (pos.x() > 0 ? pos.x() : pos.x() - rulerOffset * 2 * rulerStep);
 
         if (i % 2)
         {
@@ -501,7 +500,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPoint& pos)
         {
             painter.drawLine(x, 0, x, PrimaryStrokeLength);
 
-            int idx = i + 2 * (pos.x() < 0 ? -rulerOffset : 0);
+            coord_t idx = i + 2 * (pos.x() < 0 ? -rulerOffset : 0);
             double rulerTime = idx * static_cast<double>(timeStep) / 1000000000;
             painter.drawText(x + TitleOffsetSmall, 0, 64, RulerHeight,
                              Qt::AlignVCenter | Qt::AlignLeft,
@@ -523,10 +522,10 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
     const auto thisWidth = width();
     const auto thisHeight = height();
 
-    const int statusMessageHeight = thisHeight - 2 * StatusMessageDist;
+    const coord_t statusMessageHeight = thisHeight - 2 * StatusMessageDist;
 
-    const int posX = thisWidth - StatusMessageWidth - StatusMessageDist;
-    const int posY = StatusMessageDist;
+    const coord_t posX = thisWidth - StatusMessageWidth - StatusMessageDist;
+    const coord_t posY = StatusMessageDist;
 
     painter.fillRect(posX, posY, StatusMessageWidth, statusMessageHeight, StatusMessageBackgroundColor);
 
@@ -560,15 +559,15 @@ void TimeLineView::layout()
 
     const auto thisWidth = width();
     const auto thisHeight = height();
-    long int reportWidth = 0;
+    coord_t reportWidth = 0;
 
     if (m_report)
     {
         m_reportHeightPx = calculateReportHeight(m_report);
 
         const auto pixpersec = pixelsPerSecond();
-        long int reportStartPx = m_report->getStartTime() * pixpersec;
-        long int reportEndPx = m_report->getEndTime() * pixpersec;
+        coord_t reportStartPx = m_report->getStartTime() * pixpersec;
+        coord_t reportEndPx = m_report->getEndTime() * pixpersec;
         reportWidth = (reportEndPx - reportStartPx);
 
         if (reportWidth <= thisWidth)
@@ -577,28 +576,28 @@ void TimeLineView::layout()
         }
         else
         {
-            long int extraWidth = reportWidth - thisWidth;
+            coord_t extraWidth = reportWidth - thisWidth;
 
             reportEndPx = reportStartPx + extraWidth * (1 + VisibleMargin / 2);
             reportStartPx = reportStartPx - extraWidth * VisibleMargin / 2;
 
             m_horizontalScrollBar.setMinimum(
-                std::clamp<long int>(reportStartPx,
+                std::clamp<coord_t>(reportStartPx,
                                      std::numeric_limits<int>::min(),
                                      std::numeric_limits<int>::max()) );
 
             m_horizontalScrollBar.setMaximum(
-                std::clamp<long int>(reportEndPx,
+                std::clamp<coord_t>(reportEndPx,
                                      std::numeric_limits<int>::min(),
                                      std::numeric_limits<int>::max()) );
         }
 
-        m_offset.setX(std::max<qreal>(m_offset.x(), reportStartPx));
-        m_offset.setX(std::min<qreal>(m_offset.x(), reportEndPx));
+        m_offset.setX(std::max<coord_t>(m_offset.x(), reportStartPx));
+        m_offset.setX(std::min<coord_t>(m_offset.x(), reportEndPx));
     }
 
-    int extraHeight = m_reportHeightPx + RecordInfoDist + 2 * RecordInfoHeight
-                      - (thisHeight - RulerHeight - RulerDistReport);
+    coord_t extraHeight = m_reportHeightPx + RecordInfoDist + 2 * RecordInfoHeight
+                          - (thisHeight - RulerHeight - RulerDistReport);
 
     bool vertBarVisible = extraHeight > 0;
     bool horBarVisible = reportWidth > thisWidth;
@@ -609,7 +608,10 @@ void TimeLineView::layout()
         m_offset.setY(std::min<qreal>(m_offset.y(), extraHeight));
 
         m_verticalScrollBar.setMinimum(0);
-        m_verticalScrollBar.setMaximum(extraHeight);
+        m_verticalScrollBar.setMaximum(
+            std::clamp<coord_t>(extraHeight,
+                                std::numeric_limits<int>::min(),
+                                std::numeric_limits<int>::max()));
     }
     else
     {
@@ -626,9 +628,9 @@ void TimeLineView::layout()
     m_verticalScrollBar.setVisible(vertBarVisible);
 }
 
-int TimeLineView::calculateReportHeight(std::shared_ptr<PerfometerReport> report)
+coord_t TimeLineView::calculateReportHeight(std::shared_ptr<PerfometerReport> report)
 {
-    int height = 0;
+    coord_t height = 0;
 
     for (const auto& component : m_components)
     {
@@ -644,7 +646,7 @@ TimeLineView::ComponentPtr TimeLineView::getComponentUnderPoint(QPoint point, QP
 
     for (auto& component : m_components)
     {
-        int componentHeight = component->height();
+        coord_t componentHeight = component->height();
 
         if (pos.ry() + componentHeight < RulerHeight + RulerDistReport)
         {
@@ -672,21 +674,16 @@ TimeLineView::ComponentPtr TimeLineView::getComponentUnderPoint(QPoint point, QP
 
 void TimeLineView::zoom(zoom_t z)
 {
-    z = std::max<zoom_t>(z, MinZoom);
+    z = std::clamp<zoom_t>(z, MinZoom, MaxZoom);
 
     if (m_zoom != z)
     {
         m_zoom = z;
         layout();
-
-        if (m_offset.x() < 0)
-        {
-            int a = 0;
-        }
     }
 }
 
-void TimeLineView::zoom(zoom_t z, int pivot)
+void TimeLineView::zoom(zoom_t z, qreal pivot)
 {
     zoom_t prevZoom = m_zoom;
     double mid = m_offset.x() + pivot;
@@ -704,7 +701,7 @@ void TimeLineView::zoomBy(zoom_t zoomDelta)
     zoomBy(zoomDelta, width() / 2);
 }
 
-void TimeLineView::zoomBy(zoom_t zoomDelta, int pivot)
+void TimeLineView::zoomBy(zoom_t zoomDelta, qreal pivot)
 {
     zoom_t prevZoom = m_zoom;
     double mid = m_offset.x() + pivot;
@@ -749,9 +746,9 @@ void TimeLineView::scrollYTo(qreal y)
     scrollTo(QPoint(m_offset.x(), y));
 }
 
-double TimeLineView::timeAtPoint(int x)
+double TimeLineView::timeAtPoint(coord_t x)
 {
-    float rulerX = x + m_offset.x();
+    coord_t rulerX = x + m_offset.x();
     return secondsPerPixel() * rulerX;
 }
 

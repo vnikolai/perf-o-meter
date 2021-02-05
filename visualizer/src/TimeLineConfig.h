@@ -23,6 +23,8 @@ SOFTWARE. */
 #include <QColor>
 
 namespace visualizer {
+    using zoom_t = unsigned long int;
+    using coord_t = long int;
 
     constexpr int       DefaultZoom             = 1000;
     constexpr double    ZoomWheelCoef           = 1.25;
@@ -33,7 +35,8 @@ namespace visualizer {
     constexpr int       TitleOffsetSmall        = 2;
     constexpr int       RecordHeight            = 16;
     constexpr int       ScrolBarThickness       = 24;
-    constexpr int       MinZoom                 = 10;
+    constexpr zoom_t    MinZoom                 = 10;
+    constexpr zoom_t    MaxZoom                 = 0x8000000000;
     constexpr int       ZoomKeyboardStep        = 2;
     constexpr int       ZoomKeyboardLargeStep   = 5;
     constexpr int       OffsetKeyboardStep      = 10;

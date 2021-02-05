@@ -31,7 +31,7 @@ TimeLineComponent::TimeLineComponent(TimeLineView& view)
 {   
 }
 
-int TimeLineComponent::height() const
+coord_t TimeLineComponent::height() const
 {
     return !collapsed() ? m_height : ThreadTitleHeight;
 }
@@ -62,29 +62,29 @@ void TimeLineComponent::focusLost()
 {
 }
 
-void TimeLineComponent::render(QPainter& painter, QRect pos)
+void TimeLineComponent::render(QPainter& painter, QRectF pos)
 {
     const auto viewportWidth = pos.width();
 
     if (collapsed())
     {
-        painter.fillRect(QRect(0, pos.y(), pos.width(), ThreadTitleHeight), StatusMessageBackgroundColor);
+        painter.fillRect(QRectF(0, pos.y(), pos.width(), ThreadTitleHeight), StatusMessageBackgroundColor);
     }
 
     if (m_highlightTitle)
     {
-        painter.fillRect(QRect(0, pos.y(), pos.width(), ThreadTitleHeight), ComponentHighlightColor);
+        painter.fillRect(QRectF(0, pos.y(), pos.width(), ThreadTitleHeight), ComponentHighlightColor);
     }
 
     QString text;
     painter.setPen(Qt::white);
-    painter.drawText(RulerDistReport + std::max(0, pos.x()), pos.y(),
+    painter.drawText(RulerDistReport + std::max<qreal>(0, pos.x()), pos.y(),
                      viewportWidth, ThreadTitleHeight,
                      Qt::AlignVCenter | Qt::AlignLeft,
                      text.fromStdString(name()));
 }
 
-void TimeLineComponent::renderOverlay(QPainter& painter, QRect pos)
+void TimeLineComponent::renderOverlay(QPainter& painter, QRectF pos)
 {
 }
 
@@ -108,7 +108,7 @@ void TimeLineComponent::collapse(bool flag)
     m_collapsed = flag;
 }
 
-void TimeLineComponent::setHeight(int height)
+void TimeLineComponent::setHeight(coord_t height)
 {
     m_height = height;
 }
