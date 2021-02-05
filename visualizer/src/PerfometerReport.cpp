@@ -33,7 +33,7 @@ namespace visualizer {
 using PerfTime = uint64_t;
 using PerfStringID = perfometer::string_id;
 
-static std::string UNKNOWN = "UNKNOWN";
+static const std::string UNKNOWN = "UNKNOWN";
 
 namespace {
 class reader : public std::ifstream
@@ -350,8 +350,9 @@ const Threads& PerfometerReport::getThreads() const
 
 ThreadPtr PerfometerReport::getThread(Thread::ID ID)
 {
-    auto pair = m_threads.emplace(ID, std::make_shared<Thread>(ID, m_thread_names[ID]));
-	return pair.first->second;
+	auto name_pair = m_thread_names.emplace(ID, UNKNOWN);
+    auto thread_pair = m_threads.emplace(ID, std::make_shared<Thread>(ID, name_pair.first->second));
+	return thread_pair.first->second;
 }
 
 ConstThreadPtr PerfometerReport::getThread(Thread::ID ID) const
