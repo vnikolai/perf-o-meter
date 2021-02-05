@@ -266,8 +266,16 @@ void TimeLineThread::drawRecord(QPainter& painter, QRectF pos, const Record& rec
     if (w >= RecordMinTextWidth)
     {
         QString text;
-        text = text.fromStdString(record.name + " " + format_time(record.timeEnd - record.timeStart));
-        painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignLeft, text);
+        text = text.fromStdString(format_time(record.timeEnd - record.timeStart));
+        painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignRight, text);
+        
+        auto time_text_width = painter.fontMetrics().boundingRect(text).width();
+        auto label_width = w - 2 * TitleOffsetSmall - time_text_width - TitleOffset;
+        if (label_width > 0)
+        {
+            text = text.fromStdString(record.name);
+            painter.drawText(x + TitleOffsetSmall, y, label_width, h, Qt::AlignVCenter | Qt::AlignLeft, text);
+        }
     }
 
     pos.translate(0, RecordHeight);

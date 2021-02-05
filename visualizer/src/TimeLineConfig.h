@@ -33,6 +33,7 @@ namespace visualizer {
     constexpr int       RulerDistReport         = 12;
     constexpr int       ThreadTitleHeight       = 32;
     constexpr int       TitleOffsetSmall        = 2;
+    constexpr int       TitleOffset             = 5;
     constexpr int       RecordHeight            = 16;
     constexpr int       ScrolBarThickness       = 24;
     constexpr zoom_t    MinZoom                 = 10;
