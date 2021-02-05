@@ -582,8 +582,15 @@ void TimeLineView::layout()
             reportEndPx = reportStartPx + extraWidth * (1 + VisibleMargin / 2);
             reportStartPx = reportStartPx - extraWidth * VisibleMargin / 2;
 
-            m_horizontalScrollBar.setMinimum(reportStartPx);
-            m_horizontalScrollBar.setMaximum(reportEndPx);
+            m_horizontalScrollBar.setMinimum(
+                std::clamp<long int>(reportStartPx,
+                                     std::numeric_limits<int>::min(),
+                                     std::numeric_limits<int>::max()) );
+
+            m_horizontalScrollBar.setMaximum(
+                std::clamp<long int>(reportEndPx,
+                                     std::numeric_limits<int>::min(),
+                                     std::numeric_limits<int>::max()) );
         }
 
         m_offset.setX(std::max<qreal>(m_offset.x(), reportStartPx));
@@ -671,6 +678,11 @@ void TimeLineView::zoom(zoom_t z)
     {
         m_zoom = z;
         layout();
+
+        if (m_offset.x() < 0)
+        {
+            int a = 0;
+        }
     }
 }
 
