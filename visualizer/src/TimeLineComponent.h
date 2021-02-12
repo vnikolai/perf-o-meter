@@ -26,6 +26,21 @@ SOFTWARE. */
 
 namespace visualizer
 {
+    struct Statistics
+    {
+        size_t numRecords = 0;
+        double frameRenderTime = 0.0;
+        double hitTestTime = 0.0;
+
+        Statistics& operator+=(const Statistics& other)
+        {
+            numRecords += other.numRecords;
+            frameRenderTime += other.frameRenderTime;
+            hitTestTime += other.hitTestTime;
+            return *this;
+        }
+    };
+
     class TimeLineView;
 
     class TimeLineComponent
@@ -40,6 +55,7 @@ namespace visualizer
         virtual void mouseDoubleClick(QPoint pos);
         virtual void focusLost();
 
+        virtual void onBeginFrame();
         virtual void render(QPainter& painter, QRectF pos);
         virtual void renderOverlay(QPainter& painter, QRectF pos);
 
@@ -49,17 +65,20 @@ namespace visualizer
         bool collapsed() const;
         void collapse(bool flag);
 
+        const Statistics& getStatistics() const;
+
     protected:
 
         void setHeight(coord_t height);
 
     protected:
-        TimeLineView&   m_view;
+        TimeLineView&       m_view;
+        Statistics           m_statistics;
 
     private:
-        std::string     m_name;
-        bool            m_collapsed;
-        coord_t         m_height;
-        bool            m_highlightTitle;
+        std::string         m_name;
+        bool                m_collapsed;
+        coord_t             m_height;
+        bool                m_highlightTitle;
     };
 } // namespace visualizer

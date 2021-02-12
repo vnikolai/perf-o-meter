@@ -44,6 +44,7 @@ void TimeLineComponent::mouseMove(QPoint pos)
 void TimeLineComponent::mouseLeft()
 {
     m_highlightTitle = false;
+    m_statistics.hitTestTime = 0.0;
 }
 
 void TimeLineComponent::mouseClick(QPoint pos)
@@ -60,6 +61,12 @@ void TimeLineComponent::mouseDoubleClick(QPoint pos)
 
 void TimeLineComponent::focusLost()
 {
+}
+
+void TimeLineComponent::onBeginFrame()
+{
+    m_statistics.numRecords = 0;
+    m_statistics.frameRenderTime = 0.0;
 }
 
 void TimeLineComponent::render(QPainter& painter, QRectF pos)
@@ -111,6 +118,11 @@ void TimeLineComponent::collapse(bool flag)
 void TimeLineComponent::setHeight(coord_t height)
 {
     m_height = height;
+}
+
+const Statistics& TimeLineComponent::getStatistics() const
+{
+    return m_statistics;
 }
 
 } // namespace visualizer

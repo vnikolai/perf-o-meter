@@ -41,7 +41,7 @@ TimeLineView::TimeLineView()
     , m_mouseDragActive(false)
     , m_zoom(DefaultZoom)
     , m_reportHeightPx(0)
-    , m_statusTextVisible(false)
+    , m_statusDisplayMode(StatusDisplayMode::None)
     , m_collapseAll(true)
     , m_offset(0.0f, 0.0f)
 {
@@ -125,6 +125,13 @@ void TimeLineView::paintGL()
 
     QPointF pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
 
+    m_statistics = Statistics();
+
+    for (auto& component : m_components)
+    {
+        component->onBeginFrame();
+    }
+
     for (auto& component : m_components)
     {
         coord_t componentHeight = component->height();
@@ -151,7 +158,12 @@ void TimeLineView::paintGL()
         component->renderOverlay(painter, QRectF(0, offset, thisWidth, thisHeight - offset));
     }
 
-    if (m_statusTextVisible)
+    for (auto& component : m_components)
+    {
+        m_statistics += component->getStatistics();
+    }
+
+    if (m_statusDisplayMode != StatusDisplayMode::None)
     {
         drawStatusMessage(painter);
     }
@@ -235,7 +247,19 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         }
         case Qt::Key_QuoteLeft:
         {
-            m_statusTextVisible = !m_statusTextVisible;
+            switch (m_statusDisplayMode)
+            {
+                case StatusDisplayMode::None:
+                    m_statusDisplayMode = StatusDisplayMode::ReportInfo;
+                    break;
+                case StatusDisplayMode::ReportInfo:
+                    m_statusDisplayMode = StatusDisplayMode::Stats;
+                    break;
+                case StatusDisplayMode::Stats:
+                    m_statusDisplayMode = StatusDisplayMode::None;
+                    break;
+            }
+
             break;
         }
         case Qt::Key_Plus:
@@ -519,6 +543,40 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
+    constexpr size_t bufferSize = 256;
+    char text[bufferSize];
+
+    switch (m_statusDisplayMode)
+    {
+        case StatusDisplayMode::ReportInfo:
+            snprintf(text, bufferSize,
+                     "mouse: %d %d\n"
+                     "zoom: %lu\n"
+                     "offset: %f %f\n"
+                     "report time: [%s] - [%s]\n"
+                     "pixel per second: %f\n",
+                     m_mousePosition.x(), m_mousePosition.y(), 
+                     m_zoom,
+                     m_offset.x(), m_offset.y(),
+                     format_time(m_report ? m_report->getStartTime() : 0.f).c_str(),
+                     format_time(m_report ? m_report->getEndTime() : 0.f).c_str(),
+                     pixelsPerSecond());
+        break;
+
+        case StatusDisplayMode::Stats:
+        {
+            snprintf(text, bufferSize,
+                     "Frame render time: %f\n"
+                     "Hit test time: %f\n"
+                     "visible records: %zu",
+                     m_statistics.frameRenderTime,
+                     m_statistics.hitTestTime,
+                     m_statistics.numRecords);
+
+            break;
+        }
+    }
+
     const auto thisWidth = width();
     const auto thisHeight = height();
 
@@ -528,21 +586,6 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
     const coord_t posY = StatusMessageDist;
 
     painter.fillRect(posX, posY, StatusMessageWidth, statusMessageHeight, StatusMessageBackgroundColor);
-
-    constexpr size_t bufferSize = 256;
-    char text[bufferSize];
-    snprintf(text, bufferSize,
-             "mouse: %d %d\n"
-             "zoom: %lu\n"
-             "offset: %f %f\n"
-             "report time: [%s] - [%s]\n"
-             "pixel per second: %f",
-             m_mousePosition.x(), m_mousePosition.y(), 
-             m_zoom,
-             m_offset.x(), m_offset.y(),
-             format_time(m_report ? m_report->getStartTime() : 0.f).c_str(),
-             format_time(m_report ? m_report->getEndTime() : 0.f).c_str(),
-             pixelsPerSecond());
 
     painter.setPen(Qt::white);
     painter.drawText(posX + StatusMessageTextDist,
@@ -738,12 +781,12 @@ void TimeLineView::scrollYBy(qreal yDelta)
 
 void TimeLineView::scrollXTo(qreal x)
 {
-    scrollTo(QPoint(x, m_offset.y()));
+    scrollTo(QPointF(x, m_offset.y()));
 }
 
 void TimeLineView::scrollYTo(qreal y)
 {
-    scrollTo(QPoint(m_offset.x(), y));
+    scrollTo(QPointF(m_offset.x(), y));
 }
 
 double TimeLineView::timeAtPoint(coord_t x)

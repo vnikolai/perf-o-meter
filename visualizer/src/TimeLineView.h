@@ -92,6 +92,13 @@ namespace visualizer
     private:
         using super = QOpenGLWidget;
 
+        enum StatusDisplayMode
+        {
+            None,
+            ReportInfo,
+            Stats
+        };
+
         QScrollBar                          m_horizontalScrollBar;
         QScrollBar                          m_verticalScrollBar;
 
@@ -101,7 +108,7 @@ namespace visualizer
         zoom_t                              m_zoom;
         coord_t                             m_reportHeightPx;
 
-        bool                                m_statusTextVisible;
+        StatusDisplayMode                   m_statusDisplayMode;
         bool                                m_collapseAll;
 
         QPointF                             m_offset;
@@ -112,5 +119,7 @@ namespace visualizer
 
         ComponentPtr                        m_componentUnderMouse;
         ComponentPtr                        m_componentWithFocus;
+
+        Statistics                          m_statistics;
     };
 } // namespace visualizer

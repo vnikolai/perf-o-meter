@@ -27,6 +27,8 @@ SOFTWARE. */
 
 #include <utils/time.h>
 
+#include <QTime>
+
 #include <thread>
 #include <chrono>
 
@@ -49,7 +51,14 @@ template<typename T>
     }
 }
 
-bool hitTestRecord(QPointF pos,
+enum HitTestResult
+{
+    NoHit,
+    Hit,
+    Abort
+};
+
+HitTestResult hitTestRecord(QPointF pos,
                     double pixelPerSecond,
                     const Record& record,
                     coord_t y,
@@ -59,9 +68,14 @@ bool hitTestRecord(QPointF pos,
     qreal w = (record.timeEnd - record.timeStart) * pixelPerSecond;
     coord_t h = RecordHeight;
 
-    if (x > pos.x() || x + w < pos.x())
+    if (pos.x() < x)
     {
-        return false;
+        return HitTestResult::Abort;
+    }
+
+    if (pos.x() > x + w || w < 1)
+    {
+        return HitTestResult::NoHit;
     }
 
     QRectF bounds(x, y, w, h);
@@ -69,20 +83,21 @@ bool hitTestRecord(QPointF pos,
     {
         RecordInfo info{bounds, record.name, record.timeStart, record.timeEnd };
         result = std::make_shared<RecordInfo>(info);
-        return true;
+        return HitTestResult::Hit;
     }
 
     y += RecordHeight;
 
     for (auto enclosedRecord : record.enclosed)
     {
-        if (hitTestRecord(pos, pixelPerSecond, enclosedRecord, y, result))
+        HitTestResult hitTestResult = hitTestRecord(pos, pixelPerSecond, enclosedRecord, y, result);
+        if (hitTestResult != HitTestResult::NoHit)
         {
-            return true;
+            return hitTestResult;
         }
     }
 
-    return false;
+    return HitTestResult::NoHit;
 };
 
 } // namespace
@@ -108,20 +123,30 @@ void TimeLineThread::mouseMove(QPoint pos)
 
     m_highlightedRecordInfo.reset();
 
-    if (pos.y() > 0 && pos.y() < height())
+    if (pos.y() <= 0 || pos.y() >= height())
     {
-        for (auto record : m_thread->records)
+        return;
+    }
+
+    QTime hitTestTime;
+    hitTestTime.start();
+    
+    for (auto record : m_thread->records)
+    {
+        HitTestResult result = hitTestRecord(pos,
+                                             pixelPerSecond,
+                                             record,
+                                             ThreadTitleHeight,
+                                             m_highlightedRecordInfo);
+        
+        if (result == HitTestResult::Abort)
         {
-            if (hitTestRecord(pos,
-                              pixelPerSecond,
-                              record,
-                              ThreadTitleHeight,
-                              m_highlightedRecordInfo))
-            {
-                return;
-            }
+            break;
         }
     }
+
+    m_statistics.hitTestTime = hitTestTime.elapsed() / 1000.0;
+    
 }
 
 void TimeLineThread::mouseLeft()
@@ -167,6 +192,9 @@ void TimeLineThread::render(QPainter& painter, QRectF pos)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
+    QTime frameTime;
+    frameTime.start();
+
     const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
@@ -194,6 +222,8 @@ void TimeLineThread::render(QPainter& painter, QRectF pos)
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(bounds);
     }
+
+    m_statistics.frameRenderTime += frameTime.elapsed() / 1000.0;
 }
 
 void TimeLineThread::renderOverlay(QPainter& painter, QRectF pos)
@@ -257,29 +287,31 @@ void TimeLineThread::drawRecord(QPainter& painter, QRectF pos, const Record& rec
 
         painter.setBrush(color);
         painter.drawRect(x, y, w, h);
+
+        if (w >= RecordMinTextWidth)
+        {
+            QString text;
+            text = text.fromStdString(format_time(record.timeEnd - record.timeStart));
+            painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignRight, text);
+
+            auto time_text_width = painter.fontMetrics().boundingRect(text).width();
+            auto label_width = w - 2 * TitleOffsetSmall - time_text_width - TitleOffset;
+            if (label_width > 0)
+            {
+                text = text.fromStdString(record.name);
+                painter.drawText(x + TitleOffsetSmall, y, label_width, h, Qt::AlignVCenter | Qt::AlignLeft, text);
+            }
+        }
     }
     else
     {
         painter.drawLine(x, y, x, y + h);
-    }
-
-    if (w >= RecordMinTextWidth)
-    {
-        QString text;
-        text = text.fromStdString(format_time(record.timeEnd - record.timeStart));
-        painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignRight, text);
-        
-        auto time_text_width = painter.fontMetrics().boundingRect(text).width();
-        auto label_width = w - 2 * TitleOffsetSmall - time_text_width - TitleOffset;
-        if (label_width > 0)
-        {
-            text = text.fromStdString(record.name);
-            painter.drawText(x + TitleOffsetSmall, y, label_width, h, Qt::AlignVCenter | Qt::AlignLeft, text);
-        }
-    }
+    }    
 
     pos.translate(0, RecordHeight);
     drawRecords(painter, pos, record.enclosed);
+
+    m_statistics.numRecords++;
 }
 
 void TimeLineThread::drawRecords(QPainter& painter, QRectF pos, const std::vector<Record>& records)
