@@ -174,6 +174,7 @@ result shutdown()
 	}
 
 	s_logging_enabled = false;
+	s_record_cache = nullptr;
 
 	{
 		scoped_lock lock(s_records_mutex);
@@ -426,9 +427,9 @@ result log_event(string_id s_id, time t)
 	return result::ok;
 }
 
-string_id register_string(const char thread_name[])
+string_id register_string(const char name[])
 {
-	return register_string(std::string(thread_name));
+	return register_string(std::string(name));
 }
 
 string_id register_string(std::string&& string)
