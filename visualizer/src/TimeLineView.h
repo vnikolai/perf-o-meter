@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +64,8 @@ namespace visualizer
         void initializeGL() override;
         void paintGL() override;
 
+        QRectF getViewport() const;
+
         virtual void keyPressEvent(QKeyEvent* event) override;
         virtual void keyReleaseEvent(QKeyEvent* event) override;
 
@@ -85,7 +87,7 @@ namespace visualizer
 
         coord_t calculateReportHeight(std::shared_ptr<PerfometerReport> report);
 
-        ComponentPtr getComponentUnderPoint(QPoint point, QPoint* outPos = nullptr);
+        ComponentPtr getComponentUnderPoint(QPointF point, QPointF* outPos = nullptr);
 
         double timeAtPoint(coord_t x);
 

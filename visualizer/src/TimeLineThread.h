@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,20 +40,20 @@ namespace visualizer
     public:
         TimeLineThread(TimeLineView& view, ConstThreadPtr thread);
 
-        void mouseMove(QPoint pos) override;
+        void mouseMove(QPointF pos) override;
         void mouseLeft() override;
-        void mouseClick(QPoint pos) override;
-        void mouseDoubleClick(QPoint pos) override;
+        void mouseClick(QPointF pos) override;
+        void mouseDoubleClick(QPointF pos) override;
         void focusLost() override;
 
-        void render(QPainter& painter, QRectF pos) override;
-        void renderOverlay(QPainter& painter, QRectF pos) override;
+        void render(QPainter& painter, QRectF viewport, QPointF offset) override;
+        void renderOverlay(QPainter& painter, QRectF viewport, QPointF offset) override;
 
     private:
 
-        void drawRecord(QPainter& painter, QRectF pos, const Record& record);
-        void drawRecords(QPainter& painter, QRectF pos, const std::vector<Record>& records);
-        void drawEvents(QPainter& painter, QRectF pos, coord_t textYOffset, const std::vector<Event>& events);
+        void drawRecord(QPainter& painter, QRectF viewport, QPointF offset, const Record& record);
+        void drawRecords(QPainter& painter, QRectF viewport, QPointF offset, const std::vector<Record>& records);
+        void drawEvents(QPainter& painter, QRectF viewport, QPointF offset, coord_t textYOffset, const std::vector<Event>& events);
 
         coord_t calculateThreadHeight(coord_t* oRecordsHeight);
         coord_t calculateRecordsHeight(const std::vector<Record>& records);

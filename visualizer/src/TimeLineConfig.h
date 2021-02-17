@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ namespace visualizer {
 
     constexpr int       StatusMessageWidth      = 256;
     constexpr int       StatusMessageTextDist   = 12;
-    constexpr int       StatusMessageDist       = 50;
+    constexpr int       StatusMessageDist       = 25;
 
     static QColor       BackgroundColor                 (32, 32, 32, 255);
     static QColor       StatusMessageBackgroundColor    (16, 16, 16, 128);

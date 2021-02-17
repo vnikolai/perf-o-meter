@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ coord_t TimeLineComponent::height() const
     return !collapsed() ? m_height : ThreadTitleHeight;
 }
 
-void TimeLineComponent::mouseMove(QPoint pos)
+void TimeLineComponent::mouseMove(QPointF pos)
 {
     m_highlightTitle = pos.y() < ThreadTitleHeight;
 }
@@ -47,7 +47,7 @@ void TimeLineComponent::mouseLeft()
     m_statistics.hitTestTime = 0.0;
 }
 
-void TimeLineComponent::mouseClick(QPoint pos)
+void TimeLineComponent::mouseClick(QPointF pos)
 {
     if (pos.y() < ThreadTitleHeight)
     {
@@ -55,7 +55,7 @@ void TimeLineComponent::mouseClick(QPoint pos)
     }
 }
 
-void TimeLineComponent::mouseDoubleClick(QPoint pos)
+void TimeLineComponent::mouseDoubleClick(QPointF pos)
 {
 }
 
@@ -69,29 +69,40 @@ void TimeLineComponent::onBeginFrame()
     m_statistics.frameRenderTime = 0.0;
 }
 
-void TimeLineComponent::render(QPainter& painter, QRectF pos)
+void TimeLineComponent::render(QPainter& painter, QRectF viewport, QPointF offset)
 {
-    const auto viewportWidth = pos.width();
+    const auto viewportWidth = viewport.width();
+
+    if (offset.y() < -ThreadTitleHeight)
+    {
+        return;
+    }
+    
+    QRectF titleRect(viewport);
+    titleRect.translate(0, offset.y());
+    titleRect.setHeight(ThreadTitleHeight);
 
     if (collapsed())
     {
-        painter.fillRect(QRectF(0, pos.y(), pos.width(), ThreadTitleHeight), StatusMessageBackgroundColor);
+        painter.fillRect(titleRect, StatusMessageBackgroundColor);
     }
 
     if (m_highlightTitle)
     {
-        painter.fillRect(QRectF(0, pos.y(), pos.width(), ThreadTitleHeight), ComponentHighlightColor);
+        painter.fillRect(titleRect, ComponentHighlightColor);
     }
 
     QString text;
     painter.setPen(Qt::white);
-    painter.drawText(RulerDistReport + std::max<qreal>(0, pos.x()), pos.y(),
-                     viewportWidth, ThreadTitleHeight,
+
+    painter.drawText(RulerDistReport + std::max<qreal>(viewport.left(), offset.x()),
+                     viewport.top() + offset.y(),
+                     viewport.width(), ThreadTitleHeight,
                      Qt::AlignVCenter | Qt::AlignLeft,
                      text.fromStdString(name()));
 }
 
-void TimeLineComponent::renderOverlay(QPainter& painter, QRectF pos)
+void TimeLineComponent::renderOverlay(QPainter& painter, QRectF viewport, QPointF offset)
 {
 }
 

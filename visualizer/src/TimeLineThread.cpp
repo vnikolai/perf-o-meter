@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -37,17 +37,17 @@ namespace visualizer {
 namespace {
 
 template<typename T>
-    void clampWidth(T& x, T& w, T width)
+    void clampWidth(T& x, T& w, T left, T right)
 {
-    if (x < 0)
+    if (x < left)
     {
-        w -= -x;
-        x = 0;
+        w -= left - x;
+        x = left;
     }
 
-    if (x + w > width)
+    if (x + w > right)
     {
-        w -= x + w - width;
+        w -= x + w - right;
     }
 }
 
@@ -107,13 +107,13 @@ TimeLineThread::TimeLineThread(TimeLineView& view, ConstThreadPtr thread)
     , m_thread(thread)
     , m_recordsHeight(0)
 {
-    setName(m_thread->name);
+    setName(std::to_string(m_thread->id) + " - " + m_thread->name);
 
     auto thisHeight = calculateThreadHeight(&m_recordsHeight);
     setHeight(thisHeight);
 }
 
-void TimeLineThread::mouseMove(QPoint pos)
+void TimeLineThread::mouseMove(QPointF pos)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
@@ -156,14 +156,14 @@ void TimeLineThread::mouseLeft()
     m_highlightedRecordInfo.reset();
 }
 
-void TimeLineThread::mouseClick(QPoint pos)
+void TimeLineThread::mouseClick(QPointF pos)
 {
     TimeLineComponent::mouseClick(pos);
 
     m_selectedRecordInfo = m_highlightedRecordInfo;
 }
 
-void TimeLineThread::mouseDoubleClick(QPoint pos)
+void TimeLineThread::mouseDoubleClick(QPointF pos)
 {
     TimeLineComponent::mouseDoubleClick(pos);
 
@@ -188,17 +188,16 @@ void TimeLineThread::focusLost()
     m_selectedRecordInfo.reset();
 }
 
-void TimeLineThread::render(QPainter& painter, QRectF pos)
+void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
     QTime frameTime;
     frameTime.start();
 
-    const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
-    TimeLineComponent::render(painter, pos);
+    TimeLineComponent::render(painter, viewport, offset);
 
     if (collapsed())
     {
@@ -207,26 +206,26 @@ void TimeLineThread::render(QPainter& painter, QRectF pos)
 
     painter.setPen(Qt::black);
 
-    QRectF childPos(pos);
-    childPos.translate(0, ThreadTitleHeight);
-    drawRecords(painter, childPos, m_thread->records);
+    QPointF childPos(offset);
+    childPos.ry() += ThreadTitleHeight;
+    drawRecords(painter, viewport, childPos, m_thread->records);
 
-    drawEvents(painter, childPos, m_recordsHeight, m_thread->events);
+    drawEvents(painter, viewport, childPos, m_recordsHeight, m_thread->events);
 
     if (m_highlightedRecordInfo)
     {
         QRectF bounds(m_highlightedRecordInfo->bounds);
-        bounds.translate(pos.topLeft());
+        bounds.translate(viewport.topLeft() + offset);
 
         painter.setPen(Qt::green);
         painter.setBrush(Qt::NoBrush);
-        painter.drawRect(bounds);
+        painter.drawRect(bounds.intersected(viewport));
     }
 
     m_statistics.frameRenderTime += frameTime.elapsed() / 1000.0;
 }
 
-void TimeLineThread::renderOverlay(QPainter& painter, QRectF pos)
+void TimeLineThread::renderOverlay(QPainter& painter, QRectF viewport, QPointF offset)
 {
     if (!m_selectedRecordInfo)
     {
@@ -238,9 +237,9 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRectF pos)
     QString text;
 
     QRectF recordInfoBounds(
-        RecordInfoDist,
-        pos.height() - RecordInfoHeight - RecordInfoDist,
-        pos.width() - 2 * RecordInfoDist,
+        viewport.left() + RecordInfoDist,
+        viewport.bottom() - RecordInfoHeight - RecordInfoDist,
+        viewport.width() - 2 * RecordInfoDist,
         RecordInfoHeight
     );
 
@@ -254,74 +253,75 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRectF pos)
     text = text.fromStdString(m_selectedRecordInfo->name);
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignLeft, text);
 
-    recordInfoBounds.setRight(pos.width() - RecordInfoDist - RecordInfoTextDist);
+    recordInfoBounds.setRight(viewport.right() - RecordInfoDist - RecordInfoTextDist);
 
     const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
     text = text.fromStdString(format_time(duration));
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
 }
 
-void TimeLineThread::drawRecord(QPainter& painter, QRectF pos, const Record& record)
+void TimeLineThread::drawRecord(QPainter& painter, QRectF viewport, QPointF offset, const Record& record)
 {
-    const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
-    coord_t x = pos.x() + record.timeStart * pixpersec;
-    coord_t y = pos.y();
+    coord_t x = viewport.left() + offset.x() + record.timeStart * pixpersec;
+    coord_t y = viewport.top() + offset.y();
     coord_t w = (record.timeEnd - record.timeStart) * pixpersec;
     coord_t h = RecordHeight;
 
-    clampWidth<coord_t>(x, w, viewportWidth);
-
-    bool selected = false;
-    if (w > 2)
+    if (offset.y() > -RecordHeight && offset.y() < viewport.height())
     {
-        int id = static_cast<int>(record.timeStart * PixelsPerSecond) + record.name.length();
-        const int colorIndex = id % NumColors;
+        clampWidth<coord_t>(x, w, viewport.left(), viewport.right());
 
-        QColor color = Colors[colorIndex];
-        if (record.wait)
+        bool selected = false;
+        if (w > 2)
         {
-            color.setAlpha(128);
-        }
+            int id = static_cast<int>(record.timeStart * PixelsPerSecond) + record.name.length();
+            const int colorIndex = id % NumColors;
 
-        painter.setBrush(color);
-        painter.drawRect(x, y, w, h);
-
-        if (w >= RecordMinTextWidth)
-        {
-            QString text;
-            text = text.fromStdString(format_time(record.timeEnd - record.timeStart));
-            painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignRight, text);
-
-            auto time_text_width = painter.fontMetrics().boundingRect(text).width();
-            auto label_width = w - 2 * TitleOffsetSmall - time_text_width - TitleOffset;
-            if (label_width > 0)
+            QColor color = Colors[colorIndex];
+            if (record.wait)
             {
-                text = text.fromStdString(record.name);
-                painter.drawText(x + TitleOffsetSmall, y, label_width, h, Qt::AlignVCenter | Qt::AlignLeft, text);
+                color.setAlpha(128);
+            }
+
+            painter.setBrush(color);
+            painter.drawRect(x, y, w, h);
+
+            if (w >= RecordMinTextWidth)
+            {
+                QString text;
+                text = text.fromStdString(format_time(record.timeEnd - record.timeStart));
+                painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignRight, text);
+
+                auto time_text_width = painter.fontMetrics().boundingRect(text).width();
+                auto label_width = w - 2 * TitleOffsetSmall - time_text_width - TitleOffset;
+                if (label_width > 0)
+                {
+                    text = text.fromStdString(record.name);
+                    painter.drawText(x + TitleOffsetSmall, y, label_width, h, Qt::AlignVCenter | Qt::AlignLeft, text);
+                }
             }
         }
+        else
+        {
+            painter.drawLine(x, y, x, y + h);
+        }
     }
-    else
-    {
-        painter.drawLine(x, y, x, y + h);
-    }    
 
-    pos.translate(0, RecordHeight);
-    drawRecords(painter, pos, record.enclosed);
+    offset.ry() += RecordHeight;
+    drawRecords(painter, viewport, offset, record.enclosed);
 
     m_statistics.numRecords++;
 }
 
-void TimeLineThread::drawRecords(QPainter& painter, QRectF pos, const std::vector<Record>& records)
+void TimeLineThread::drawRecords(QPainter& painter, QRectF viewport, QPointF offset, const std::vector<Record>& records)
 {
-    const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
     for (const auto& record : records)
     {
-        coord_t x = pos.x() + record.timeStart * pixpersec;
+        coord_t x = offset.x() + record.timeStart * pixpersec;
         coord_t w = (record.timeEnd - record.timeStart) * pixpersec;
 
         if (x + w < 0)
@@ -329,46 +329,55 @@ void TimeLineThread::drawRecords(QPainter& painter, QRectF pos, const std::vecto
             continue;
         }
 
-        if (x > viewportWidth)
+        if (x > viewport.width())
         {
             break;
         }
 
-        drawRecord(painter, pos, record);
+        drawRecord(painter, viewport, offset, record);
     }
 }
 
-void TimeLineThread::drawEvents(QPainter& painter, QRectF pos, coord_t textYOffset, const std::vector<Event>& events)
+void TimeLineThread::drawEvents(QPainter& painter, QRectF viewport, QPointF offset, coord_t textYOffset, const std::vector<Event>& events)
 {
-    const auto viewportWidth = pos.width();
     const auto pixpersec = m_view.pixelsPerSecond();
 
     QString text;
 
     for (const auto& event : m_thread->events)
     {
-        coord_t x = pos.x() + event.time * pixpersec;
+        coord_t x = offset.x() + event.time * pixpersec;
+        coord_t y = offset.y();
         if (x < 0)
         {
             continue;
         }
 
-        if (x > viewportWidth)
+        if (x > viewport.width())
         {
             break;
         }
 
-        painter.setPen(Qt::cyan);
-        painter.drawLine(x,
-                         pos.y() - ThreadTitleHeight / 4,
-                         x,
-                         pos.y() + height() - ThreadTitleHeight);
+        x += viewport.x();
+        y += viewport.y();
 
-        painter.setPen(Qt::darkCyan);
-        painter.drawText(x  + TitleOffsetSmall, pos.y() + textYOffset,
-                         viewportWidth, RecordHeight,
-                         Qt::AlignVCenter | Qt::AlignLeft,
-                         text.fromStdString(event.name));
+        coord_t y_start = std::max<coord_t>(y - ThreadTitleHeight / 4, viewport.top());
+        coord_t y_end = std::min<coord_t>(y + height() - ThreadTitleHeight, viewport.bottom());
+
+        if (y_end > y_start)
+        {
+            painter.setPen(Qt::cyan);
+            painter.drawLine(x, y_start, x, y_end);
+
+            QRectF titleRect(x  + TitleOffsetSmall, y + textYOffset, viewport.width(), RecordHeight);
+            if (titleRect.intersects(viewport))
+            {
+                painter.setPen(Qt::darkCyan);
+                painter.drawText(titleRect,
+                                Qt::AlignVCenter | Qt::AlignLeft,
+                                text.fromStdString(event.name));
+            }
+        }
     }
 }
 

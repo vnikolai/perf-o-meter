@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -115,8 +115,7 @@ void TimeLineView::paintGL()
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    const auto thisWidth = width();
-    const auto thisHeight = height();
+    QRectF viewport = getViewport();
 
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -136,26 +135,24 @@ void TimeLineView::paintGL()
     {
         coord_t componentHeight = component->height();
 
-        if (pos.ry() + componentHeight < RulerHeight + RulerDistReport)
+        if (pos.ry() + componentHeight <= 0)
         {
             pos.ry() += componentHeight;
             continue;
         }
 
-        component->render(painter, QRectF(pos, QSizeF(width(), height())));
+        component->render(painter, viewport, pos);
 
         pos.ry() += componentHeight;
-        if (pos.ry() >= thisHeight)
+        if (pos.ry() >= viewport.height())
         {
             break;
         }
     }
 
-    const coord_t offset = RulerHeight + RulerDistReport;
-
     for (auto& component : m_components)
     {
-        component->renderOverlay(painter, QRectF(0, offset, thisWidth, thisHeight - offset));
+        component->renderOverlay(painter, viewport, pos);
     }
 
     for (auto& component : m_components)
@@ -171,15 +168,33 @@ void TimeLineView::paintGL()
     drawRuler(painter, pos);
 
     painter.setPen(Qt::darkGreen);
-    painter.drawLine(m_mousePosition.x(), 0, m_mousePosition.x(), thisHeight);
+    painter.drawLine(m_mousePosition.x(), viewport.top(), m_mousePosition.x(), viewport.bottom());
 
     QString text;
     painter.setPen(RulerBackgroundColor);
     painter.drawText(m_mousePosition.x() + TitleOffsetSmall, RulerHeight, 200, 50,
                      Qt::AlignTop | Qt::AlignLeft,
-                     text.fromStdString(format_time(timeAtPoint(m_mousePosition.x()))));
+                     text.fromStdString(format_time(timeAtPoint(m_mousePosition.x() - viewport.left()))));
 
     painter.end();
+}
+
+QRectF TimeLineView::getViewport() const
+{
+    auto thisWidth = width();
+    auto thisHeight = height();
+
+    if (m_verticalScrollBar.isVisible())
+    {
+        thisWidth -= m_verticalScrollBar.width();
+    }
+
+    if (m_horizontalScrollBar.isVisible())
+    {
+        thisHeight -= m_horizontalScrollBar.height();
+    }
+
+    return QRectF(0, 0, thisWidth, thisHeight);
 }
 
 void TimeLineView::keyPressEvent(QKeyEvent* event)
@@ -264,12 +279,14 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         }
         case Qt::Key_Plus:
         {
-            zoom(m_zoom * (ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep), width() / 2);
+            zoom(m_zoom * (ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep),
+                 getViewport().width() / 2);
             break;
         }
         case Qt::Key_Minus:
         {
-            zoom(m_zoom / (ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep), width() / 2);
+            zoom(m_zoom / (ctrl ? ZoomKeyboardLargeStep : ZoomKeyboardStep),
+                 getViewport().width() / 2);
             break;
         }
         case Qt::Key_Asterisk:
@@ -316,7 +333,9 @@ void TimeLineView::mousePressEvent(QMouseEvent* event)
         m_mouseDragActive = true;
     }
 
-    ComponentPtr component = getComponentUnderPoint(m_mousePosition);
+    QPointF hitTestPosition = m_mousePosition - getViewport().topLeft();
+
+    ComponentPtr component = getComponentUnderPoint(hitTestPosition);
     if (m_componentWithFocus && m_componentWithFocus != component)
     {
         if (m_componentWithFocus)
@@ -338,11 +357,13 @@ void TimeLineView::mouseReleaseEvent(QMouseEvent* event)
         m_mouseDragActive = false;
     }
 
-    QPoint pos;
-    ComponentPtr component = getComponentUnderPoint(m_mousePosition, &pos);
+    QPointF pos;
+    QPointF hitTestPosition = m_mousePosition - getViewport().topLeft();
+
+    ComponentPtr component = getComponentUnderPoint(hitTestPosition, &pos);
     if (component)
     {
-        QPoint localPosition = m_mousePosition - pos;
+        QPointF localPosition = hitTestPosition - pos;
         component->mouseClick(localPosition);
     }
 
@@ -358,14 +379,16 @@ void TimeLineView::mouseMoveEvent(QMouseEvent* event)
 
     if (m_mouseDragActive)
     {
-        QPoint delta = event->pos() - m_mousePosition;
+        QPointF delta = event->pos() - m_mousePosition;
         scrollBy(-delta);
     }
 
     m_mousePosition = event->pos();
 
-    QPoint pos;
-    ComponentPtr component = getComponentUnderPoint(m_mousePosition, &pos);
+    QPointF pos;
+    QPointF hitTestPosition = m_mousePosition - getViewport().topLeft();
+
+    ComponentPtr component = getComponentUnderPoint(hitTestPosition, &pos);
 
     if (m_componentUnderMouse != component && m_componentUnderMouse)
     {
@@ -374,7 +397,7 @@ void TimeLineView::mouseMoveEvent(QMouseEvent* event)
 
     if (component)
     {
-        QPoint localPosition = m_mousePosition - pos;
+        QPointF localPosition = hitTestPosition - pos;
         component->mouseMove(localPosition);
     }
 
@@ -390,7 +413,8 @@ void TimeLineView::wheelEvent(QWheelEvent* event)
 
     if (event->modifiers() & Qt::ControlModifier)
     {
-        zoom(delta > 0 ? m_zoom * ZoomWheelCoef : m_zoom / ZoomWheelCoef, m_mousePosition.x());
+        zoom(delta > 0 ? m_zoom * ZoomWheelCoef : m_zoom / ZoomWheelCoef,
+             m_mousePosition.x() - getViewport().left());
     }
     else
     {
@@ -405,11 +429,13 @@ void TimeLineView::wheelEvent(QWheelEvent* event)
 
 void TimeLineView::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    QPoint pos;
-    ComponentPtr component = getComponentUnderPoint(m_mousePosition, &pos);
+    QPointF pos;
+    QPointF hitTestPosition = m_mousePosition - getViewport().topLeft();
+
+    ComponentPtr component = getComponentUnderPoint(hitTestPosition, &pos);
     if (component)
     {
-        QPoint localPosition = m_mousePosition - pos;
+        QPointF localPosition = hitTestPosition - pos;
         component->mouseDoubleClick(localPosition);
     }
 
@@ -490,16 +516,15 @@ void TimeLineView::drawRuler(QPainter& painter, QPointF& pos)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    const auto thisWidth = width();
-    const auto thisHeight = height();
+    QRectF viewport = getViewport();
 
     constexpr coord_t PrimaryStrokeLength = 16;
     constexpr coord_t SecondaryStrokeLength = 12;
 
     painter.setPen(Qt::black);
     painter.setBrush(RulerBackgroundColor);
-    painter.drawRect(1, 0, thisWidth - 1, RulerHeight);
-    painter.drawLine(0, RulerHeight, thisWidth, RulerHeight);
+    painter.drawRect(viewport.left(), 0, viewport.width() - 1, RulerHeight);
+    painter.drawLine(viewport.top(), RulerHeight, viewport.width(), RulerHeight);
 
     double rulerStep = 0;
     coord_t timeStep = 0;
@@ -508,13 +533,16 @@ void TimeLineView::drawRuler(QPainter& painter, QPointF& pos)
     QString text;
 
     const auto pixpersec = pixelsPerSecond();
-    const long int rulerCount = thisWidth / rulerStep;
+    const long int rulerCount = viewport.width() / rulerStep;
 
     coord_t rulerOffset = static_cast<coord_t>(pos.x() / (rulerStep * 2));
 
     for (long int i = 0; i < rulerCount + 2; ++i)
     {
-        coord_t x = i * rulerStep + (pos.x() > 0 ? pos.x() : pos.x() - rulerOffset * 2 * rulerStep);
+        coord_t x =
+            i * rulerStep +
+            (pos.x() > 0 ? pos.x() : pos.x() - rulerOffset * 2 * rulerStep) +
+            viewport.left();
 
         if (i % 2)
         {
@@ -535,7 +563,8 @@ void TimeLineView::drawRuler(QPainter& painter, QPointF& pos)
     if (pos.x() > 0)
     {
         painter.setPen(Qt::darkRed);
-        painter.drawLine(pos.x(), 0, pos.x(), thisHeight);
+        coord_t zeroPointX = pos.x() + viewport.left();
+        painter.drawLine(zeroPointX, viewport.top(), zeroPointX, viewport.bottom());
     }
 }
 
@@ -577,13 +606,12 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
         }
     }
 
-    const auto thisWidth = width();
-    const auto thisHeight = height();
+    QRectF viewport = getViewport();
 
-    const coord_t statusMessageHeight = thisHeight - 2 * StatusMessageDist;
+    const coord_t statusMessageHeight = viewport.height() - 2 * StatusMessageDist;
 
-    const coord_t posX = thisWidth - StatusMessageWidth - StatusMessageDist;
-    const coord_t posY = StatusMessageDist;
+    const coord_t posX = viewport.right() - StatusMessageWidth - StatusMessageDist;
+    const coord_t posY = viewport.top() + StatusMessageDist;
 
     painter.fillRect(posX, posY, StatusMessageWidth, statusMessageHeight, StatusMessageBackgroundColor);
 
@@ -683,21 +711,21 @@ coord_t TimeLineView::calculateReportHeight(std::shared_ptr<PerfometerReport> re
     return height;
 }
 
-TimeLineView::ComponentPtr TimeLineView::getComponentUnderPoint(QPoint point, QPoint* outPos)
+TimeLineView::ComponentPtr TimeLineView::getComponentUnderPoint(QPointF point, QPointF* outPos)
 {
-    QPoint pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
+    QPointF pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
 
     for (auto& component : m_components)
     {
         coord_t componentHeight = component->height();
 
-        if (pos.ry() + componentHeight < RulerHeight + RulerDistReport)
+        if (pos.ry() + componentHeight <= 0)
         {
             pos.ry() += componentHeight;
             continue;
         }
 
-        QPoint localPosition = point - pos;
+        QPointF localPosition = point - pos;
         if (localPosition.y() < 0 || localPosition.y() > componentHeight)
         {
             pos.ry() += componentHeight;
@@ -741,7 +769,7 @@ void TimeLineView::zoom(zoom_t z, qreal pivot)
 
 void TimeLineView::zoomBy(zoom_t zoomDelta)
 {
-    zoomBy(zoomDelta, width() / 2);
+    zoomBy(zoomDelta, getViewport().width() / 2);
 }
 
 void TimeLineView::zoomBy(zoom_t zoomDelta, qreal pivot)

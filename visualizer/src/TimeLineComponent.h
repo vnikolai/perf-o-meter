@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -49,15 +49,15 @@ namespace visualizer
         TimeLineComponent(TimeLineView& view);
         coord_t height() const;
 
-        virtual void mouseMove(QPoint pos);
+        virtual void mouseMove(QPointF pos);
         virtual void mouseLeft();
-        virtual void mouseClick(QPoint pos);
-        virtual void mouseDoubleClick(QPoint pos);
+        virtual void mouseClick(QPointF pos);
+        virtual void mouseDoubleClick(QPointF pos);
         virtual void focusLost();
 
         virtual void onBeginFrame();
-        virtual void render(QPainter& painter, QRectF pos);
-        virtual void renderOverlay(QPainter& painter, QRectF pos);
+        virtual void render(QPainter& painter, QRectF viewport, QPointF offset);
+        virtual void renderOverlay(QPainter& painter, QRectF viewport, QPointF offset);
 
         const std::string& name() const;
         void setName(const std::string& name);
