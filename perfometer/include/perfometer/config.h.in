@@ -23,8 +23,8 @@ SOFTWARE. */
 #include <cstddef>
 #include <cstdint>
 
-#include PERFOMETER_TIME_H
-#include PERFOMETER_THREAD_H
+#include @PERFOMETER_TIME_H@
+#include @PERFOMETER_THREAD_H@
 
 //#define PERFOMETER_LOG_RECORD_SWAP_OVERHEAD
 
