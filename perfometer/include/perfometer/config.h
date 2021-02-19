@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,9 @@ SOFTWARE. */
 
 #include <cstddef>
 #include <cstdint>
+
+#include PERFOMETER_TIME_H
+#include PERFOMETER_THREAD_H
 
 //#define PERFOMETER_LOG_RECORD_SWAP_OVERHEAD
 

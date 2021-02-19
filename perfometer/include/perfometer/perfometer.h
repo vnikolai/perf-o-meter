@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,6 @@ SOFTWARE. */
 #pragma once
 
 #include <perfometer/config.h>
-#include <perfometer/thread.h>
-#include <perfometer/time.h>
 
 namespace perfometer
 {

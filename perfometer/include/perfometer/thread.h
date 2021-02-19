@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,13 @@ SOFTWARE. */
 #pragma once
 
 #include <thread>
+#include <mutex>
 
 namespace perfometer
 {
+    using mutex = std::recursive_mutex;
+    using scoped_lock = std::unique_lock<mutex>;
+
     using thread_id = std::thread::id;
 
     inline thread_id get_thread_id()
