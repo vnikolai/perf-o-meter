@@ -5,7 +5,21 @@ add_library (perfometer
             src/perfometer.cpp
             src/serializer.cpp)
 
+set(PERFOMETER_TIME_H <perfometer/time.h>)
+set(PERFOMETER_THREAD_H <perfometer/thread.h>)
+
+if (OVERRIDE_TIME_H)
+    set(PERFOMETER_TIME_H ${OVERRIDE_TIME_H})
+endif()
+
+if (OVERRIDE_THREAD_H)
+    set(PERFOMETER_THREAD_H ${OVERRIDE_THREAD_H})
+endif()
+
 target_include_directories (perfometer PUBLIC include)
+target_compile_definitions(perfometer PUBLIC 
+                           PERFOMETER_TIME_H=${PERFOMETER_TIME_H}
+                           PERFOMETER_THREAD_H=${PERFOMETER_THREAD_H})
 
 file(GLOB_RECURSE headers "include/perfometer/*.h")
 set_target_properties(perfometer PROPERTIES PUBLIC_HEADER "${headers}")
