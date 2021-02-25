@@ -2,3 +2,4 @@ build/
 temp/
 bin/
 lib/
+perfometer/include/perfometer/config.h
