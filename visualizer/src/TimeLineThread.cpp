@@ -73,7 +73,7 @@ HitTestResult hitTestRecord(QPointF pos,
         return HitTestResult::Abort;
     }
 
-    if (pos.x() > x + w || w < 1)
+    if (pos.x() > x + w || w < 1 || pos.y() < y)
     {
         return HitTestResult::NoHit;
     }
@@ -131,7 +131,7 @@ void TimeLineThread::mouseMove(QPointF pos)
     QTime hitTestTime;
     hitTestTime.start();
     
-    for (auto record : m_thread->records)
+    for (const auto& record : m_thread->records)
     {
         HitTestResult result = hitTestRecord(pos,
                                              pixelPerSecond,
@@ -211,6 +211,16 @@ void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
     drawRecords(painter, viewport, childPos, m_thread->records);
 
     drawEvents(painter, viewport, childPos, m_recordsHeight, m_thread->events);
+
+    if (m_selectedRecordInfo)
+    {
+        QRectF bounds(m_selectedRecordInfo->bounds);
+        bounds.translate(viewport.topLeft() + offset);
+
+        painter.setPen(Qt::white);
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(bounds.intersected(viewport));
+    }
 
     if (m_highlightedRecordInfo)
     {
@@ -302,15 +312,15 @@ void TimeLineThread::drawRecord(QPainter& painter, QRectF viewport, QPointF offs
                     painter.drawText(x + TitleOffsetSmall, y, label_width, h, Qt::AlignVCenter | Qt::AlignLeft, text);
                 }
             }
+
+            offset.ry() += RecordHeight;
+            drawRecords(painter, viewport, offset, record.enclosed);
         }
         else
         {
             painter.drawLine(x, y, x, y + h);
         }
     }
-
-    offset.ry() += RecordHeight;
-    drawRecords(painter, viewport, offset, record.enclosed);
 
     m_statistics.numRecords++;
 }
