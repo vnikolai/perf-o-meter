@@ -28,6 +28,8 @@ SOFTWARE. */
 #include <perfometer/format.h>
 #include <perfometer/helpers.h>
 
+#include <QDebug>
+
 namespace visualizer {
 
 using PerfTime = uint64_t;
@@ -39,8 +41,9 @@ namespace {
 class reader : public std::ifstream
 {
 public:
-	reader(const std::string& fileName)
-		: std::ifstream(fileName, std::ios::binary)
+	reader(const std::string& fileName,
+		   std::ios::openmode openMode = std::ios::binary)
+		: std::ifstream(fileName, openMode)
 	{
 	}
 
@@ -110,32 +113,29 @@ PerfometerReport::~PerfometerReport()
 {
 }
 
-bool PerfometerReport::loadFile(const std::string& fileName,
-								std::function<void(const std::string&)> logger)
+bool PerfometerReport::loadFile(const std::string& fileName)
 {
 	PERFOMETER_LOG_WORK_FUNCTION();
 
-	auto log = [&logger](const std::string& text)
-	{
-		if (logger)
-		{
-			logger(text);
-		}
-	};
+	qDebug() << "Loading report" << fileName.c_str();
 
-    reader report(fileName);
+    reader report(fileName, std::ios::binary | std::ios::ate);
 	if (!report)
 	{
-		log(std::string("ERROR loading report: Cannot open file ") + fileName);
+		qCritical() << "Loading report: Cannot open file" << fileName.c_str();
 		return false;
 	}
+
+	const size_t reportSize = report.tellg();
+	report.seekg(0);
+	size_t progress = 0;
 
 	char header[16];
 	report.read(header, 11);
 
 	if (report.fail() || std::strncmp(header, perfometer::format::header, 11))
 	{
-		log("ERROR loading report: wrong file format");
+		qCritical() << "Loading report: wrong file format";
 		return false;
 	}
 
@@ -162,8 +162,15 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 	{
 		if (report.fail())
 		{
-			log(std::string("ERROR loading report: cannot read from file ") + fileName);
+			qCritical() << "Loading report: cannot read from file" << fileName.c_str();
 			return false;
+		}
+
+		size_t currentProgress = report.tellg() * 100 / reportSize;
+		if (currentProgress > progress)
+		{
+			progress = currentProgress;
+			qDebug() << "Report loading progress " << progress << "%";
 		}
 
 		switch (record_type)
@@ -175,7 +182,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				if (timeSize > 8)
 				{
-					log("ERROR loading report: Time size too large");
+					qCritical() << "Loading report: Time size too large";
 					return false;
 				}
 
@@ -193,7 +200,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 
 				if (threadIDSize > 8)
 				{
-					log("ERROR loading report: Thread ID size too large");
+					qCritical() << "Loading report: Thread ID size too large";
 					return false;
 				}
 
@@ -328,7 +335,7 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 			}
 			default:
 			{
-				log("ERROR loading report: Unknown record type");
+				qCritical() << "Loading report: Unknown record type";
 
 				return m_traits.AllowIncompleteReport;
 			}
@@ -339,6 +346,8 @@ bool PerfometerReport::loadFile(const std::string& fileName,
 	{
 		m_thread_names[pair.first] = m_strings[pair.second];
 	}
+
+	qDebug() << "Report loading done";
 
     return true;
 }

@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2021 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,14 +35,25 @@ struct options
 	bool		profile = false;
 };
 
-static void log(const std::string& text)
+void MessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
-	static std::ofstream logFile("perfometer.log", std::ios::trunc);
+	std::string message;
 
-	logFile << text << std::endl;
-	logFile.flush();
+  	switch (type)
+	{
+		case QtDebugMsg: break;
+		case QtInfoMsg:  break;
+		case QtWarningMsg: message = "WARNING: "; break;
+		case QtCriticalMsg: message = "CRITICAL: "; break;
+		case QtFatalMsg: 	message = "FATAL: "; break;
+	}
 
-	std::cerr << text << std::endl;
+	message += msg.toStdString();
+
+	std::cout << message << std::endl;
+
+  	static std::ofstream logFile("perfometer.log", std::ios::trunc);
+	logFile << message << std::endl << std::flush;
 }
 
 void parseCommandline(options& opts, int argc, char* argv[])
@@ -66,6 +77,8 @@ void parseCommandline(options& opts, int argc, char* argv[])
 
 int main(int argc, char** argv)
 {
+	qInstallMessageHandler(MessageHandler);
+
 	QApplication app(argc, argv);
 
 	char title[64];
@@ -96,7 +109,7 @@ int main(int argc, char** argv)
 	{
 		auto report = std::make_shared<visualizer::PerfometerReport>();
 
-		if (report->loadFile(opts.reportFileName, log))
+		if (report->loadFile(opts.reportFileName))
 		{
 			timeLineView->setReport(report);
 
