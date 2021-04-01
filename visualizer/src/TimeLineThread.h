@@ -46,6 +46,8 @@ namespace visualizer
         void mouseDoubleClick(QPointF pos) override;
         void focusLost() override;
 
+        void onCopy(QClipboard* clipboard) override;
+
         void render(QPainter& painter, QRectF viewport, QPointF offset) override;
         void renderOverlay(QPainter& painter, QRectF viewport, QPointF offset) override;
 

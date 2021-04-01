@@ -188,6 +188,14 @@ void TimeLineThread::focusLost()
     m_selectedRecordInfo.reset();
 }
 
+void TimeLineThread::onCopy(QClipboard* clipboard)
+{
+    if (m_selectedRecordInfo)
+    {
+        clipboard->setText(QString::fromStdString(m_selectedRecordInfo->name));
+    }
+}
+
 void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
 {
     PERFOMETER_LOG_WORK_FUNCTION();

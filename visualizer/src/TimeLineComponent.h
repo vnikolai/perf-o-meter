@@ -23,6 +23,7 @@ SOFTWARE. */
 #include "PerfometerReport.h"
 #include "TimeLineConfig.h"
 #include <QPainter>
+#include <QClipboard>
 
 namespace visualizer
 {
@@ -54,6 +55,9 @@ namespace visualizer
         virtual void mouseClick(QPointF pos);
         virtual void mouseDoubleClick(QPointF pos);
         virtual void focusLost();
+
+        virtual void onCopy(QClipboard* clipboard);
+        virtual void onPaste(QClipboard* clipboard);
 
         virtual void onBeginFrame();
         virtual void render(QPainter& painter, QRectF viewport, QPointF offset);

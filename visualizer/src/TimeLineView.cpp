@@ -27,6 +27,7 @@ SOFTWARE. */
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include <QApplication>
 
 #include <perfometer/perfometer.h>
 #include <perfometer/helpers.h>
@@ -292,6 +293,30 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Asterisk:
         {
             m_zoom = DefaultZoom;
+            break;
+        }
+        case Qt::Key_C:
+        {
+            if (ctrl)
+            {
+                for (const auto& component : m_components)
+                {
+                    component->onCopy(QApplication::clipboard());
+                }
+            }
+            
+            break;
+        }
+        case Qt::Key_V:
+        {
+            if (ctrl)
+            {
+                for (const auto& component : m_components)
+                {
+                    component->onPaste(QApplication::clipboard());
+                }
+            }
+            
             break;
         }
         case Qt::Key_T:

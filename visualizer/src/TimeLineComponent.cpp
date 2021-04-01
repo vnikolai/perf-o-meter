@@ -63,6 +63,14 @@ void TimeLineComponent::focusLost()
 {
 }
 
+void TimeLineComponent::onCopy(QClipboard* clipboard)
+{
+}
+
+void TimeLineComponent::onPaste(QClipboard* clipboard)
+{
+}
+
 void TimeLineComponent::onBeginFrame()
 {
     m_statistics.numRecords = 0;
