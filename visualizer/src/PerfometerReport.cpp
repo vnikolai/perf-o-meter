@@ -291,7 +291,7 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 				
 					// records.resize(count);
 					// shrinking requires move assignment for some reason, so here's workaround:
-					while (it != records.end())
+					while (records.size() > count)
 					{
 						records.pop_back();
 					}
