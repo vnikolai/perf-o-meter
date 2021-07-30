@@ -30,11 +30,20 @@ using perf_thread_id = int64_t;		// holding at least 8 bytes
 using perf_time = uint64_t;			// holding at least 8 bytes
 using perf_string_id = perfometer::string_id;
 
+enum time_format
+{
+	automatic,
+	seconds,
+	milliseconds,
+	microseconds
+};
+
 class reader : public std::ifstream
 {
 public:
-	reader(const char* file_name)
-		: std::ifstream(file_name, std::ios::binary)
+	reader(const char* file_name,
+		   std::ios::openmode openMode = std::ios::binary)
+		: std::ifstream(file_name, openMode)
 	{
 	}
 
@@ -92,23 +101,53 @@ private:
 
 //-----------------------------------------------------------------------------
 
-int main(int argc, const char** argv)
+struct time_formatter
 {
-	if (argc < 2)
-	{
-		std::cout << "Not enough arguments. Use printer [report_file_name]" << std::endl;
-		return -1;
-	}
+	double time;
+	time_format tfmt;
 
-	reader report_file(argv[1]);
+	friend inline std::ostream& operator << (std::ostream& stream, const time_formatter& formatter)
+	{
+		switch (formatter.tfmt)
+		{
+			case time_format::seconds:
+			{
+				stream << formatter.time << " s";
+				break;
+			}
+			case time_format::milliseconds:
+			{
+				stream << std::fixed << static_cast<uint64_t>(formatter.time * 1000) << " ms";
+				break;
+			}
+			case time_format::microseconds:
+			{
+				stream << std::fixed << static_cast<uint64_t>(formatter.time * 1000000) << " us";
+				break;
+			}
+			case time_format::automatic:
+			default:
+			{
+				stream << visualizer::format_time(formatter.time);
+				break;
+			}
+		}
+
+		return stream;
+	}
+};
+
+int process(const char* filename, time_format tfmt)
+{
+	reader report_file(filename);
 
 	if (!report_file)
 	{
-		std::cout << "Cannot open file " << argv[1] << std::endl;
+		std::cout << "Cannot open file " << filename << std::endl;
 		return -1;
 	}
 
-	std::cout << "Opening report file " << argv[1] << std::endl;
+	std::cout << "Opening report file " << filename << std::endl;
 
 	char header[16];
 	report_file.read(header, 11);
@@ -116,7 +155,7 @@ int main(int argc, const char** argv)
 
 	if (report_file.fail() || std::strncmp(header, perfometer::format::header, 11))
 	{
-		std::cout << "Wrong file format " << argv[1] << std::endl;
+		std::cout << "Wrong file format " << filename << std::endl;
 		return -1;
 	}
 
@@ -150,7 +189,7 @@ int main(int argc, const char** argv)
 	{
 		if (report_file.fail())
 		{
-			std::cout << "Error reading file " << argv[1] << std::endl;
+			std::cout << "Error reading file " << filename << std::endl;
 			return -1;
 		}
 
@@ -242,13 +281,13 @@ int main(int argc, const char** argv)
 				{
 					case perfometer::format::record_type::work: std::cout << "Work"; break;
 					case perfometer::format::record_type::wait: std::cout << "Wait"; break;
-						break;
+					default: break;
 				}
 
 				std::cout << " " << string_id << ":" << strings[string_id].c_str()
 						  << " on "  << thread_id << ":" << strings[threads[thread_id]].c_str()
-						  << " started " << visualizer::format_time(static_cast<double>(time_start - init_time) / clock_frequency)
-						  << " duration " << visualizer::format_time(static_cast<double>(time_end - time_start) / clock_frequency)
+						  << " started " << time_formatter{static_cast<double>(time_start - init_time) / clock_frequency, tfmt}
+						  << " duration " << time_formatter{static_cast<double>(time_end - time_start) / clock_frequency, tfmt}
 						  << std::endl;
 
 				break;
@@ -265,7 +304,7 @@ int main(int argc, const char** argv)
 
 				std::cout << "Event " << strings[string_id].c_str()
 						  << " on "  << strings[threads[thread_id]].c_str()
-						  << " fired " << static_cast<double>(t - init_time) / clock_frequency << " sec"
+						  <<  " fired " << time_formatter{static_cast<double>(t - init_time) / clock_frequency, tfmt}
 						  << std::endl;
 
 				break;
@@ -279,4 +318,40 @@ int main(int argc, const char** argv)
 	}
 
 	return 0;
+}
+
+int main(int argc, const char** argv)
+{
+	if (argc < 2)
+	{
+		std::cout << "Not enough arguments. Use printer [report_file_name]" << std::endl;
+		return -1;
+	}
+
+	time_format tfmt = time_format::automatic;
+	const char* filename = nullptr;
+
+	for (int i = 1; i < argc; ++i)
+	{
+		using namespace std::string_literals;
+
+		if (argv[i] == "-ts"s)
+		{
+			tfmt = time_format::seconds;
+		}
+		else if (argv[i] == "-tm"s)
+		{
+			tfmt = time_format::milliseconds;
+		}
+		else if (argv[i] == "-tM"s)
+		{
+			tfmt = time_format::microseconds;
+		}
+		else
+		{
+			filename = argv[i];
+		}		
+	}
+
+	return process(filename, tfmt);
 }
