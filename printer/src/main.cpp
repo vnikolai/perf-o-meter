@@ -143,7 +143,7 @@ int process(const char* filename, time_format tfmt)
 
 	if (!report_file)
 	{
-		std::cout << "Cannot open file " << filename << std::endl;
+		std::cerr << "Cannot open file " << filename << std::endl;
 		return -1;
 	}
 
@@ -320,37 +320,66 @@ int process(const char* filename, time_format tfmt)
 	return 0;
 }
 
+void print_help()
+{
+	std::cout << "Usage: printer [options] [filename]" << std::endl
+			  << "Perf-o-meter printer loads binary report and prints it as text to stdout" << std::endl
+			  << "Arguments:" << std::endl
+			  << "-ts: force seconds time format" << std::endl
+			  << "-tm: force milliseconds time format" << std::endl
+			  << "-tM: force microseconds time format" << std::endl;
+
+}
+
 int main(int argc, const char** argv)
 {
-	if (argc < 2)
-	{
-		std::cout << "Not enough arguments. Use printer [report_file_name]" << std::endl;
-		return -1;
-	}
-
-	time_format tfmt = time_format::automatic;
 	const char* filename = nullptr;
+	time_format tfmt = time_format::automatic;
+
+	bool parameters_parsed = true;
 
 	for (int i = 1; i < argc; ++i)
 	{
 		using namespace std::string_literals;
 
-		if (argv[i] == "-ts"s)
+		const char* arg = argv[i];
+		if (arg[0] == '-')
 		{
-			tfmt = time_format::seconds;
-		}
-		else if (argv[i] == "-tm"s)
-		{
-			tfmt = time_format::milliseconds;
-		}
-		else if (argv[i] == "-tM"s)
-		{
-			tfmt = time_format::microseconds;
+			if (arg == "--help"s)
+			{
+				print_help();
+				return 0;
+			}
+			else if (arg == "-ts"s)
+			{
+				tfmt = time_format::seconds;
+			}
+			else if (arg == "-tm"s)
+			{
+				tfmt = time_format::milliseconds;
+			}
+			else if (arg == "-tM"s)
+			{
+				tfmt = time_format::microseconds;
+			}
+			else
+			{
+				parameters_parsed = false;
+				std::cerr << "Unknown argument " << arg << std::endl;
+			}
 		}
 		else
 		{
 			filename = argv[i];
 		}		
+	}
+
+	if (!parameters_parsed || !filename)
+	{
+		std::cerr << "Incorrect arguments, aborting "<< std::endl;
+		std::cerr << "printer [options] [report_file_name]" << std::endl;
+		std::cerr << "printer --help" << std::endl;
+		return -1;
 	}
 
 	return process(filename, tfmt);
