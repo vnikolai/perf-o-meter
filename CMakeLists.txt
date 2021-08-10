@@ -2,6 +2,10 @@
 
 cmake_minimum_required(VERSION 3.1)
 
+if (BUILD_TESTS)
+    enable_testing()
+endif()
+
 option (BUILD_PRINTER "Build printer" ON)
 option (BUILD_SAMPLES "Build printer" ON)
 option (BUILD_VISUALIZER "Build visualizer" ON)
@@ -42,6 +46,3 @@ if (BUILD_VISUALIZER)
     add_subdirectory (visualizer)
 endif()
 
-if (BUILD_TESTS)
-    add_subdirectory (test)
-endif()
