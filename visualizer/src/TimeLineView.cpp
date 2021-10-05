@@ -39,7 +39,9 @@ TimeLineView::TimeLineView()
     , m_horizontalScrollBar(Qt::Horizontal, this)
     , m_verticalScrollBar(Qt::Vertical, this)
     , m_mousePosition(0, 0)
+    , m_mousePanStartPosition(0, 0)
     , m_mouseDragActive(false)
+    , m_mousePanActive(false)
     , m_zoom(DefaultZoom)
     , m_reportHeightPx(0)
     , m_statusDisplayMode(StatusDisplayMode::None)
@@ -176,6 +178,13 @@ void TimeLineView::paintGL()
     painter.drawText(m_mousePosition.x() + TitleOffsetSmall, RulerHeight, 200, 50,
                      Qt::AlignTop | Qt::AlignLeft,
                      text.fromStdString(format_time(timeAtPoint(m_mousePosition.x() - viewport.left()))));
+
+    if (m_mousePanActive)
+    {
+        painter.drawText(m_mousePosition.x() + TitleOffsetSmall, 2 * RulerHeight, 200, 50,
+                     Qt::AlignTop | Qt::AlignLeft,
+                     text.fromStdString(format_time(timeAtPoint(m_mousePosition.x() - m_mousePanStartPosition.x()))));
+    }
 
     painter.end();
 }
@@ -357,6 +366,11 @@ void TimeLineView::mousePressEvent(QMouseEvent* event)
     {
         m_mouseDragActive = true;
     }
+    if (!modifier && event->button() == Qt::MiddleButton)
+    {
+        m_mousePanActive = true;
+        m_mousePanStartPosition = m_mousePosition;
+    }
 
     QPointF hitTestPosition = m_mousePosition - getViewport().topLeft();
 
@@ -380,6 +394,12 @@ void TimeLineView::mouseReleaseEvent(QMouseEvent* event)
     if (event->button() == Qt::LeftButton)
     {
         m_mouseDragActive = false;
+    }
+
+    if (event->button() == Qt::MiddleButton)
+    {
+        m_mousePanActive = false;
+        m_mousePanStartPosition = {};
     }
 
     QPointF pos;

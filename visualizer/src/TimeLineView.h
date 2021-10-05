@@ -107,6 +107,9 @@ namespace visualizer
         QPoint                              m_mousePosition;
         bool                                m_mouseDragActive;
 
+        QPoint                              m_mousePanStartPosition;
+        bool                                m_mousePanActive;
+        
         zoom_t                              m_zoom;
         coord_t                             m_reportHeightPx;
 
