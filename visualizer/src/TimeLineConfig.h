@@ -23,7 +23,7 @@ SOFTWARE. */
 #include <QColor>
 
 namespace visualizer {
-    using zoom_t = long long int;
+    using zoom_t = unsigned long long int;
     using coord_t = long int;
 
     constexpr int       DefaultZoom             = 1000;
