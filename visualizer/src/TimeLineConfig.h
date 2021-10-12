@@ -23,8 +23,8 @@ SOFTWARE. */
 #include <QColor>
 
 namespace visualizer {
-    using zoom_t = unsigned long long int;
-    using coord_t = long int;
+    using zoom_t = uint64_t;
+    using coord_t = int64_t;
 
     constexpr int       DefaultZoom             = 1000;
     constexpr double    ZoomWheelCoef           = 1.25;
@@ -58,6 +58,7 @@ namespace visualizer {
     static QColor       StatusMessageBackgroundColor    (16, 16, 16, 128);
     static QColor       ComponentHighlightColor         (48, 48, 48, 128);
     static QColor       RulerBackgroundColor            (228, 230, 241, 255);
+    static QColor       SelectionColor                  (128, 230, 128, 32);
 
     constexpr int NumColors = 8;
     static QColor Colors[NumColors] = { QColor(160, 96, 96, 255), // soft pink

@@ -23,6 +23,7 @@ SOFTWARE. */
 #include <utils/time.h>
 #include <cstring>
 #include <algorithm>
+#include <sstream>
 #include <QPainter>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -170,6 +171,18 @@ void TimeLineView::paintGL()
 
     drawRuler(painter, pos);
 
+    if (m_mousePanActive)
+    {
+        const auto width = m_mousePosition.x() - m_mousePanStartPosition.x();
+
+        painter.fillRect(m_mousePanStartPosition.x(), viewport.top() + RulerHeight, width, viewport.bottom(), SelectionColor);
+
+        painter.setPen(RulerBackgroundColor);
+        painter.drawText(m_mousePosition.x() + TitleOffsetSmall, 2 * RulerHeight, 200, 50,
+                     Qt::AlignTop | Qt::AlignLeft,
+                     format_time(timeAtPoint(width)).c_str());
+    }
+
     painter.setPen(Qt::darkGreen);
     painter.drawLine(m_mousePosition.x(), viewport.top(), m_mousePosition.x(), viewport.bottom());
 
@@ -178,13 +191,6 @@ void TimeLineView::paintGL()
     painter.drawText(m_mousePosition.x() + TitleOffsetSmall, RulerHeight, 200, 50,
                      Qt::AlignTop | Qt::AlignLeft,
                      text.fromStdString(format_time(timeAtPoint(m_mousePosition.x() - viewport.left()))));
-
-    if (m_mousePanActive)
-    {
-        painter.drawText(m_mousePosition.x() + TitleOffsetSmall, 2 * RulerHeight, 200, 50,
-                     Qt::AlignTop | Qt::AlignLeft,
-                     text.fromStdString(format_time(timeAtPoint(m_mousePosition.x() - m_mousePanStartPosition.x()))));
-    }
 
     painter.end();
 }
@@ -361,12 +367,15 @@ void TimeLineView::mousePressEvent(QMouseEvent* event)
     const bool shift = event->modifiers() & Qt::ShiftModifier;
     const bool alt = event->modifiers() & Qt::AltModifier;
     const bool modifier = ctrl || shift || alt;
+    const bool left_button = event->button() == Qt::LeftButton;
+    const bool right_button = event->button() == Qt::RightButton;
+    const bool middle_button = event->button() == Qt::MiddleButton;
 
-    if (!modifier && event->button() == Qt::LeftButton)
+    if (!modifier && left_button)
     {
         m_mouseDragActive = true;
     }
-    if (!modifier && event->button() == Qt::MiddleButton)
+    else if (!modifier && middle_button)
     {
         m_mousePanActive = true;
         m_mousePanStartPosition = m_mousePosition;
@@ -391,12 +400,15 @@ void TimeLineView::mouseReleaseEvent(QMouseEvent* event)
 {
     super::mouseReleaseEvent(event);
 
-    if (event->button() == Qt::LeftButton)
+    const bool left_button = event->button() == Qt::LeftButton;
+    const bool right_button = event->button() == Qt::RightButton;
+    const bool middle_button = event->button() == Qt::MiddleButton;
+
+    if (left_button)
     {
         m_mouseDragActive = false;
     }
-
-    if (event->button() == Qt::MiddleButton)
+    else if (middle_button)
     {
         m_mousePanActive = false;
         m_mousePanStartPosition = {};
@@ -617,35 +629,24 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    constexpr size_t bufferSize = 256;
-    char text[bufferSize];
+    std::stringstream stream;
 
     switch (m_statusDisplayMode)
     {
         case StatusDisplayMode::ReportInfo:
-            snprintf(text, bufferSize,
-                     "mouse: %d %d\n"
-                     "zoom: %lu\n"
-                     "offset: %f %f\n"
-                     "report time: [%s] - [%s]\n"
-                     "pixel per second: %f\n",
-                     m_mousePosition.x(), m_mousePosition.y(), 
-                     m_zoom,
-                     m_offset.x(), m_offset.y(),
-                     format_time(m_report ? m_report->getStartTime() : 0.f).c_str(),
-                     format_time(m_report ? m_report->getEndTime() : 0.f).c_str(),
-                     pixelsPerSecond());
+            stream << "mouse: " << m_mousePosition.x() << " " << m_mousePosition.y() << std::endl
+                   << "zoom: " << m_zoom << std::endl
+                   << "offset: " << m_offset.x() << " " << m_offset.y() << std::endl
+                   << "report time: [" << format_time(m_report ? m_report->getStartTime() : 0.f) << "] - [" 
+                                       << format_time(m_report ? m_report->getEndTime() : 0.f) <<  "]" << std::endl
+                   << "pixel per second: " << pixelsPerSecond() << std::endl;
         break;
 
         case StatusDisplayMode::Stats:
         {
-            snprintf(text, bufferSize,
-                     "Frame render time: %f\n"
-                     "Hit test time: %f\n"
-                     "visible records: %zu",
-                     m_statistics.frameRenderTime,
-                     m_statistics.hitTestTime,
-                     m_statistics.numRecords);
+            stream << "frame render time: " << m_statistics.frameRenderTime << std::endl
+                   << "hit test time: " << m_statistics.hitTestTime << std::endl
+                   << "visible records: " << m_statistics.numRecords << std::endl;
 
             break;
         }
@@ -666,7 +667,7 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
                      StatusMessageWidth - 2 * StatusMessageTextDist,
                      statusMessageHeight - 2 * StatusMessageTextDist,
                      Qt::AlignTop | Qt::AlignLeft,
-                     text);
+                     stream.str().c_str());
 }
 
 void TimeLineView::layout()
