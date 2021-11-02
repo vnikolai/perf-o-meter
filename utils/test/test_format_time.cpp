@@ -21,43 +21,50 @@ SOFTWARE. */
 #include <utils/time.h>
 #include <iostream>
 
-#define CHECK(a, b) if (a != b) { std::cout << "check failed " << #a << " != " << #b << std::endl; result = -1; }
+template<typename T1, typename T2>
+void print_error(const T1& a, const T2& b, const char* desc_a, const char* desc_b)
+{
+	std::cout << "check failed " << desc_a << " != " << desc_b << std::endl;
+	std::cout << "Expected: " << b << ", actual: " << a << std::endl;
+}
+
+#define CHECK(a, b) if (a != b) { print_error(a, b, #a, #b); result = -1; }
 
 int main(int argc, const char** argv)
 {
 	int result = 0;
 
-	CHECK(visualizer::format_time(3600), "1 h");
-	CHECK(visualizer::format_time(5400), "1 h 30 m");
-	CHECK(visualizer::format_time(7200), "2 h");
+	CHECK(visualizer::format_time(3600), "1h");
+	CHECK(visualizer::format_time(5400), "1h 30m");
+	CHECK(visualizer::format_time(7200), "2h");
 
-	CHECK(visualizer::format_time(10000), "2 h 46 m 40 s");
-	CHECK(visualizer::format_time(1000), "16 m 40 s");
-	CHECK(visualizer::format_time(100), "1 m 40 s");
-	CHECK(visualizer::format_time(10), "10 s");
-	CHECK(visualizer::format_time(1), "1 s");
-	CHECK(visualizer::format_time(0.1), "100 ms");
-	CHECK(visualizer::format_time(0.5), "500 ms");
-	CHECK(visualizer::format_time(0.01), "10 ms");
-	CHECK(visualizer::format_time(0.001), "1 ms");
-	CHECK(visualizer::format_time(0.0001), "100 us");
-	CHECK(visualizer::format_time(0.00001), "10 us");
-	CHECK(visualizer::format_time(0.000001), "1 us");
-	CHECK(visualizer::format_time(0.0000001), "100 ns");
-	CHECK(visualizer::format_time(0.00000001), "10 ns");
-	CHECK(visualizer::format_time(0.000000001), "1 ns");
-	CHECK(visualizer::format_time(0.0000000001), "0 ns");
+	CHECK(visualizer::format_time(10000), "2h 46m 40s");
+	CHECK(visualizer::format_time(1000), "16m 40s");
+	CHECK(visualizer::format_time(100), "1m 40s");
+	CHECK(visualizer::format_time(10), "10s");
+	CHECK(visualizer::format_time(1), "1s");
+	CHECK(visualizer::format_time(0.1), "100ms");
+	CHECK(visualizer::format_time(0.5), "500ms");
+	CHECK(visualizer::format_time(0.01), "10ms");
+	CHECK(visualizer::format_time(0.001), "1ms");
+	CHECK(visualizer::format_time(0.0001), "100us");
+	CHECK(visualizer::format_time(0.00001), "10us");
+	CHECK(visualizer::format_time(0.000001), "1us");
+	CHECK(visualizer::format_time(0.0000001), "100ns");
+	CHECK(visualizer::format_time(0.00000001), "10ns");
+	CHECK(visualizer::format_time(0.000000001), "1ns");
+	CHECK(visualizer::format_time(0.0000000001), "0ns");
 
-	CHECK(visualizer::format_time(1.2), "1.20 s");
-	CHECK(visualizer::format_time(1.4), "1.40 s");
-	CHECK(visualizer::format_time(1.5), "1.50 s");
-	CHECK(visualizer::format_time(11.5), "11.5 s");
-	CHECK(visualizer::format_time(60), "1 m");
-	CHECK(visualizer::format_time(72), "1 m 12 s");
-	CHECK(visualizer::format_time(3659), "1 h 59 s");
-	CHECK(visualizer::format_time(3660), "1 h 1 m");
-	CHECK(visualizer::format_time(3661), "1 h 1 m 1 s");
-	CHECK(visualizer::format_time(3601), "1 h 1 s");
+	CHECK(visualizer::format_time(1.2), "1.20s");
+	CHECK(visualizer::format_time(1.4), "1.40s");
+	CHECK(visualizer::format_time(1.5), "1.50s");
+	CHECK(visualizer::format_time(11.5), "11.5s");
+	CHECK(visualizer::format_time(60), "1m");
+	CHECK(visualizer::format_time(72), "1m 12s");
+	CHECK(visualizer::format_time(3659), "1h 59s");
+	CHECK(visualizer::format_time(3660), "1h 1m");
+	CHECK(visualizer::format_time(3661), "1h 1m 1s");
+	CHECK(visualizer::format_time(3601), "1h 1s");
 
 	return result;
 }

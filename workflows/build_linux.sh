@@ -9,5 +9,7 @@ mkdir $build
 cd $build
 pwd
 
-cmake $src -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake $src -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
 make
+
+ctest --output-on-failure

@@ -15,5 +15,5 @@ if (BUILD_TESTS)
     add_executable(test_format_time test/test_format_time.cpp)
     target_link_libraries(test_format_time utils)
 
-    add_test(NAME test_utils COMMAND test_format_time)
+    add_test(NAME test_format_time COMMAND test_format_time)
 endif()
