@@ -34,7 +34,8 @@ namespace perfometer
     constexpr unsigned char minor_version = 0;
     constexpr unsigned char patch_version = 0;
 
-    constexpr size_t records_cache_size = 1024;
+    constexpr size_t records_cache_size = 4048;
+    // this buf in bytes + some control data to fit 4K page overral
 
     using string_id = uint16_t;
 

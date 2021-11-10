@@ -20,9 +20,7 @@ SOFTWARE. */
 
 #pragma once
 
-#include <perfometer/format.h>
 #include <perfometer/perfometer.h>
-
 #include <fstream>
 
 namespace perfometer
@@ -39,20 +37,11 @@ namespace perfometer
 
         result status() { return m_report_file.fail() ? result::io_error : result::ok; }
 
-        serializer& operator << (const unsigned char byte);
-        serializer& operator << (const char* string);
-        serializer& operator << (const string_id& id);
-        serializer& operator << (const format::record_type type);
-        serializer& operator << (const thread_id& id);
-        serializer& operator << (const time& time);
-
-    private:
-        result write_header();
-        result write_clock_config();
-        result write_thread_info();
+        result write(const char* data, size_t size);
 
     private:
         std::ofstream m_report_file;
+        mutex s_file_mutex;
 	};
 
 } // namespace perfometer

@@ -45,8 +45,7 @@ namespace perfometer
 	result flush_thread_cache();
 	result flush();
 
-	string_id register_string(const char string[]);
-	string_id register_string(std::string&& string);
+	string_id register_string(const char* string);
 
 	result log_thread_name(string_id s_id, thread_id t_id);
 	result log_thread_name(string_id s_id);

@@ -34,7 +34,6 @@ namespace perfometer {
 
 static bool s_initialized = false;
 serializer s_serializer;
-static mutex s_serializer_mutex;
 
 static bool s_logging_enabled = false;
 
@@ -46,8 +45,6 @@ static std::unordered_map<thread_id, record_buffer*> s_records_inprogress;
 static mutex s_records_mutex;
 static thread_local record_buffer* s_record_cache = nullptr;
 
-static mutex s_strings_mutex;
-static std::vector<std::string> s_strings;
 constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();
 
 void logger_thread()
@@ -67,53 +64,7 @@ void logger_thread()
 
 		if (buffer)
 		{
-			for (size_t i = 0; i < buffer->count; ++i)
-			{
-				const record& record = buffer->records[i];
-				scoped_lock lock(s_serializer_mutex);
-
-				switch (record.type)
-				{
-					case format::record_type::string:
-					{
-						s_strings_mutex.lock();
-						s_serializer << format::record_type::string
-									 << record.s_id
-									 << s_strings[record.s_id].c_str();
-						s_strings_mutex.unlock();
-						break;
-					}
-					case format::record_type::thread_name:
-					{
-						s_serializer << format::record_type::thread_name
-				 					 << record.t_id
-				 					 << record.s_id;
-						break;
-					}
-					case format::record_type::work:
-					case format::record_type::wait:
-					{
-						s_serializer << record.type
-									 << record.s_id
-									 << record.start
-									 << record.end
-									 << record.t_id;
-						break;
-					}
-					case format::record_type::event:
-					{
-						s_serializer << format::record_type::event
-									 << record.s_id
-									 << record.start
-									 << record.t_id;
-						break;
-					}
-					default:
-					{
-						break;
-					}
-				}
-			}
+			s_serializer.write(buffer->data(), buffer->used_size());
 
 			delete buffer;
 		}
@@ -143,17 +94,38 @@ result initialize(const char file_name[], bool running)
 		return res;
 	}
 
+	formatter<serializer> output(s_serializer);
+
+	output.write(format::header, sizeof(format::header) - 1);
+	output << format::major_version
+		   << format::minor_version
+		   << format::patch_version;
+
+	unsigned char time_size = sizeof(time);
+	auto start_time = get_time();
+	auto clock_frequency = get_clock_frequency();
+
+	output << format::record_type::clock_configuration
+		   << time_size
+		   << clock_frequency
+		   << start_time;
+
+	unsigned char thread_id_size = sizeof(thread_id);
+	output << format::record_type::thread_info
+		   << thread_id_size
+		   << get_thread_id();
+
 	// writing "UKNOWN" to string map first to ocupy zero ID
 	constexpr char unknown_tag[] = "UNKNOWN";
 	string_id s_id = register_string(unknown_tag);
 
-	s_serializer << format::record_type::string
-				 << s_id
-				 << unknown_tag;
+	output << format::record_type::string
+		   << s_id
+		   << unknown_tag;
 
-	s_serializer << format::record_type::string
-				 << invalid_string_id
-				 << "String limit overflow";
+	output << format::record_type::string
+		   << invalid_string_id
+		   << "String limit overflow";
 
 	s_logger_thread_running = true;
 	s_logger_thread = std::thread(logger_thread);
@@ -196,8 +168,7 @@ result shutdown()
 		s_logger_thread.join();
 	}
 
-	scoped_lock lock(s_serializer_mutex);
-
+	s_serializer.flush();
 	s_serializer.close();
 
 	s_initialized = false;
@@ -268,7 +239,6 @@ result flush()
 		}
 	}
 
-	scoped_lock lock(s_serializer_mutex);
 	return s_serializer.flush();
 }
 
@@ -277,7 +247,7 @@ result ensure_buffer()
 #if defined(PERFOMETER_LOG_RECORD_SWAP_OVERHEAD)
 	time start_time = get_time();
 #endif
-	if (s_record_cache && s_record_cache->count == records_cache_size)
+	if (s_record_cache && s_record_cache->free_size() < 256)
     {
 		flush_thread_cache();
     }
@@ -285,7 +255,7 @@ result ensure_buffer()
 	if (s_record_cache == nullptr)
 	{
 		s_record_cache = new record_buffer();
-		if (!s_record_cache || !s_record_cache->records)
+		if (!s_record_cache || !s_record_cache->data())
 		{
 			delete s_record_cache;
 			s_record_cache = nullptr;
@@ -327,12 +297,11 @@ result log_thread_name(string_id s_id, thread_id t_id)
 		return res;
 	}
 
-	*s_record_cache << record{
-		format::record_type::thread_name,
-		s_id,
-		0,
-		0,
-		t_id};
+	formatter<record_buffer> output(*s_record_cache);
+
+	output << format::record_type::thread_name
+		   << t_id
+		   << s_id;
 
 	return result::ok;
 }
@@ -360,12 +329,13 @@ result log_work(string_id s_id, time start_time, time end_time)
 		return res;
 	}
 
-	*s_record_cache << record{
-		format::record_type::work,
-		s_id,
-		start_time,
-		end_time,
-		get_thread_id()};
+	formatter<record_buffer> output(*s_record_cache);
+
+	output << format::record_type::work
+		   << s_id
+		   << start_time
+		   << end_time
+		   << get_thread_id();
 
 	return result::ok;
 }
@@ -388,12 +358,13 @@ result log_wait(string_id s_id, time start_time, time end_time)
 		return res;
 	}
 
-	*s_record_cache << record{
-		format::record_type::wait,
-		s_id,
-		start_time,
-		end_time,
-		get_thread_id()};
+	formatter<record_buffer> output(*s_record_cache);
+
+	output << format::record_type::wait
+		   << s_id
+		   << start_time
+		   << end_time
+		   << get_thread_id();
 
 	return result::ok;
 }
@@ -416,36 +387,24 @@ result log_event(string_id s_id, time t)
 		return res;
 	}
 
-	*s_record_cache << record{
-		format::record_type::event,
-		s_id,
-		t,
-		time(0),
-		get_thread_id()};
+	formatter<record_buffer> output(*s_record_cache);
+
+	output << format::record_type::event
+		   << s_id
+		   << t
+		   << get_thread_id();
 
 	return result::ok;
 }
 
-string_id register_string(const char name[])
-{
-	return register_string(std::string(name));
-}
-
-string_id register_string(std::string&& string)
+string_id register_string(const char* string)
 {
 	static std::atomic<string_id> s_unique_id(0);
-	s_strings.reserve(1024);
 
 	string_id s_id = s_unique_id;
 	if (s_unique_id == invalid_string_id)
 	{
 		return invalid_string_id;
-	}
-
-	{
-		s_strings_mutex.lock();
-		s_strings.push_back(string);
-		s_strings_mutex.unlock();
 	}
 
 	s_unique_id++;
@@ -455,13 +414,12 @@ string_id register_string(std::string&& string)
 	{
 		return res;
 	}
+
+	formatter<record_buffer> output(*s_record_cache);
 	
-	*s_record_cache << record{
-		format::record_type::string,
-		s_id,
-		0,
-		0,
-		thread_id()};
+	output << format::record_type::string
+		   << s_id
+		   << string;
 
 	return s_id;
 }

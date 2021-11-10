@@ -23,40 +23,47 @@ SOFTWARE. */
 #include <perfometer/config.h>
 #include <perfometer/format.h>
 
+#include "formatter.h"
+
 namespace perfometer
 {
-	struct record
+	class record_buffer
 	{
-		format::record_type	type;
-		string_id 			s_id;
-		time 				start;
-		time 				end;
-		thread_id			t_id;
-	};
-
-	struct record_buffer
-	{
+	public:
 		record_buffer()
+			: m_curr_pos(m_data)
 		{
-			count = 0;
-			records = new record[records_cache_size];
 		}
 
 		~record_buffer()
 		{
-			delete[] records;
 		}
 
-		record_buffer& operator << (record&& record)
+		size_t used_size() const
 		{
-			records[count] = std::move(record);
-			++count;
-
-			return *this;
+			return m_curr_pos - m_data;
 		}
 
-		size_t 		count;
-		record*		records;
+		size_t free_size() const
+		{
+			size_t used = used_size();
+			return records_cache_size > used ? records_cache_size - used : 0;
+		}
+
+		const char* data() const { return m_data; }
+
+		void write(const char *data, size_t size)
+		{
+			if (data && size <= free_size())
+			{
+				mempcpy(m_curr_pos, data, size);
+				m_curr_pos += size;
+			}
+		}
+
+	private:
+		char		m_data[records_cache_size];
+		char*		m_curr_pos;
 	};
 
 } // namespace perfometer
