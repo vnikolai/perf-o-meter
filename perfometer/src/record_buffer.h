@@ -56,7 +56,7 @@ namespace perfometer
 		{
 			if (data && size <= free_size())
 			{
-				mempcpy(m_curr_pos, data, size);
+				memcpy(m_curr_pos, data, size);
 				m_curr_pos += size;
 			}
 		}
