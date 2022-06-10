@@ -1,6 +1,6 @@
 # Perf-o-meter project for collecting and visualizing performance data
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 
 if (BUILD_TESTS)
     enable_testing()
