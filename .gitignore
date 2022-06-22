@@ -1,5 +1,13 @@
-build/
-temp/
-bin/
-lib/
+# Temporary folders
+bin
+out
+build
+
+# Generated code
 perfometer/include/perfometer/config.h
+
+# IDE
+.vs
+CMakeSettings.json
+
+.vscode

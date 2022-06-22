@@ -32,6 +32,6 @@ set_property(TARGET perfometer PROPERTY CXX_STANDARD 11)
 
 install(TARGETS perfometer
         ARCHIVE
-            DESTINATION lib
+            DESTINATION bin
         PUBLIC_HEADER
             DESTINATION include/perfometer)
