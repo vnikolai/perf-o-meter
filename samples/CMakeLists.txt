@@ -1,20 +1,13 @@
 # Perf-o-meter library usage samples
 
-add_executable(simple src/simple.cpp)
-target_link_libraries(simple perfometer)
-set_property(TARGET simple PROPERTY CXX_STANDARD 11)
+file(GLOB files "src/*.cpp")
 
-add_executable(pause src/pause.cpp)
-target_link_libraries(pause perfometer)
-set_property(TARGET pause PROPERTY CXX_STANDARD 11)
-
-add_executable(threads src/threads.cpp)
-target_link_libraries(threads perfometer)
-set_property(TARGET threads PROPERTY CXX_STANDARD 11)
-
-add_executable(events src/events.cpp)
-target_link_libraries(events perfometer)
-set_property(TARGET events PROPERTY CXX_STANDARD 11)
+foreach(file ${files})
+    get_filename_component(file_name ${file} NAME_WE)
+    add_executable(${file_name} ${file})
+    target_link_libraries(${file_name} perfometer)
+    set_property(TARGET ${file_name} PROPERTY CXX_STANDARD 11)
+endforeach()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(threads pthread)
