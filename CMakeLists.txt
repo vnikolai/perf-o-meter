@@ -10,6 +10,7 @@ option (BUILD_PRINTER "Build printer" ON)
 option (BUILD_SAMPLES "Build printer" ON)
 option (BUILD_VISUALIZER "Build visualizer" ON)
 option (BUILD_TESTS "Build tests" ON)
+option (LEAN_AND_MEAN "Minimum build" OFF)
 
 project (perf-o-meter)
 

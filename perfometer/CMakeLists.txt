@@ -1,5 +1,15 @@
 # Perf-o-meter library for performance data collecting functionality
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    include(cmake/gcc.cmake)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")  
+    include(cmake/clang.cmake)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    include(cmake/msvc.cmake)
+else()
+    message(FATAL_ERROR, "unsupported compiler")
+endif()
+
 add_library (perfometer
             STATIC
             src/perfometer.cpp
