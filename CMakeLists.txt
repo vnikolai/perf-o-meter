@@ -39,10 +39,6 @@ if (BUILD_PRINTER)
     add_subdirectory (printer)
 endif()
 
-if (BUILD_SAMPLES)
-    add_subdirectory (samples)
-endif()
-
 if (BUILD_VISUALIZER)
     add_subdirectory (visualizer)
 endif()
