@@ -47,7 +47,7 @@ install(TARGETS perfometer
             DESTINATION include/perfometer)
 
 # Perf-o-meter library usage samples
-if (BUILD_SAMPLES)
+if (PERFOMETER_BUILD_SAMPLES)
     file(GLOB files "samples/*.cpp")
 
     foreach(file ${files})
