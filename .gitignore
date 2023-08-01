@@ -3,6 +3,9 @@ bin
 out
 build
 
+# Temporary files
+*.log
+
 # Generated code
 perfometer/include/perfometer/config.h
 

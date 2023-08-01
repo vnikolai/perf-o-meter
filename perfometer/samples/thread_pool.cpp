@@ -35,7 +35,7 @@ const int num_threads = std::thread::hardware_concurrency();
 class thread_pool
 {
 public:
-    thread_pool( )
+    thread_pool( ) : m_running(false)
     {
     }
 
@@ -149,7 +149,7 @@ private:
     }
 
 private:
-    std::atomic_bool m_running = false;
+    std::atomic_bool m_running;
 
     std::mutex m_task_queue_lock;
     std::queue< std::function<void(void)> > m_task_queue;
