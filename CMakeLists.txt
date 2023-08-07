@@ -12,7 +12,7 @@ if (PERFOMETER_BUILD_TESTS)
     enable_testing()
 endif()
 
-project (perf-o-meter)
+project (perf-o-meter VERSION 2.2.2)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 

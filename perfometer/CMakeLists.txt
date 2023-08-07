@@ -29,7 +29,7 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/perfometer/config.h.in
                ${CMAKE_CURRENT_SOURCE_DIR}/include/perfometer/config.h)
 
-target_include_directories (perfometer PUBLIC include)
+target_include_directories (perfometer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>)
 
 file(GLOB_RECURSE headers "include/perfometer/*.h")
 set_target_properties(perfometer PROPERTIES PUBLIC_HEADER "${headers}")
@@ -40,11 +40,9 @@ endif()
 
 set_property(TARGET perfometer PROPERTY CXX_STANDARD 11)
 
-install(TARGETS perfometer
-        ARCHIVE
-            DESTINATION bin
-        PUBLIC_HEADER
-            DESTINATION include/perfometer)
+install(TARGETS perfometer EXPORT perfometer DESTINATION lib)
+install(EXPORT perfometer FILE perfometer.cmake DESTINATION lib/cmake/perfometer)
+install(FILES ${headers} DESTINATION include/perfometer)
 
 # Perf-o-meter library usage samples
 if (PERFOMETER_BUILD_SAMPLES)
