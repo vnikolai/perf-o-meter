@@ -27,7 +27,7 @@ SOFTWARE. */
 
 #include <utils/time.h>
 
-#include <QTime>
+#include <QElapsedTimer>
 
 #include <thread>
 #include <chrono>
@@ -128,8 +128,8 @@ void TimeLineThread::mouseMove(QPointF pos)
         return;
     }
 
-    QTime hitTestTime;
-    hitTestTime.start();
+    QElapsedTimer hitTestTimer;
+    hitTestTimer.start();
     
     for (const auto& record : m_thread->records)
     {
@@ -145,7 +145,7 @@ void TimeLineThread::mouseMove(QPointF pos)
         }
     }
 
-    m_statistics.hitTestTime = hitTestTime.elapsed() / 1000.0;
+    m_statistics.hitTestTime = hitTestTimer.elapsed() / 1000.0;
     
 }
 
@@ -200,8 +200,8 @@ void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    QTime frameTime;
-    frameTime.start();
+    QElapsedTimer frameTimer;
+    frameTimer.start();
 
     const auto pixpersec = m_view.pixelsPerSecond();
 
@@ -240,7 +240,7 @@ void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
         painter.drawRect(bounds.intersected(viewport));
     }
 
-    m_statistics.frameRenderTime += frameTime.elapsed() / 1000.0;
+    m_statistics.frameRenderTime += frameTimer.elapsed() / 1000.0;
 }
 
 void TimeLineThread::renderOverlay(QPainter& painter, QRectF viewport, QPointF offset)
