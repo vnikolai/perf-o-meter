@@ -59,3 +59,10 @@ if (PERFOMETER_BUILD_SAMPLES)
         target_link_libraries(threads pthread)
     endif()
 endif()
+
+if (PERFOMETER_BUILD_TESTS)
+    add_executable(test_start_stop_out_of_order test/start_stop_out_of_order.cpp)
+    target_link_libraries(test_start_stop_out_of_order perfometer)
+
+    add_test(NAME start_stop_out_of_order COMMAND start_stop_out_of_order)
+endif()
