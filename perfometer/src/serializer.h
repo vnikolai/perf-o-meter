@@ -42,6 +42,6 @@ namespace perfometer
     private:
         std::ofstream m_report_file;
         mutex s_file_mutex;
-	};
+    };
 
 } // namespace perfometer

@@ -28,12 +28,12 @@ SOFTWARE. */
 
 int main(int argc, const char** argv)
 {
-	auto result = perfometer::initialize("perfometer.report");
-	std::cout << "perfometer::initialize() returned " << result << std::endl;
+    auto result = perfometer::initialize("perfometer.report");
+    std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
+    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
     // Log named event that will store time and thread id
     PERFOMETER_LOG_EVENT("First Event");
@@ -42,8 +42,8 @@ int main(int argc, const char** argv)
 
     PERFOMETER_LOG_EVENT("Second Event");
 
-	result = perfometer::shutdown();
-	std::cout << "perfometer::shutdown() returned " << result << std::endl;
+    result = perfometer::shutdown();
+    std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
-	return 0;
+    return 0;
 }

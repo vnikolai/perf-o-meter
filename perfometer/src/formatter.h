@@ -38,8 +38,8 @@ namespace perfometer
 
         formatter& operator << (const unsigned char byte)
         {
-    	    write(reinterpret_cast<const char*>(&byte), 1);
-	        return *this;
+            write(reinterpret_cast<const char*>(&byte), 1);
+            return *this;
         }
 
         formatter& operator << (const char* string)
@@ -91,6 +91,6 @@ namespace perfometer
 
     private:
         Buffer& m_buffer;
-	};
+    };
 
 } // namespace perfometer

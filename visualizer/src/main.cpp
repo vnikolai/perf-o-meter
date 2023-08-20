@@ -31,111 +31,111 @@ SOFTWARE. */
 
 struct options
 {
-	std::string reportFileName;
-	bool		profile = false;
+    std::string reportFileName;
+    bool        profile = false;
 };
 
 void MessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
-	std::string message;
+    std::string message;
 
-  	switch (type)
-	{
-		case QtDebugMsg: break;
-		case QtInfoMsg:  break;
-		case QtWarningMsg: message = "WARNING: "; break;
-		case QtCriticalMsg: message = "CRITICAL: "; break;
-		case QtFatalMsg: 	message = "FATAL: "; break;
-	}
+      switch (type)
+    {
+        case QtDebugMsg: break;
+        case QtInfoMsg:  break;
+        case QtWarningMsg: message = "WARNING: "; break;
+        case QtCriticalMsg: message = "CRITICAL: "; break;
+        case QtFatalMsg:     message = "FATAL: "; break;
+    }
 
-	message += msg.toStdString();
+    message += msg.toStdString();
 
-	std::cout << message << std::endl;
+    std::cout << message << std::endl;
 
-  	static std::ofstream logFile("perfometer.log", std::ios::trunc);
-	logFile << message << std::endl << std::flush;
+      static std::ofstream logFile("perfometer.log", std::ios::trunc);
+    logFile << message << std::endl << std::flush;
 }
 
 void parseCommandline(options& opts, int argc, char* argv[])
 {
-	if (argc > 1)
-	{
-		opts.reportFileName = argv[1];
+    if (argc > 1)
+    {
+        opts.reportFileName = argv[1];
 
-		if (argc > 2)
-		{
-			for (int i = 2; i < argc; ++i)
-			{
-				if (strcmp(argv[i], "--profile") == 0)
-				{
-					opts.profile = true;
-				}
-			}
-		}
-	}
+        if (argc > 2)
+        {
+            for (int i = 2; i < argc; ++i)
+            {
+                if (strcmp(argv[i], "--profile") == 0)
+                {
+                    opts.profile = true;
+                }
+            }
+        }
+    }
 }
 
 int main(int argc, char** argv)
 {
-	qInstallMessageHandler(MessageHandler);
+    qInstallMessageHandler(MessageHandler);
 
-	QApplication app(argc, argv);
+    QApplication app(argc, argv);
 
-	char title[64];
-	std::snprintf(title, 64,
-				  "Perf-o-meter Visualizer %d.%d.%d",
-				  int(perfometer::major_version),
-				  int(perfometer::minor_version),
-				  int(perfometer::patch_version));
+    char title[64];
+    std::snprintf(title, 64,
+                  "Perf-o-meter Visualizer %d.%d.%d",
+                  int(perfometer::major_version),
+                  int(perfometer::minor_version),
+                  int(perfometer::patch_version));
 
-	QApplication::setApplicationName(title);
+    QApplication::setApplicationName(title);
 
-	visualizer::TimeLineView* timeLineView = new visualizer::TimeLineView();
+    visualizer::TimeLineView* timeLineView = new visualizer::TimeLineView();
 
-	QMainWindow window;
-	window.resize(1280, 720);
-	window.setCentralWidget(timeLineView);
-	window.show();
+    QMainWindow window;
+    window.resize(1280, 720);
+    window.setCentralWidget(timeLineView);
+    window.show();
 
-	options opts;
-	parseCommandline(opts, argc, argv);
+    options opts;
+    parseCommandline(opts, argc, argv);
 
-	if (opts.profile)
-	{
-		perfometer::initialize("visualizer.report");
-	}
+    if (opts.profile)
+    {
+        perfometer::initialize("visualizer.report");
+    }
 
-	if (opts.reportFileName.length())
-	{
-		auto report = std::make_shared<visualizer::PerfometerReport>();
+    if (opts.reportFileName.length())
+    {
+        auto report = std::make_shared<visualizer::PerfometerReport>();
 
-		if (report->loadFile(opts.reportFileName))
-		{
-			timeLineView->setReport(report);
+        if (report->loadFile(opts.reportFileName))
+        {
+            timeLineView->setReport(report);
 
-			char titleWithFile[1024];
-			std::snprintf(titleWithFile, 1024, "%s - %s", title, opts.reportFileName.c_str());
+            char titleWithFile[1024];
+            std::snprintf(titleWithFile, 1024, "%s - %s", title, opts.reportFileName.c_str());
 
-			window.setWindowTitle(titleWithFile);
-		}
-		else
-		{
-			QString text;
-			text = text.fromStdString(opts.reportFileName);
-			text.prepend("Cannot open report file ");
+            window.setWindowTitle(titleWithFile);
+        }
+        else
+        {
+            QString text;
+            text = text.fromStdString(opts.reportFileName);
+            text.prepend("Cannot open report file ");
 
-			QMessageBox messageBox;
-			messageBox.setText(text);
-			messageBox.exec();
-		}
-	}
+            QMessageBox messageBox;
+            messageBox.setText(text);
+            messageBox.exec();
+        }
+    }
 
-	int retval = app.exec();
+    int retval = app.exec();
 
-	if (opts.profile)
-	{
-		perfometer::shutdown();
-	}
+    if (opts.profile)
+    {
+        perfometer::shutdown();
+    }
 
-	return retval;
+    return retval;
 }

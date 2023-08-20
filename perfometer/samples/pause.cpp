@@ -28,60 +28,60 @@ SOFTWARE. */
 
 void my_func_to_trace()
 {
-	auto start = perfometer::get_time();
+    auto start = perfometer::get_time();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-	static auto s_id = perfometer::register_string(__FUNCTION__);
-	perfometer::log_work(s_id, start, perfometer::get_time());
+    static auto s_id = perfometer::register_string(__FUNCTION__);
+    perfometer::log_work(s_id, start, perfometer::get_time());
 }
 
 void my_enclosed_func()
 {
-	auto start = perfometer::get_time();
+    auto start = perfometer::get_time();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-	static auto s_id = perfometer::register_string(__FUNCTION__);
-	perfometer::log_work(s_id, start, perfometer::get_time());
+    static auto s_id = perfometer::register_string(__FUNCTION__);
+    perfometer::log_work(s_id, start, perfometer::get_time());
 }
 
 void my_another_func()
 {
-	auto start = perfometer::get_time();
+    auto start = perfometer::get_time();
 
-	my_enclosed_func();
+    my_enclosed_func();
 
-	static auto s_id = perfometer::register_string(__FUNCTION__);
-	perfometer::log_work(s_id, start, perfometer::get_time());
+    static auto s_id = perfometer::register_string(__FUNCTION__);
+    perfometer::log_work(s_id, start, perfometer::get_time());
 }
 
 int main(int argc, const char** argv)
 {
-	auto result = perfometer::initialize("perfometer.report", false);
-	std::cout << "perfometer::initialize() returned " << result << std::endl;
+    auto result = perfometer::initialize("perfometer.report", false);
+    std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	// perfometer started in paused mode, my_func_to_trace will not be logged
-	my_func_to_trace();
+    // perfometer started in paused mode, my_func_to_trace will not be logged
+    my_func_to_trace();
 
-	// thread name will be logged even while work logging paused
-	auto s_id = perfometer::register_string("MAIN_THREAD");
-	perfometer::log_thread_name(s_id);
+    // thread name will be logged even while work logging paused
+    auto s_id = perfometer::register_string("MAIN_THREAD");
+    perfometer::log_thread_name(s_id);
 
-	result = perfometer::resume();
-	std::cout << "perfometer::resume() returned " << result << std::endl;
+    result = perfometer::resume();
+    std::cout << "perfometer::resume() returned " << result << std::endl;
 
-	// my_another_func will be logged
-	my_another_func();
+    // my_another_func will be logged
+    my_another_func();
 
-	result = perfometer::pause();
-	std::cout << "perfometer::pause() returned " << result << std::endl;
+    result = perfometer::pause();
+    std::cout << "perfometer::pause() returned " << result << std::endl;
 
-	// perfometer paused, my_enclosed_func not logged
-	my_enclosed_func();
+    // perfometer paused, my_enclosed_func not logged
+    my_enclosed_func();
 
-	result = perfometer::shutdown();
-	std::cout << "perfometer::shutdown() returned " << result << std::endl;
+    result = perfometer::shutdown();
+    std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
-	return 0;
+    return 0;
 }

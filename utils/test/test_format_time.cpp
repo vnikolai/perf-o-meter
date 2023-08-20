@@ -24,49 +24,49 @@ SOFTWARE. */
 template<typename T1, typename T2>
 void print_error(const T1& a, const T2& b, const char* desc_a, const char* desc_b)
 {
-	std::cout << "check failed " << desc_a << " != " << desc_b << std::endl;
-	std::cout << "Expected: " << b << ", actual: " << a << std::endl;
+    std::cout << "check failed " << desc_a << " != " << desc_b << std::endl;
+    std::cout << "Expected: " << b << ", actual: " << a << std::endl;
 }
 
 #define CHECK(a, b) if (a != b) { print_error(a, b, #a, #b); result = -1; }
 
 int main(int argc, const char** argv)
 {
-	using namespace perfometer::utils;
+    using namespace perfometer::utils;
 
-	int result = 0;
+    int result = 0;
 
-	CHECK(time_to_string(3600), "1h");
-	CHECK(time_to_string(5400), "1h 30m");
-	CHECK(time_to_string(7200), "2h");
+    CHECK(time_to_string(3600), "1h");
+    CHECK(time_to_string(5400), "1h 30m");
+    CHECK(time_to_string(7200), "2h");
 
-	CHECK(time_to_string(10000), "2h 46m 40s");
-	CHECK(time_to_string(1000), "16m 40s");
-	CHECK(time_to_string(100), "1m 40s");
-	CHECK(time_to_string(10), "10s");
-	CHECK(time_to_string(1), "1s");
-	CHECK(time_to_string(0.1), "100ms");
-	CHECK(time_to_string(0.5), "500ms");
-	CHECK(time_to_string(0.01), "10ms");
-	CHECK(time_to_string(0.001), "1ms");
-	CHECK(time_to_string(0.0001), "100us");
-	CHECK(time_to_string(0.00001), "10us");
-	CHECK(time_to_string(0.000001), "1us");
-	CHECK(time_to_string(0.0000001), "100ns");
-	CHECK(time_to_string(0.00000001), "10ns");
-	CHECK(time_to_string(0.000000001), "1ns");
-	CHECK(time_to_string(0.0000000001), "0ns");
+    CHECK(time_to_string(10000), "2h 46m 40s");
+    CHECK(time_to_string(1000), "16m 40s");
+    CHECK(time_to_string(100), "1m 40s");
+    CHECK(time_to_string(10), "10s");
+    CHECK(time_to_string(1), "1s");
+    CHECK(time_to_string(0.1), "100ms");
+    CHECK(time_to_string(0.5), "500ms");
+    CHECK(time_to_string(0.01), "10ms");
+    CHECK(time_to_string(0.001), "1ms");
+    CHECK(time_to_string(0.0001), "100us");
+    CHECK(time_to_string(0.00001), "10us");
+    CHECK(time_to_string(0.000001), "1us");
+    CHECK(time_to_string(0.0000001), "100ns");
+    CHECK(time_to_string(0.00000001), "10ns");
+    CHECK(time_to_string(0.000000001), "1ns");
+    CHECK(time_to_string(0.0000000001), "0ns");
 
-	CHECK(time_to_string(1.2), "1.20s");
-	CHECK(time_to_string(1.4), "1.40s");
-	CHECK(time_to_string(1.5), "1.50s");
-	CHECK(time_to_string(11.5), "11.5s");
-	CHECK(time_to_string(60), "1m");
-	CHECK(time_to_string(72), "1m 12s");
-	CHECK(time_to_string(3659), "1h 59s");
-	CHECK(time_to_string(3660), "1h 1m");
-	CHECK(time_to_string(3661), "1h 1m 1s");
-	CHECK(time_to_string(3601), "1h 1s");
+    CHECK(time_to_string(1.2), "1.20s");
+    CHECK(time_to_string(1.4), "1.40s");
+    CHECK(time_to_string(1.5), "1.50s");
+    CHECK(time_to_string(11.5), "11.5s");
+    CHECK(time_to_string(60), "1m");
+    CHECK(time_to_string(72), "1m 12s");
+    CHECK(time_to_string(3659), "1h 59s");
+    CHECK(time_to_string(3660), "1h 1m");
+    CHECK(time_to_string(3661), "1h 1m 1s");
+    CHECK(time_to_string(3601), "1h 1s");
 
-	return result;
+    return result;
 }

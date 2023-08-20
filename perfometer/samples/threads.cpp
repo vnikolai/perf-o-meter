@@ -29,85 +29,85 @@ SOFTWARE. */
 constexpr int num_threads = 10;
 std::thread threads[num_threads];
 const char* thread_names[num_threads] = { "job01", "job02", "job03", "job04", "job05",
-										  "job06", "job07", "job08", "job09", "job10" };
+                                          "job06", "job07", "job08", "job09", "job10" };
 
 void wait(unsigned int millisec)
 {
-	PERFOMETER_LOG_WAIT_FUNCTION();
+    PERFOMETER_LOG_WAIT_FUNCTION();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(millisec));
+    std::this_thread::sleep_for(std::chrono::milliseconds(millisec));
 }
 
 void sub_task()
 {
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 void task()
 {
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
-	sub_task();
+    sub_task();
 
-	wait(50);
+    wait(50);
 
-	sub_task();
+    sub_task();
 }
 
 void job(int num_tasks)
 {
-	auto id = perfometer::register_string(thread_names[num_tasks]);
-	perfometer::log_thread_name(id);
+    auto id = perfometer::register_string(thread_names[num_tasks]);
+    perfometer::log_thread_name(id);
 
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
-	for (int i = 0; i < num_tasks; ++i)
-	{
-		task();
-	}
+    for (int i = 0; i < num_tasks; ++i)
+    {
+        task();
+    }
 }
 
 void start_threads()
 {
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
-	for (int i = 0; i < num_threads; ++i)
-	{
-		threads[i] = std::thread(job, i);
+    for (int i = 0; i < num_threads; ++i)
+    {
+        threads[i] = std::thread(job, i);
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	}
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 }
 
 void wait_threads()
 {
-	PERFOMETER_LOG_WAIT_FUNCTION();
+    PERFOMETER_LOG_WAIT_FUNCTION();
 
-	for (int i = 0; i < num_threads; ++i)
-	{
-		std::thread& thread = threads[i];
-		if (thread.joinable())
-		{
-			thread.join();
-		}
-	}
+    for (int i = 0; i < num_threads; ++i)
+    {
+        std::thread& thread = threads[i];
+        if (thread.joinable())
+        {
+            thread.join();
+        }
+    }
 }
 
 int main(int argc, const char** argv)
 {
-	auto result = perfometer::initialize();
-	std::cout << "perfometer::initialize() returned " << result << std::endl;
+    auto result = perfometer::initialize();
+    std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
+    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
-	start_threads();
+    start_threads();
 
-	wait_threads();
+    wait_threads();
 
-	result = perfometer::shutdown();
-	std::cout << "perfometer::shutdown() returned " << result << std::endl;
+    result = perfometer::shutdown();
+    std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
-	return 0;
+    return 0;
 }

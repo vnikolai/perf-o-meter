@@ -24,36 +24,36 @@ SOFTWARE. */
 
 namespace perfometer
 {
-	enum result
-	{
-		ok,
-		io_error,
-		invalid_arguments,
-		no_memory_available,
-		not_initialized,
-		not_running,
-		not_implemented,
-		overflow
-	};
+    enum result
+    {
+        ok,
+        io_error,
+        invalid_arguments,
+        no_memory_available,
+        not_initialized,
+        not_running,
+        not_implemented,
+        overflow
+    };
 
-	result initialize(const char file_name[] = "perfometer.report", bool running = true);
-	result shutdown();
+    result initialize(const char file_name[] = "perfometer.report", bool running = true);
+    result shutdown();
 
-	result pause();
-	result resume();
+    result pause();
+    result resume();
 
-	result flush_thread_cache();
-	result flush();
+    result flush_thread_cache();
+    result flush();
 
-	string_id register_string(const char* string);
-	string_id register_string(const char* string, size_t len);
+    string_id register_string(const char* string);
+    string_id register_string(const char* string, size_t len);
 
-	result log_thread_name(string_id s_id, thread_id t_id);
-	result log_thread_name(string_id s_id);
+    result log_thread_name(string_id s_id, thread_id t_id);
+    result log_thread_name(string_id s_id);
 
-	result log_work(string_id s_id, time start_time, time end_time);
-	result log_wait(string_id s_id, time start_time, time end_time);
+    result log_work(string_id s_id, time start_time, time end_time);
+    result log_wait(string_id s_id, time start_time, time end_time);
 
-	result log_event(string_id s_id, time t);
+    result log_event(string_id s_id, time t);
 
 } // namespace perfometer

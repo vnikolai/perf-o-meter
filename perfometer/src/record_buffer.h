@@ -27,43 +27,43 @@ SOFTWARE. */
 
 namespace perfometer
 {
-	class record_buffer
-	{
-	public:
-		record_buffer()
-			: m_curr_pos(m_data)
-		{
-		}
+    class record_buffer
+    {
+    public:
+        record_buffer()
+            : m_curr_pos(m_data)
+        {
+        }
 
-		~record_buffer()
-		{
-		}
+        ~record_buffer()
+        {
+        }
 
-		size_t used_size() const
-		{
-			return m_curr_pos - m_data;
-		}
+        size_t used_size() const
+        {
+            return m_curr_pos - m_data;
+        }
 
-		size_t free_size() const
-		{
-			size_t used = used_size();
-			return records_cache_size > used ? records_cache_size - used : 0;
-		}
+        size_t free_size() const
+        {
+            size_t used = used_size();
+            return records_cache_size > used ? records_cache_size - used : 0;
+        }
 
-		const char* data() const { return m_data; }
+        const char* data() const { return m_data; }
 
-		void write(const char *data, size_t size)
-		{
-			if (data && size <= free_size())
-			{
-				memcpy(m_curr_pos, data, size);
-				m_curr_pos += size;
-			}
-		}
+        void write(const char *data, size_t size)
+        {
+            if (data && size <= free_size())
+            {
+                memcpy(m_curr_pos, data, size);
+                m_curr_pos += size;
+            }
+        }
 
-	private:
-		char		m_data[records_cache_size];
-		char*		m_curr_pos;
-	};
+    private:
+        char        m_data[records_cache_size];
+        char*       m_curr_pos;
+    };
 
 } // namespace perfometer

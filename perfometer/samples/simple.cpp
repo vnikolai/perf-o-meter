@@ -28,38 +28,38 @@ SOFTWARE. */
 
 void my_func_to_trace()
 {
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
 }
 
 void my_enclosed_func()
 {
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(350));
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
 }
 
 void my_another_func()
 {
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
-	my_enclosed_func();
+    my_enclosed_func();
 }
 
 int main(int argc, const char** argv)
 {
-	auto result = perfometer::initialize();
-	std::cout << "perfometer::initialize() returned " << result << std::endl;
+    auto result = perfometer::initialize();
+    std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
+    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
-	my_func_to_trace();
+    my_func_to_trace();
 
-	my_another_func();
+    my_another_func();
 
-	result = perfometer::shutdown();
-	std::cout << "perfometer::shutdown() returned " << result << std::endl;
+    result = perfometer::shutdown();
+    std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
-	return 0;
+    return 0;
 }

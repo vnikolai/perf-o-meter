@@ -33,43 +33,43 @@ serializer::~serializer()
 
 result serializer::open_file_stream(const char file_name[])
 {
-	scoped_lock lock(s_file_mutex);
+    scoped_lock lock(s_file_mutex);
 
     m_report_file.open(file_name, std::ofstream::binary | std::ofstream::out | std::ofstream::trunc);
 
-	if (!m_report_file)
-	{
-		return result::io_error;
-	}
+    if (!m_report_file)
+    {
+        return result::io_error;
+    }
 
-	return status();
+    return status();
 }
 
 result serializer::flush()
 {
-	scoped_lock lock(s_file_mutex);
+    scoped_lock lock(s_file_mutex);
 
-	m_report_file.flush();
+    m_report_file.flush();
 
-	return status();
+    return status();
 }
 
 result serializer::close()
 {
-	scoped_lock lock(s_file_mutex);
+    scoped_lock lock(s_file_mutex);
 
-	m_report_file.close();
+    m_report_file.close();
 
-	return status();
+    return status();
 }
 
 result serializer::write(const char* data, size_t size)
 {
-	scoped_lock lock(s_file_mutex);
+    scoped_lock lock(s_file_mutex);
 
-	m_report_file.write(data, size);
+    m_report_file.write(data, size);
 
-	return status();
+    return status();
 }
 
 } // namespace perfometer

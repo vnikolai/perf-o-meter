@@ -34,11 +34,11 @@ namespace format
     constexpr unsigned char minor_version = 0;
     constexpr unsigned char patch_version = 0;
 
-	enum record_type : uint8_t
-	{
+    enum record_type : uint8_t
+    {
         undefined = 0,              // Not defined
 
-		clock_configuration = 1,    // 8 bit record type
+        clock_configuration = 1,    // 8 bit record type
                                     // 8 bit time size
                                     // time size clock frequency value
                                     // time size initial time
@@ -72,7 +72,7 @@ namespace format
                                     // time size time start
                                     // time size time end
                                     // thread id size thread id
-	};
+    };
 
     inline std::ostream& operator << (std::ostream& stream, const record_type& type)
     {
@@ -80,11 +80,11 @@ namespace format
         return stream;
     }
 
-	inline std::istream& operator >> (std::istream& stream, record_type& type)
-	{
-		stream.read(reinterpret_cast<char *>(&type), 1);
-		return stream;
-	}
+    inline std::istream& operator >> (std::istream& stream, record_type& type)
+    {
+        stream.read(reinterpret_cast<char *>(&type), 1);
+        return stream;
+    }
 
 } // namespace format
 } // namespace perfometer

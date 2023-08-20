@@ -46,7 +46,7 @@ public:
 
     void run( )
     {
-		PERFOMETER_LOG_WORK_FUNCTION();
+        PERFOMETER_LOG_WORK_FUNCTION();
 
         if ( m_running ) return;
 
@@ -125,9 +125,9 @@ private:
 
     void worker_thread( )
     {
-		PERFOMETER_LOG_THREAD_NAME("WORKER_THREAD");
+        PERFOMETER_LOG_THREAD_NAME("WORKER_THREAD");
 
-		PERFOMETER_LOG_WORK_FUNCTION();
+        PERFOMETER_LOG_WORK_FUNCTION();
         while ( m_running )
         {
             std::unique_lock< std::mutex > guard( m_task_queue_lock );
@@ -171,17 +171,17 @@ int random(int max)
 
 void task()
 {
-	PERFOMETER_LOG_WORK_FUNCTION();
+    PERFOMETER_LOG_WORK_FUNCTION();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(random(5) * 100));
 }
 
 int main(int argc, const char** argv)
 {
-	auto result = perfometer::initialize();
-	std::cout << "perfometer::initialize() returned " << result << std::endl;
+    auto result = perfometer::initialize();
+    std::cout << "perfometer::initialize() returned " << result << std::endl;
 
-	PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
+    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
     thread_pool pool;
 
@@ -193,8 +193,8 @@ int main(int argc, const char** argv)
     pool.run();
     pool.stop();
 
-	result = perfometer::shutdown();
-	std::cout << "perfometer::shutdown() returned " << result << std::endl;
+    result = perfometer::shutdown();
+    std::cout << "perfometer::shutdown() returned " << result << std::endl;
 
-	return 0;
+    return 0;
 }
