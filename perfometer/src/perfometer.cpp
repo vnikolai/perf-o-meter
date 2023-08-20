@@ -399,6 +399,11 @@ result log_event(string_id s_id, time t)
 
 string_id register_string(const char* string)
 {
+	return register_string(string, std::strlen(string));
+}
+
+string_id register_string(const char* string, size_t len)
+{
 	static std::atomic<string_id> s_unique_id(0);
 
 	string_id s_id = s_unique_id;
@@ -418,8 +423,8 @@ string_id register_string(const char* string)
 	formatter<record_buffer> output(*s_record_cache);
 	
 	output << format::record_type::string
-		   << s_id
-		   << string;
+		   << s_id;
+	output.write_string(string, len);
 
 	return s_id;
 }

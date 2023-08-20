@@ -46,6 +46,7 @@ namespace perfometer
 	result flush();
 
 	string_id register_string(const char* string);
+	string_id register_string(const char* string, size_t len);
 
 	result log_thread_name(string_id s_id, thread_id t_id);
 	result log_thread_name(string_id s_id);

@@ -21,6 +21,7 @@ SOFTWARE. */
 #pragma once
 
 #include <perfometer/perfometer.h>
+#include <cstring>
 
 namespace perfometer
 {
@@ -65,7 +66,7 @@ namespace perfometer
 
 #define PERFOMETER_REGISTER_STRING(name)                                    \
         static perfometer::string_id PERFOMETER_UNIQUE(s_id) =              \
-            perfometer::register_string(name)                               \
+            perfometer::register_string(name, std::strlen(name))            \
 
 #define PERFOMETER_LOG_WORK_SCOPE(name)                                     \
         PERFOMETER_REGISTER_STRING(name);                                   \

@@ -76,6 +76,14 @@ namespace perfometer
             return *this;
         }
 
+        void write_string(const char* string, size_t len)
+        {
+            unsigned char string_length = std::min<unsigned int>(255, len);
+            *this << string_length;
+
+            write(string, string_length);
+        }
+
         void write(const char* data, size_t size)
         {
             m_buffer.write(data, size);
