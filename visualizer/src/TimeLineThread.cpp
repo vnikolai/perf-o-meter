@@ -274,7 +274,7 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRectF viewport, QPointF o
     recordInfoBounds.setRight(viewport.right() - RecordInfoDist - RecordInfoTextDist);
 
     const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
-    text = text.fromStdString(format_time(duration));
+    text = text.fromStdString(perfometer::utils::time_to_string(duration));
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignRight, text);
 }
 
@@ -309,7 +309,7 @@ void TimeLineThread::drawRecord(QPainter& painter, QRectF viewport, QPointF offs
             if (w >= RecordMinTextWidth)
             {
                 QString text;
-                text = text.fromStdString(format_time(record.timeEnd - record.timeStart));
+                text = text.fromStdString(perfometer::utils::time_to_string(record.timeEnd - record.timeStart));
                 painter.drawText(x + TitleOffsetSmall, y, w - 2 * TitleOffsetSmall, h, Qt::AlignVCenter | Qt::AlignRight, text);
 
                 auto time_text_width = painter.fontMetrics().boundingRect(text).width();

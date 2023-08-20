@@ -21,13 +21,14 @@ SOFTWARE. */
 #include <utils/time.h>
 #include <cmath>
 
-namespace visualizer {
+namespace perfometer {
+namespace utils {
 
-std::string format_time(double time)
+std::string time_to_string(double time)
 {
     if (time < 0)
     {
-        return std::string("-") + format_time(-time);
+        return std::string("-") + time_to_string(-time);
     }
 
     const double precision = 1.0 / 10000000000; // 0.1 nanosec precision
@@ -106,11 +107,17 @@ std::string format_time(double time)
         double fract = time * denom - static_cast<int>(time * denom + precision);
         if (fract + precision >= denom)
         {
-            result += " " + format_time(fract / denom);
+            result += " " + time_to_string(fract / denom);
         }
     }
 
     return result;
 }
 
-} // namespace visualizer
+std::string time_to_string(time t, time freq)
+{
+    return time_to_string(t * 1.0 / freq);
+}
+
+} // namespace utils
+} // namespace perfometer

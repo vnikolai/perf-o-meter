@@ -20,9 +20,80 @@ SOFTWARE. */
 
 #pragma once
 
+#include <perfometer/time.h>
 #include <string>
+#include <ostream>
 
-namespace visualizer
+namespace perfometer
 {
-    std::string format_time(double time);
-} // namespace visualizer
+    namespace utils
+    {
+        std::string time_to_string(double t);
+        std::string time_to_string(perfometer::time t, perfometer::time freq);
+
+        enum time_format
+        {
+            automatic,
+            seconds,
+            milliseconds,
+            microseconds,
+            nanoseconds
+        };
+
+        struct time_formatter
+        {
+            time_formatter(double t, time_format fmt)
+                : m_time(t)
+                , m_tfmt(fmt)
+            {                
+            }
+
+            template<typename time>
+            time_formatter(time t, time f, time_format fmt)
+                : m_time(static_cast<double>(t)/f)
+                , m_tfmt(fmt) {}
+            
+            double m_time;
+            time_format m_tfmt;
+
+            friend std::ostream& operator << (std::ostream& stream, const time_formatter& formatter)
+            {
+                switch (formatter.m_tfmt)
+                {
+                    case time_format::automatic:
+                    {
+                        stream << perfometer::utils::time_to_string(formatter.m_time);
+                        break;
+                    }
+                    case time_format::seconds:
+                    {
+                        stream << formatter.m_time << " s";
+                        break;
+                    }
+                    case time_format::milliseconds:
+                    {
+                        stream << std::fixed << static_cast<uint64_t>(formatter.m_time * 1000) << " ms";
+                        break;
+                    }
+                    case time_format::microseconds:
+                    {
+                        stream << std::fixed << static_cast<uint64_t>(formatter.m_time * 1000000) << " us";
+                        break;
+                    }
+                    case time_format::nanoseconds:
+                    {
+                        stream << std::fixed << static_cast<uint64_t>(formatter.m_time * 1000000000) << " ns";
+                        break;
+                    }
+                    default:
+                    {
+                        stream << "time_formatter: unknown time format";
+                        break;
+                    }
+                }
+
+                return stream;
+            }
+        };
+    } // namespace perfometer
+} // namespace perfometer

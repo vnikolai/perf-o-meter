@@ -30,14 +30,7 @@ using perf_thread_id = int64_t;		// holding at least 8 bytes
 using perf_time = uint64_t;			// holding at least 8 bytes
 using perf_string_id = perfometer::string_id;
 
-enum time_format
-{
-	automatic,
-	seconds,
-	milliseconds,
-	microseconds
-};
-
+namespace perfometer {
 class reader : public std::ifstream
 {
 public:
@@ -101,43 +94,7 @@ private:
 
 //-----------------------------------------------------------------------------
 
-struct time_formatter
-{
-	double time;
-	time_format tfmt;
-
-	friend inline std::ostream& operator << (std::ostream& stream, const time_formatter& formatter)
-	{
-		switch (formatter.tfmt)
-		{
-			case time_format::seconds:
-			{
-				stream << formatter.time << " s";
-				break;
-			}
-			case time_format::milliseconds:
-			{
-				stream << std::fixed << static_cast<uint64_t>(formatter.time * 1000) << " ms";
-				break;
-			}
-			case time_format::microseconds:
-			{
-				stream << std::fixed << static_cast<uint64_t>(formatter.time * 1000000) << " us";
-				break;
-			}
-			case time_format::automatic:
-			default:
-			{
-				stream << visualizer::format_time(formatter.time);
-				break;
-			}
-		}
-
-		return stream;
-	}
-};
-
-int process(const char* filename, time_format tfmt)
+int process(const char* filename, utils::time_format tfmt)
 {
 	reader report_file(filename);
 
@@ -187,6 +144,8 @@ int process(const char* filename, time_format tfmt)
 
 	while ((report_file >> record_type) && !report_file.eof())
 	{
+		using namespace perfometer::utils;
+
 		if (report_file.fail())
 		{
 			std::cout << "Error reading file " << filename << std::endl;
@@ -260,7 +219,7 @@ int process(const char* filename, time_format tfmt)
 
 				threads[thread_id] = string_id;
 
-				std::cout << "Thread ID " << thread_id << " name " << strings[string_id].c_str() << std::endl;
+				std::cout << "Thread ID " << thread_id << " name " << strings[string_id] << std::endl;
 
 				break;
 			}
@@ -284,10 +243,10 @@ int process(const char* filename, time_format tfmt)
 					default: break;
 				}
 
-				std::cout << " " << string_id << ":" << strings[string_id].c_str()
-						  << " on "  << thread_id << ":" << strings[threads[thread_id]].c_str()
-						  << " started " << time_formatter{static_cast<double>(time_start - init_time) / clock_frequency, tfmt}
-						  << " duration " << time_formatter{static_cast<double>(time_end - time_start) / clock_frequency, tfmt}
+				std::cout << " " << string_id << ":" << strings[string_id]
+						  << " on "  << thread_id << ":" << strings[threads[thread_id]]
+						  << " started " << time_formatter(time_start - init_time, clock_frequency, tfmt)
+						  << " duration " << time_formatter(time_end - time_start, clock_frequency, tfmt)
 						  << std::endl;
 
 				break;
@@ -302,9 +261,9 @@ int process(const char* filename, time_format tfmt)
 							>> t
 							>> thread_id;
 
-				std::cout << "Event " << strings[string_id].c_str()
-						  << " on "  << strings[threads[thread_id]].c_str()
-						  <<  " fired " << time_formatter{static_cast<double>(t - init_time) / clock_frequency, tfmt}
+				std::cout << "Event " << strings[string_id]
+						  << " on "  << strings[threads[thread_id]]
+						  <<  " fired " << time_formatter(t - init_time, clock_frequency, tfmt)
 						  << std::endl;
 
 				break;
@@ -320,6 +279,8 @@ int process(const char* filename, time_format tfmt)
 	return 0;
 }
 
+} // namespace perfometer
+
 void print_help()
 {
 	std::cout << "Usage: printer [options] [filename]" << std::endl
@@ -334,7 +295,7 @@ void print_help()
 int main(int argc, const char** argv)
 {
 	const char* filename = nullptr;
-	time_format tfmt = time_format::automatic;
+	perfometer::utils::time_format tfmt = perfometer::utils::time_format::automatic;
 
 	bool parameters_parsed = true;
 
@@ -352,15 +313,15 @@ int main(int argc, const char** argv)
 			}
 			else if (arg == "-ts"s)
 			{
-				tfmt = time_format::seconds;
+				tfmt = perfometer::utils::time_format::seconds;
 			}
 			else if (arg == "-tm"s)
 			{
-				tfmt = time_format::milliseconds;
+				tfmt = perfometer::utils::time_format::milliseconds; 
 			}
 			else if (arg == "-tM"s)
 			{
-				tfmt = time_format::microseconds;
+				tfmt = perfometer::utils::time_format::microseconds;
 			}
 			else
 			{
@@ -382,5 +343,5 @@ int main(int argc, const char** argv)
 		return -1;
 	}
 
-	return process(filename, tfmt);
+	return perfometer::process(filename, tfmt);
 }

@@ -4,6 +4,7 @@ add_library (utils
             STATIC
             src/time.cpp)
 
+target_link_libraries(utils perfometer)
 target_include_directories (utils PUBLIC include)
 
 file(GLOB_RECURSE headers "include/utils/*.h")

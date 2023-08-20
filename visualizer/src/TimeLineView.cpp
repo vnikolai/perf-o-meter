@@ -180,7 +180,7 @@ void TimeLineView::paintGL()
         painter.setPen(RulerBackgroundColor);
         painter.drawText(m_mousePosition.x() + TitleOffsetSmall, 2 * RulerHeight, 200, 50,
                      Qt::AlignTop | Qt::AlignLeft,
-                     format_time(timeAtPoint(width)).c_str());
+                     perfometer::utils::time_to_string(timeAtPoint(width)).c_str());
     }
 
     painter.setPen(Qt::darkGreen);
@@ -190,7 +190,7 @@ void TimeLineView::paintGL()
     painter.setPen(RulerBackgroundColor);
     painter.drawText(m_mousePosition.x() + TitleOffsetSmall, RulerHeight, 200, 50,
                      Qt::AlignTop | Qt::AlignLeft,
-                     text.fromStdString(format_time(timeAtPoint(m_mousePosition.x() - viewport.left()))));
+                     text.fromStdString(perfometer::utils::time_to_string(timeAtPoint(m_mousePosition.x() - viewport.left()))));
 
     painter.end();
 }
@@ -613,7 +613,7 @@ void TimeLineView::drawRuler(QPainter& painter, QPointF& pos)
             double rulerTime = idx * static_cast<double>(timeStep) / 1000000000;
             painter.drawText(x + TitleOffsetSmall, 0, 64, RulerHeight,
                              Qt::AlignVCenter | Qt::AlignLeft,
-                             text.fromStdString(format_time(rulerTime)));
+                             text.fromStdString(perfometer::utils::time_to_string(rulerTime)));
         }
     }
 
@@ -649,8 +649,8 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
             stream << "mouse: " << m_mousePosition.x() << " " << m_mousePosition.y() << std::endl
                    << "zoom: " << m_zoom << std::endl
                    << "offset: " << m_offset.x() << " " << m_offset.y() << std::endl
-                   << "report time: [" << format_time(m_report ? m_report->getStartTime() : 0.f) << "] - [" 
-                                       << format_time(m_report ? m_report->getEndTime() : 0.f) <<  "]" << std::endl
+                   << "report time: [" << perfometer::utils::time_to_string(m_report ? m_report->getStartTime() : 0.f) << "] - [" 
+                                       << perfometer::utils::time_to_string(m_report ? m_report->getEndTime() : 0.f) <<  "]" << std::endl
                    << "pixel per second: " << pixelsPerSecond() << std::endl;
         break;
 
