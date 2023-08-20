@@ -617,11 +617,23 @@ void TimeLineView::drawRuler(QPainter& painter, QPointF& pos)
         }
     }
 
+    painter.setPen(Qt::darkRed);
+
     if (pos.x() > 0)
     {
-        painter.setPen(Qt::darkRed);
         coord_t zeroPointX = pos.x() + viewport.left();
         painter.drawLine(zeroPointX, viewport.top(), zeroPointX, viewport.bottom());
+    }
+
+    if (m_report)
+    {
+        coord_t reportEndTimeCoord = m_report->getEndTime() * pixelsPerSecond();
+        coord_t endPointX = reportEndTimeCoord + pos.x() + viewport.left();
+        if (endPointX < viewport.right())
+        {
+            
+            painter.drawLine(endPointX, viewport.top(), endPointX, viewport.bottom());
+        }
     }
 }
 
