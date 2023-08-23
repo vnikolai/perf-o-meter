@@ -6,6 +6,7 @@ option (PERFOMETER_BUILD_PRINTER    "Build printer"     OFF)
 option (PERFOMETER_BUILD_SAMPLES    "Build samples"     OFF)
 option (PERFOMETER_BUILD_VISUALIZER "Build visualizer"  OFF)
 option (PERFOMETER_BUILD_TESTS      "Build tests"       OFF)
+option (PERFOMETER_BUILD_BENCHMARKS "Build benchmarks"  OFF)
 option (LEAN_AND_MEAN               "Minimum build"     OFF)
 
 if (PERFOMETER_BUILD_TESTS)

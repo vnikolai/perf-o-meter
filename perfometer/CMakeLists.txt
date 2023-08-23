@@ -66,3 +66,8 @@ if (PERFOMETER_BUILD_TESTS)
 
     add_test(NAME start_stop_out_of_order COMMAND start_stop_out_of_order)
 endif()
+
+if (PERFOMETER_BUILD_BENCHMARKS)
+    add_executable(benchmark benchmark/benchmark_register_constant_string.cpp)
+    target_link_libraries(benchmark perfometer utils)
+endif()
