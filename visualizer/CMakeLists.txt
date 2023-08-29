@@ -14,4 +14,4 @@ target_link_libraries(
     Qt5::Gui
     Qt5::OpenGL)
 
-set_property(TARGET visualizer PROPERTY CXX_STANDARD 17)
+set_property(TARGET visualizer PROPERTY CXX_STANDARD 20)
