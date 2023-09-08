@@ -40,10 +40,10 @@ static bool s_logging_enabled = false;
 static bool s_logger_thread_running = false;
 static std::thread s_logger_thread;
 
-static std::queue<record_buffer*> s_logger_records_queue;
-static std::unordered_map<thread_id, record_buffer*> s_records_inprogress;
+static std::queue<std::shared_ptr<record_buffer>> s_logger_records_queue;
+static std::unordered_map<thread_id, std::shared_ptr<record_buffer>> s_records_inprogress;
 static mutex s_records_mutex;
-static thread_local record_buffer* s_record_cache = nullptr;
+static thread_local std::shared_ptr<record_buffer> s_record_cache = nullptr;
 
 constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();
 
@@ -51,7 +51,7 @@ void logger_thread()
 {
     while (s_logger_thread_running)
     {
-        record_buffer* buffer = nullptr;
+        std::shared_ptr<record_buffer> buffer = nullptr;
         {
             scoped_lock lock(s_records_mutex);
 
@@ -65,8 +65,6 @@ void logger_thread()
         if (buffer)
         {
             s_serializer.write(buffer->data(), buffer->used_size());
-
-            delete buffer;
         }
         else
         {
@@ -145,18 +143,19 @@ result shutdown()
     }
 
     s_logging_enabled = false;
-    s_record_cache = nullptr;
 
     {
         scoped_lock lock(s_records_mutex);
 
         for (auto pair : s_records_inprogress)
         {
-            record_buffer* buffer = pair.second;
-            s_logger_records_queue.push(buffer);
+            std::shared_ptr<record_buffer> buffer = pair.second;
+            std::shared_ptr<record_buffer> copy(new record_buffer(*buffer));
+            s_logger_records_queue.push(std::move(copy));
         }
 
         s_records_inprogress.clear();
+        s_record_cache.reset();
     }
 
     result res = flush();
@@ -210,7 +209,7 @@ result flush_thread_cache()
     if (s_record_cache)
     {
         scoped_lock lock(s_records_mutex);
-        s_logger_records_queue.push(s_record_cache);
+        s_logger_records_queue.push(std::move(s_record_cache));
     }
 
     s_record_cache = nullptr;
@@ -254,10 +253,9 @@ result ensure_buffer()
 
     if (s_record_cache == nullptr)
     {
-        s_record_cache = new record_buffer();
+        s_record_cache = std::make_shared<record_buffer>();
         if (!s_record_cache || !s_record_cache->data())
         {
-            delete s_record_cache;
             s_record_cache = nullptr;
 
             return result::no_memory_available;

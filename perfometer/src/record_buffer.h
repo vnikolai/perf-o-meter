@@ -35,6 +35,12 @@ namespace perfometer
         {
         }
 
+        explicit record_buffer(const record_buffer& copy)
+            : m_curr_pos(m_data + copy.used_size())
+        {
+            memcpy(m_data, copy.m_data, copy.used_size());
+        }
+
         ~record_buffer()
         {
         }
