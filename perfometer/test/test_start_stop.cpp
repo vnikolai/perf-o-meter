@@ -20,41 +20,46 @@ SOFTWARE. */
 
 #include <perfometer/perfometer.h>
 #include <perfometer/helpers.h>
+#include <ctime>
 #include <iostream>
 #include <thread>
 
 constexpr int num_threads = 10;
 std::thread threads[num_threads];
 
-void wait(unsigned int millisec)
+void wait(unsigned int microsec)
 {
     PERFOMETER_LOG_WAIT_FUNCTION();
+    PERFOMETER_LOG_EVENT(PERFOMETER_FUNCTION);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(millisec));
+    std::this_thread::sleep_for(std::chrono::microseconds(microsec));
 }
 
-void sub_task()
+void sub_task(unsigned int microsec)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::time_t result = std::time(nullptr);
+    PERFOMETER_LOG_DYNAMIC_EVENT(std::ctime(&result));
+
+    std::this_thread::sleep_for(std::chrono::microseconds(microsec));
 }
 
 void task()
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    sub_task();
+    sub_task(2);
 
-    wait(50);
+    wait(1);
 
-    sub_task();
+    sub_task(2);
 }
 
 void job(int num_tasks)
 {
-    auto id = perfometer::register_string(thread_names[num_tasks]);
-    perfometer::log_thread_name(id);
+    PERFOMETER_LOG_THREAD_NAME("WORKER");
+    std::cout << "job " << num_tasks << " started" << std::endl;
 
     PERFOMETER_LOG_WORK_FUNCTION();
 
@@ -62,6 +67,8 @@ void job(int num_tasks)
     {
         task();
     }
+
+    std::cout << "job " << num_tasks << " done" << std::endl;
 }
 
 void start_work_threads()
@@ -70,9 +77,9 @@ void start_work_threads()
 
     for (int i = 0; i < num_threads; ++i)
     {
-        threads[i] = std::thread(job, i);
+        threads[i] = std::thread(job, i*1000);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
 }
 
@@ -90,19 +97,62 @@ void wait_work_threads()
     }
 }
 
-int main(int argc, const char** argv)
+void test_late_start()
 {
-    auto result = perfometer::initialize();
-    std::cout << "perfometer::initialize() returned " << result << std::endl;
-
-    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
-
     start_work_threads();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+    auto result = perfometer::initialize("test_late_start.report");
+    std::cout << "perfometer::initialize() returned " << result << std::endl;
+    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
 
     wait_work_threads();
 
     result = perfometer::shutdown();
     std::cout << "perfometer::shutdown() returned " << result << std::endl;
+}
+
+void test_early_stop()
+{
+    auto result = perfometer::initialize("test_early_stop.report");
+    std::cout << "perfometer::initialize() returned " << result << std::endl;
+    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
+
+    start_work_threads();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
+
+    result = perfometer::shutdown();
+    std::cout << "perfometer::shutdown() returned " << result << std::endl;
+
+    wait_work_threads();
+}
+
+void test_start_stop_repeat()
+{
+    start_work_threads();
+
+    for (int i = 0; i < 100; ++i)
+    {
+        auto result = perfometer::initialize("test_start_stop_repeat.report");
+        std::cout << "perfometer::initialize() returned " << result << std::endl;
+        PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+        result = perfometer::shutdown();
+        std::cout << "perfometer::shutdown() returned " << result << std::endl;
+    }
+
+    wait_work_threads();
+}
+
+int main(int argc, const char** argv)
+{
+    test_late_start();
+    test_early_stop();
+    test_start_stop_repeat();
 
     return 0;
 }
