@@ -57,10 +57,13 @@ int main(int argc, const char** argv)
     CHECK(time_to_string(0.000000001), "1ns");
     CHECK(time_to_string(0.0000000001), "0ns");
 
-    CHECK(time_to_string(1.2), "1.20s");
-    CHECK(time_to_string(1.4), "1.40s");
-    CHECK(time_to_string(1.5), "1.50s");
-    CHECK(time_to_string(11.5), "11.5s");
+    CHECK(time_to_string(1.4), "1.4s");
+    CHECK(time_to_string(11.4), "11.4s");
+    CHECK(time_to_string(11.47), "11.47s");
+    CHECK(time_to_string(111.47), "1m 51.47s");
+    CHECK(time_to_string(10.4), "10.4s");
+    CHECK(time_to_string(1.04), "1.04s");
+    CHECK(time_to_string(10.04), "10.04s");
     CHECK(time_to_string(60), "1m");
     CHECK(time_to_string(72), "1m 12s");
     CHECK(time_to_string(3659), "1h 59s");

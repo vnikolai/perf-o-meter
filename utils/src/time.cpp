@@ -67,7 +67,7 @@ std::string time_to_string(double time)
         suffix = "s";
         denom = 1;
 
-        withFraction = time < 10 ? 100 : 10;
+        withFraction = 100;
     }
     else if (time < 3600 - precision)
     {
@@ -94,7 +94,12 @@ std::string time_to_string(double time)
         if (fraction >= 1)
         {
             char text[16];
-            std::snprintf(text, 16, "%d.%d", value, fraction);
+            int len = std::snprintf(text, 16, "%d.%02d", value, fraction);
+
+            while (--len && text[len] == '0')
+            {
+                text[len] = 0;
+            }
 
             return std::string(text) + suffix;
         }
