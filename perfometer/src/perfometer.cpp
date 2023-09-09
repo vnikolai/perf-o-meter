@@ -248,7 +248,11 @@ result ensure_buffer()
 #endif
     if (s_record_cache && s_record_cache->free_size() < 256)
     {
-        flush_thread_cache();
+        result res = flush_thread_cache();
+        if (res != result::ok)
+        {
+            return res;
+        }
     }
 
     if (s_record_cache == nullptr)
