@@ -142,6 +142,18 @@ int process(const char* filename, options opts)
               << int(minor_version) << "."
               << int(patch_version) << std::endl;
 
+    int report_version = major_version << 16 | minor_version << 8 | patch_version;
+    int software_version = perfometer::format::major_version << 16 |
+                           perfometer::format::minor_version << 8 |
+                           perfometer::format::patch_version;
+
+    if (report_version > software_version)
+    {
+        std::cout << "Report version is newer than current software supports"
+                  << int(major_version) << "." << int(minor_version) << "." << int(patch_version) << std::endl;
+        return -1;
+    }
+
     constexpr size_t buffer_size = 1024;
     char buffer[buffer_size];
 
@@ -217,6 +229,11 @@ int process(const char* filename, options opts)
             {
                 perf_string_id id = 0;
                 report_file >> id;
+
+                if (1460 == id)
+                {
+                    std::cout << "this must be that weird string" << std::endl;
+                }
 
                 report_file.read_string(buffer, buffer_size);
 
@@ -297,6 +314,11 @@ int process(const char* filename, options opts)
                           <<  " fired " << time_formatter(t - init_time, clock_frequency, opts.tfmt)
                           << std::endl;
 
+                break;
+            }
+            case 77:
+            {
+                std::cout << "Page break " << std::endl;
                 break;
             }
             default:

@@ -147,6 +147,18 @@ bool PerfometerReport::loadFile(const std::string& fileName)
            >> minorVersion
            >> patchVersion;
 
+    int reportVersion = majorVersion << 16 | minorVersion << 8 | patchVersion;
+    int softwareVersion = perfometer::format::major_version << 16 |
+                           perfometer::format::minor_version << 8 |
+                           perfometer::format::patch_version;
+
+    if (reportVersion > softwareVersion)
+    {
+        qCritical() << "Report version is newer than current software supports" 
+                    << int(majorVersion) << "." << int(minorVersion) << "." << int(patchVersion);
+        return false;
+    }
+
     constexpr size_t bufferSize = 1024;
     char buffer[bufferSize];
 
@@ -331,6 +343,11 @@ bool PerfometerReport::loadFile(const std::string& fileName)
                 m_startTime = std::min(m_startTime, event_time);
                 m_endTime = std::max(m_endTime, event_time);
 
+                break;
+            }
+            case 77:
+            {
+                std::cout << "Page break " << std::endl;
                 break;
             }
             default:
