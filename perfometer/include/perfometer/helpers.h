@@ -21,6 +21,7 @@ SOFTWARE. */
 #pragma once
 
 #include <perfometer/perfometer.h>
+#include <string>
 #include <cstring>
 
 namespace perfometer
@@ -52,6 +53,26 @@ namespace perfometer
         string_id m_name;
         time m_start_time;
     };
+
+    inline const char* string_adapter(const char* string)
+    {
+        return string;
+    }
+
+    inline const char* string_adapter(const std::string& string)
+    {
+        return string.c_str();
+    }
+
+    inline const size_t string_length_adapter(const char* string)
+    {
+        return std::strlen(string);
+    }
+
+    inline const size_t string_length_adapter(const std::string& string)
+    {
+        return string.length();
+    }
 }
 
 #if defined(__GNUC__) || defined( __clang__ )
@@ -64,27 +85,32 @@ namespace perfometer
 #define PERFOMETER_CONCAT(x, y)             PERFOMETER_CONCAT_WRAPPER(x, y)
 #define PERFOMETER_UNIQUE( x )              PERFOMETER_CONCAT( x, __LINE__ )
 
-#define PERFOMETER_REGISTER_STRING(name)                                    \
-        static perfometer::string_id PERFOMETER_UNIQUE(s_id) =              \
-            perfometer::register_string(name, std::strlen(name))            \
+#define PERFOMETER_STRING_ADAPTER(name) perfometer::string_adapter(name), perfometer::string_length_adapter(name)
 
-#define PERFOMETER_LOG_WORK_SCOPE(name)                                     \
-        PERFOMETER_REGISTER_STRING(name);                                   \
-        perfometer::scope_log<perfometer::log_work>                         \
+#define PERFOMETER_REGISTER_STRING(name)                                                    \
+        static perfometer::string_id PERFOMETER_UNIQUE(s_id) =                              \
+            perfometer::register_string(PERFOMETER_STRING_ADAPTER(name))                    \
+
+#define PERFOMETER_LOG_WORK_SCOPE(name)                                                     \
+        PERFOMETER_REGISTER_STRING(name);                                                   \
+        perfometer::scope_log<perfometer::log_work>                                         \
             PERFOMETER_UNIQUE(logger)(PERFOMETER_UNIQUE(s_id))
 
-#define PERFOMETER_LOG_WAIT_SCOPE(name)                                     \
-        PERFOMETER_REGISTER_STRING(name);                                   \
-        perfometer::scope_log<perfometer::log_wait>                         \
+#define PERFOMETER_LOG_WAIT_SCOPE(name)                                                     \
+        PERFOMETER_REGISTER_STRING(name);                                                   \
+        perfometer::scope_log<perfometer::log_wait>                                         \
             PERFOMETER_UNIQUE(logger)(PERFOMETER_UNIQUE(s_id))
 
-#define PERFOMETER_LOG_THREAD_NAME(name)                                    \
-        PERFOMETER_REGISTER_STRING(name);                                   \
+#define PERFOMETER_LOG_THREAD_NAME(name)                                                    \
+        PERFOMETER_REGISTER_STRING(name);                                                   \
         perfometer::log_thread_name(PERFOMETER_UNIQUE(s_id));
 
-#define PERFOMETER_LOG_EVENT(name)                                          \
-        PERFOMETER_REGISTER_STRING(name);                                   \
+#define PERFOMETER_LOG_EVENT(name)                                                          \
+        PERFOMETER_REGISTER_STRING(name);                                                   \
         perfometer::log_event(PERFOMETER_UNIQUE(s_id), perfometer::get_time())
+
+#define PERFOMETER_LOG_DYNAMIC_EVENT(name)                                                  \
+        perfometer::log_event(perfometer::register_string(name), perfometer::get_time())
 
 #define PERFOMETER_LOG_WORK_FUNCTION()      PERFOMETER_LOG_WORK_SCOPE(PERFOMETER_FUNCTION)
 #define PERFOMETER_LOG_WAIT_FUNCTION()      PERFOMETER_LOG_WAIT_SCOPE(PERFOMETER_FUNCTION)
