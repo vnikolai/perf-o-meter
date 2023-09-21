@@ -64,12 +64,12 @@ namespace perfometer
         return string.c_str();
     }
 
-    inline const size_t string_length_adapter(const char* string)
+    inline size_t string_length_adapter(const char* string)
     {
         return std::strlen(string);
     }
 
-    inline const size_t string_length_adapter(const std::string& string)
+    inline size_t string_length_adapter(const std::string& string)
     {
         return string.length();
     }
