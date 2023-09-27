@@ -110,7 +110,7 @@ double report_reader::convert_time(perf_time time)
 
 perfometer::result report_reader::process(const char* filename)
 {
-    binary_stream_reader<std::ifstream> report_file(filename);
+    binary_stream_reader<std::ifstream> report_file(filename, std::ios::binary | std::ios::ate);
 
     if (!report_file)
     {
@@ -119,6 +119,10 @@ perfometer::result report_reader::process(const char* filename)
     }
 
     LOG( "Opening report file " << filename );
+
+    const size_t report_size = report_file.tellg();
+    report_file.seekg(0);
+    size_t progress = 0;
 
     char header[16];
     report_file.read(header, 11);
@@ -169,6 +173,13 @@ perfometer::result report_reader::process(const char* filename)
         {
             LOG_ERROR( "Error reading file " << filename )
             return perfometer::result::io_error;
+        }
+
+        size_t current_progress = report_file.tellg() * 100 / report_size;
+        if (current_progress > progress)
+        {
+            progress = current_progress;
+            handle_loading_progress(progress);
         }
 
         m_statistics.num_blocks++;

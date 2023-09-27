@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2023 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,8 @@ SOFTWARE. */
 
 #pragma once
 
+#include <utils/report_reader.h>
+
 #include <map>
 #include <string>
 #include <vector>
@@ -28,7 +30,7 @@ SOFTWARE. */
 
 namespace visualizer
 {
-    using StringID = size_t;
+    using StringID = perfometer::string_id;
 
     struct Record
     {
@@ -47,7 +49,7 @@ namespace visualizer
 
     struct Thread
     {
-        using ID = int64_t;
+        using ID = perfometer::utils::perf_thread_id;
 
         Thread(ID _id, const std::string& n)
             : id(_id)
@@ -66,7 +68,7 @@ namespace visualizer
 
     using Threads = std::map<Thread::ID, ThreadPtr>;
 
-    class PerfometerReport
+    class PerfometerReport : public perfometer::utils::report_reader
     {
     public:
         struct Traits
@@ -96,14 +98,26 @@ namespace visualizer
         ConstThreadPtr getThread(Thread::ID id) const;
 
     private:
+
+        void log(const std::string& message) override;
+        void log_error(const std::string& message) override;
+        void handle_loading_progress(size_t percentage) override;
+        void handle_clock_configuration(char time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time) override;
+        void handle_thread_info(char thread_id_size, perfometer::utils::perf_thread_id main_thread_id) override;
+        void handle_string(perfometer::string_id id, const std::string& string) override;
+        void handle_thread_name(perfometer::utils::perf_thread_id thread_id, const std::string& name) override;
+        void handle_work(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time_start, double time_end) override;
+        void handle_wait(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time_start, double time_end) override;
+        void handle_event(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time) override;
+
+        void process_record(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time_start, double time_end, bool wait);
+
+    private:
         double m_startTime;
         double m_endTime;
 
         Traits  m_traits;
         Threads m_threads;
-
-        std::map<StringID, std::string> m_strings;
-        std::map<Thread::ID, std::string> m_thread_names;
 
         Thread::ID m_mainThreadID;
     };

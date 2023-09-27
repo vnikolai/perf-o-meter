@@ -57,6 +57,7 @@ namespace perfometer
         protected:
             virtual void log(const std::string& message) {}
             virtual void log_error(const std::string& message) {}
+            virtual void handle_loading_progress(size_t percentage) {}
             virtual void handle_clock_configuration(char time_size, perf_time clock_frequency, perf_time init_time) {}
             virtual void handle_thread_info(char thread_id_size, perf_thread_id main_thread_id) {}
             virtual void handle_string(perfometer::string_id id, const std::string& string) {}

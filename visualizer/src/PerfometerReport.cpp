@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2023 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,82 +19,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include "PerfometerReport.h"
-#include <algorithm>
-#include <fstream>
 #include <cstring>
-#include <stack>
-#include <unordered_map>
-#include <perfometer/perfometer.h>
-#include <perfometer/format.h>
 #include <perfometer/helpers.h>
-
 #include <QDebug>
 
 namespace visualizer {
 
-using PerfTime = uint64_t;
-using PerfStringID = perfometer::string_id;
-
 static const std::string UNKNOWN = "UNKNOWN";
-
-namespace {
-class reader : public std::ifstream
-{
-public:
-    reader(const std::string& fileName,
-           std::ios::openmode openMode = std::ios::binary)
-        : std::ifstream(fileName, openMode)
-    {
-    }
-
-    reader& operator >> (unsigned char& byte)
-    {
-        read(reinterpret_cast<char*>(&byte), 1);
-        return *this;
-    }
-
-    reader& operator >> (Thread::ID& ID)
-    {
-        ID = 0;
-        read(reinterpret_cast<char*>(&ID), m_threadIDSize);
-        return *this;
-    }
-
-    reader& operator >> (PerfTime& time)
-    {
-        time = 0;
-        read(reinterpret_cast<char*>(&time), m_timeSize);
-        return *this;
-    }
-
-    reader& operator >> (PerfStringID& ID)
-    {
-        read(reinterpret_cast<char*>(&ID), sizeof(PerfStringID));
-        return *this;
-    }
-
-    reader& readString(char* buffer, size_t buffer_size)
-    {
-        unsigned char nameLength = 0;
-        *this >> nameLength;
-
-        size_t length = std::min(buffer_size - 1, static_cast<size_t>(nameLength));
-
-        read(buffer, length);
-        buffer[length] = 0;
-
-        return *this;
-    }
-
-    void setThreadIDSize(size_t size) { m_threadIDSize = size; }
-    void setTimeSize(size_t size) { m_timeSize = size; }
-
-private:
-    size_t m_threadIDSize = 0;
-    size_t m_timeSize = 0;
-};
-
-} // namespace
 
 PerfometerReport::PerfometerReport()
     : m_startTime(std::numeric_limits<double>::max())
@@ -117,256 +48,131 @@ bool PerfometerReport::loadFile(const std::string& fileName)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    qDebug() << "Loading report" << fileName.c_str();
-
-    reader report(fileName, std::ios::binary | std::ios::ate);
-    if (!report)
-    {
-        qCritical() << "Loading report: Cannot open file" << fileName.c_str();
-        return false;
-    }
-
-    const size_t reportSize = report.tellg();
-    report.seekg(0);
-    size_t progress = 0;
-
-    char header[16];
-    report.read(header, 11);
-
-    if (report.fail() || std::strncmp(header, perfometer::format::header, 11))
-    {
-        qCritical() << "Loading report: wrong file format";
-        return false;
-    }
-
-    unsigned char majorVersion = 0;
-    unsigned char minorVersion = 0;
-    unsigned char patchVersion = 0;
-
-    report >> majorVersion
-           >> minorVersion
-           >> patchVersion;
-
-    int reportVersion = majorVersion << 16 | minorVersion << 8 | patchVersion;
-    int softwareVersion = perfometer::format::major_version << 16 |
-                           perfometer::format::minor_version << 8 |
-                           perfometer::format::patch_version;
-
-    if (reportVersion > softwareVersion)
-    {
-        qCritical() << "Report version is newer than current software supports" 
-                    << int(majorVersion) << "." << int(minorVersion) << "." << int(patchVersion);
-        return false;
-    }
-
-    constexpr size_t bufferSize = 1024;
-    char buffer[bufferSize];
-
-    PerfTime clockFrequency = 0;
-    PerfTime initTime = 0;
-
-    m_strings.clear();
-    std::unordered_map<Thread::ID, PerfStringID> thread_name_ids;
-
-    perfometer::format::record_type record_type;
-
-    while ((report >> record_type) && !report.eof())
-    {
-        if (report.fail())
-        {
-            qCritical() << "Loading report: cannot read from file" << fileName.c_str();
-            return false;
-        }
-
-        size_t currentProgress = report.tellg() * 100 / reportSize;
-        if (currentProgress > progress)
-        {
-            progress = currentProgress;
-            qDebug() << "Report loading progress " << progress << "%";
-        }
-
-        switch (record_type)
-        {
-            case perfometer::format::record_type::clock_configuration:
-            {
-                unsigned char timeSize = 0;
-                report >> timeSize;
-
-                if (timeSize > 8)
-                {
-                    qCritical() << "Loading report: Time size too large";
-                    return false;
-                }
-
-                report.setTimeSize(timeSize);
-
-                report >> clockFrequency
-                       >> initTime;
-
-                break;
-            }
-            case perfometer::format::record_type::thread_info:
-            {
-                unsigned char threadIDSize = 0;
-                report >> threadIDSize;
-
-                if (threadIDSize > 8)
-                {
-                    qCritical() << "Loading report: Thread ID size too large";
-                    return false;
-                }
-
-                report.setThreadIDSize(threadIDSize);
-
-                report >> m_mainThreadID;
-
-                break;
-            }
-            case perfometer::format::record_type::string:
-            {
-                PerfStringID ID = 0;
-                report >> ID;
-
-                report.readString(buffer, bufferSize);
-
-                m_strings[ID] = buffer;
-
-                break;
-            }
-            case perfometer::format::record_type::thread_name:
-            {
-                Thread::ID threadID = 0;
-                PerfStringID stringID = 0;
-
-                report >> threadID
-                       >> stringID;
-
-                thread_name_ids[threadID] = stringID;
-
-                break;
-            }
-            case perfometer::format::record_type::work:
-            case perfometer::format::record_type::wait:
-            {
-                PerfStringID stringID = 0;
-                Thread::ID threadID = 0;
-                PerfTime startTime = 0;
-                PerfTime endTime = 0;
-
-                report >> stringID
-                       >> startTime
-                       >> endTime
-                       >> threadID;
-
-                double start = static_cast<double>(startTime - initTime) / clockFrequency;
-                double end = static_cast<double>(endTime - initTime) / clockFrequency;
-
-                if (m_traits.SkipRecordsIncorrectTime)
-                {
-                    if (start >= m_traits.RecordTimeMaxLimit || end >= m_traits.RecordTimeMaxLimit)
-                    {
-                        continue;
-                    }
-                }
-
-                if (m_traits.SkipEmptyRecords)
-                {
-                    if (end - start < m_traits.EmptyRecordLimit)
-                    {
-                        continue;
-                    }
-                }
-
-                ThreadPtr thread = getThread(threadID);
-                Record record{start, end, m_strings[stringID], record_type == perfometer::format::record_type::wait};
-
-                std::vector<Record>& records = thread->records;
-
-                // take records with enclosed time from thread into self 
-                size_t count = -1;
-                size_t i = records.size() - 1;
-                for (; i < records.size(); i--)
-                {
-                    Record& enclosed = records[i];
-                    if (enclosed.timeStart < record.timeStart || enclosed.timeEnd > record.timeEnd)
-                    {
-                        break;
-                    }
-
-                    count = i;
-                }
-
-                if (count < records.size())
-                {
-                    auto it = records.begin() + count;
-                    std::move(it, records.end(), std::back_inserter(record.enclosed));
-                
-                    // records.resize(count);
-                    // shrinking requires move assignment for some reason, so here's workaround:
-                    while (records.size() > count)
-                    {
-                        records.pop_back();
-                    }
-                }
-
-                records.push_back(record);
-
-                m_startTime = std::min(m_startTime, record.timeStart);
-                m_endTime = std::max(m_endTime, record.timeEnd);
-
-                break;
-            }
-            case perfometer::format::record_type::event:
-            {
-                PerfStringID stringID = 0;
-                Thread::ID threadID = 0;
-                PerfTime time = 0;
-                PerfTime endTime = 0;
-
-                report >> stringID
-                       >> time
-                       >> threadID;
-
-                double event_time = static_cast<double>(time - initTime) / clockFrequency;
-                if (m_traits.SkipRecordsIncorrectTime)
-                {
-                    if (event_time >= m_traits.RecordTimeMaxLimit)
-                    {
-                        continue;
-                    }
-                }
-
-                ThreadPtr thread = getThread(threadID);
-
-                thread->events.push_back(Event{event_time, m_strings[stringID]});
-
-                m_startTime = std::min(m_startTime, event_time);
-                m_endTime = std::max(m_endTime, event_time);
-
-                break;
-            }
-            case 77:
-            {
-                std::cout << "Page break " << std::endl;
-                break;
-            }
-            default:
-            {
-                qCritical() << "Loading report: Unknown record type";
-
-                return m_traits.AllowIncompleteReport;
-            }
-        }
-    }
-
-    for (auto&& pair : thread_name_ids)
-    {
-        m_thread_names[pair.first] = m_strings[pair.second];
-    }
+    process(fileName.c_str());
 
     qDebug() << "Report loading done";
 
     return true;
+}
+
+void PerfometerReport::log(const std::string& message)
+{
+    qDebug() << message.c_str();
+}
+
+void PerfometerReport::log_error(const std::string& message)
+{
+    qCritical() << message.c_str();
+}
+
+void PerfometerReport::handle_loading_progress(size_t percentage)
+{
+    qDebug() << "Report loading progress " << percentage << "%";
+}
+
+void PerfometerReport::handle_clock_configuration(char time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time)
+{
+}
+
+void PerfometerReport::handle_thread_info(char thread_id_size, perfometer::utils::perf_thread_id main_thread_id)
+{
+    m_mainThreadID = main_thread_id;
+}
+
+void PerfometerReport::handle_string(perfometer::string_id id, const std::string& string)
+{
+}
+
+void PerfometerReport::handle_thread_name(perfometer::utils::perf_thread_id thread_id, const std::string& name)
+{
+}
+
+void PerfometerReport::handle_work(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time_start, double time_end)
+{
+    process_record(string_id, thread_id, time_start, time_end, false);
+}
+
+void PerfometerReport::handle_wait(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time_start, double time_end)
+{
+    process_record(string_id, thread_id, time_start, time_end, true);
+}
+
+void PerfometerReport::process_record(perfometer::string_id string_id,
+                                      perfometer::utils::perf_thread_id thread_id,
+                                      double time_start,
+                                      double time_end,
+                                      bool wait)
+{
+    if (m_traits.SkipRecordsIncorrectTime)
+    {
+        if (time_start >= m_traits.RecordTimeMaxLimit || time_end >= m_traits.RecordTimeMaxLimit)
+        {
+            return;
+        }
+    }
+
+    if (m_traits.SkipEmptyRecords)
+    {
+        if (time_end - time_start < m_traits.EmptyRecordLimit)
+        {
+            return;
+        }
+    }
+
+    ThreadPtr thread = getThread(thread_id);
+    Record record{time_start, time_end, string_by_id(string_id), wait};
+
+    std::vector<Record>& records = thread->records;
+
+    // take records with enclosed time from thread into self 
+    size_t count = -1;
+    size_t i = records.size() - 1;
+    for (; i < records.size(); i--)
+    {
+        Record& enclosed = records[i];
+        if (enclosed.timeStart < record.timeStart || enclosed.timeEnd > record.timeEnd)
+        {
+            break;
+        }
+
+        count = i;
+    }
+
+    if (count < records.size())
+    {
+        auto it = records.begin() + count;
+        std::move(it, records.end(), std::back_inserter(record.enclosed));
+    
+        // records.resize(count);
+        // shrinking requires move assignment for some reason, so here's workaround:
+        while (records.size() > count)
+        {
+            records.pop_back();
+        }
+    }
+
+    records.push_back(record);
+
+    m_startTime = std::min(m_startTime, record.timeStart);
+    m_endTime = std::max(m_endTime, record.timeEnd);
+}
+
+void PerfometerReport::handle_event(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double event_time)
+{
+    if (m_traits.SkipRecordsIncorrectTime)
+    {
+        if (event_time >= m_traits.RecordTimeMaxLimit)
+        {
+            return;
+        }
+    }
+
+    ThreadPtr thread = getThread(thread_id);
+
+    thread->events.push_back(Event{event_time, string_by_id(string_id)});
+
+    m_startTime = std::min(m_startTime, event_time);
+    m_endTime = std::max(m_endTime, event_time);
 }
 
 const Threads& PerfometerReport::getThreads() const
@@ -376,8 +182,7 @@ const Threads& PerfometerReport::getThreads() const
 
 ThreadPtr PerfometerReport::getThread(Thread::ID ID)
 {
-    auto name_pair = m_thread_names.emplace(ID, UNKNOWN);
-    auto thread_pair = m_threads.emplace(ID, std::make_shared<Thread>(ID, name_pair.first->second));
+    auto thread_pair = m_threads.emplace(ID, std::make_shared<Thread>(ID, thread_name_by_id(ID)));
     return thread_pair.first->second;
 }
 
