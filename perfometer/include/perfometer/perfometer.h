@@ -1,4 +1,4 @@
-/* Copyright 2020-2021 Volodymyr Nikolaichuk
+/* Copyright 2020-2023 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,10 @@ namespace perfometer
         not_initialized,
         not_running,
         not_implemented,
-        overflow
+        overflow,
+        file_not_found,
+        wrong_format,
+        newer_format
     };
 
     result initialize(const char file_name[] = "perfometer.report", bool running = true);

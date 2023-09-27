@@ -24,15 +24,14 @@ SOFTWARE. */
 #include <cstring>
 #include <algorithm>
 #include <fstream>
-#include <unordered_map>
+#include <sstream>
 #include <vector>
+
+#define LOG(...)        { std::stringstream s; s << __VA_ARGS__; log(s.str().c_str()); }
+#define LOG_ERROR(...)  { std::stringstream s; s << __VA_ARGS__; log_error(s.str().c_str()); }
 
 namespace perfometer {
 namespace utils {
-
-using perf_thread_id = int64_t; // holding at least 8 bytes
-using perf_time = uint64_t;     // holding at least 8 bytes
-using perf_string_id = perfometer::string_id;
 
 template<typename stream>
 class binary_stream_reader : public stream
@@ -104,17 +103,22 @@ report_reader::~report_reader()
 {
 }
 
-int report_reader::process(const char* filename)
+double report_reader::convert_time(perf_time time)
+{
+    return static_cast<double>(time - m_init_time) / m_clock_frequency;
+}
+
+perfometer::result report_reader::process(const char* filename)
 {
     binary_stream_reader<std::ifstream> report_file(filename);
 
     if (!report_file)
     {
-        std::cerr << "Cannot open file " << filename << std::endl;
-        return -1;
+        LOG_ERROR( "Cannot open file " << filename );
+        return perfometer::result::file_not_found;
     }
 
-    std::cout << "Opening report file " << filename << std::endl;
+    LOG( "Opening report file " << filename );
 
     char header[16];
     report_file.read(header, 11);
@@ -122,8 +126,8 @@ int report_reader::process(const char* filename)
 
     if (report_file.fail() || std::strncmp(header, perfometer::format::header, 11))
     {
-        std::cout << "Wrong file format " << filename << std::endl;
-        return -1;
+        LOG_ERROR( "Wrong file format " << filename );
+        return perfometer::result::wrong_format;
     }
 
     unsigned char major_version = 0;
@@ -134,10 +138,10 @@ int report_reader::process(const char* filename)
                 >> minor_version
                 >> patch_version;
 
-    std::cout << "File version "
-              << int(major_version) << "."
-              << int(minor_version) << "."
-              << int(patch_version) << std::endl;
+    LOG( "File version "
+         << int(major_version) << "."
+         << int(minor_version) << "."
+         << int(patch_version) );
 
     int report_version = major_version << 16 | minor_version << 8 | patch_version;
     int software_version = perfometer::format::major_version << 16 |
@@ -146,33 +150,25 @@ int report_reader::process(const char* filename)
 
     if (report_version > software_version)
     {
-        std::cout << "Report version is newer than current software supports"
-                  << int(major_version) << "." << int(minor_version) << "." << int(patch_version) << std::endl;
-        return -1;
+        LOG_ERROR( "Report version is newer than current software supports"
+                  << int(major_version) << "." << int(minor_version) << "." << int(patch_version) );
+        return perfometer::result::newer_format;
     }
 
     constexpr size_t buffer_size = 1024;
     char buffer[buffer_size];
 
-    perf_time clock_frequency = 0;
-    perf_time init_time = 0;
-
+    perf_time duration = 0;
     perf_thread_id main_thread_id = 0;
-
-    std::unordered_map<perf_string_id, std::string>         strings;
-    std::unordered_map<perf_thread_id, perf_string_id>      threads;
-    std::unordered_map<perf_string_id, size_t>              blocks_occurences;
 
     perfometer::format::record_type record_type;
 
     while ((report_file >> record_type) && !report_file.eof())
     {
-        using namespace perfometer::utils;
-
         if (report_file.fail())
         {
-            std::cout << "Error reading file " << filename << std::endl;
-            return -1;
+            LOG_ERROR( "Error reading file " << filename )
+            return perfometer::result::io_error;
         }
 
         m_statistics.num_blocks++;
@@ -186,18 +182,16 @@ int report_reader::process(const char* filename)
 
                 if (time_size > 8)
                 {
-                    std::cout << "ERROR: Time size too large" << std::endl;
-                    return -1;
+                    LOG_ERROR( "ERROR: Time size too large" );
+                    return perfometer::result::invalid_arguments;
                 }
 
                 report_file.set_time_size(time_size);
 
-                report_file >> clock_frequency
-                            >> init_time;
+                report_file >> m_clock_frequency
+                            >> m_init_time;
 
-                std::cout << "Time size " << int(time_size) << " bytes" << std::endl;
-                std::cout << "Clock frequency " << clock_frequency << std::endl;
-                std::cout << "Start time " << init_time << std::endl;
+                handle_clock_configuration(time_size, m_clock_frequency, m_init_time);
 
                 break;
             }
@@ -208,16 +202,15 @@ int report_reader::process(const char* filename)
 
                 if (thread_id_size > 8)
                 {
-                    std::cout << "ERROR: Thread id size too large" << std::endl;
-                    return -1;
+                    LOG_ERROR( "ERROR: Thread id size too large" );
+                    return perfometer::result::invalid_arguments;
                 }
 
                 report_file.set_thread_id_size(thread_id_size);
 
                 report_file >> main_thread_id;
 
-                std::cout << "Thread ID size " << int(thread_id_size) << " bytes" << std::endl;
-                std::cout << "Main thread " << main_thread_id << std::endl;
+                handle_thread_info(thread_id_size, main_thread_id);
 
                 break;
             }
@@ -226,16 +219,9 @@ int report_reader::process(const char* filename)
                 perf_string_id id = 0;
                 report_file >> id;
 
-                if (1460 == id)
-                {
-                    std::cout << "this must be that weird string" << std::endl;
-                }
-
                 report_file.read_string(buffer, buffer_size);
 
-                strings[id] = buffer;
-
-                std::cout << "String ID " << id << " name " << buffer << std::endl;
+                handle_string(id, m_strings[id] = buffer);
 
                 break;
             }
@@ -247,9 +233,9 @@ int report_reader::process(const char* filename)
                 report_file >> thread_id
                             >> string_id;
 
-                threads[thread_id] = string_id;
+                m_threads[thread_id] = string_id;
 
-                std::cout << "Thread ID " << thread_id << " name " << strings[string_id] << std::endl;
+                handle_thread_name(thread_id, m_strings[string_id]);
 
                 break;
             }
@@ -266,21 +252,17 @@ int report_reader::process(const char* filename)
                             >> time_end
                             >> thread_id;
 
-                blocks_occurences.emplace(string_id, 0).first->second++;
-                m_statistics.duration = std::max<perf_time>(m_statistics.duration, time_end);
+                m_blocks_occurences.emplace(string_id, 0).first->second++;
+                duration = std::max<perf_time>(duration, time_end - m_init_time);
 
-                switch (record_type)
+                if (record_type == perfometer::format::record_type::work)
                 {
-                    case perfometer::format::record_type::work: std::cout << "Work"; break;
-                    case perfometer::format::record_type::wait: std::cout << "Wait"; break;
-                    default: break;
+                    handle_work(string_id, thread_id, convert_time(time_start), convert_time(time_end));
                 }
-
-                std::cout << " " << string_id << ":" << strings[string_id]
-                          << " on "  << thread_id << ":" << strings[threads[thread_id]]
-                          << " started " << time_formatter(time_start - init_time, clock_frequency, time_format::automatic)
-                          << " duration " << time_formatter(time_end - time_start, clock_frequency, time_format::automatic)
-                          << std::endl;
+                else if (record_type == perfometer::format::record_type::wait)
+                {
+                    handle_wait(string_id, thread_id, convert_time(time_start), convert_time(time_end));
+                }
 
                 break;
             }
@@ -294,37 +276,31 @@ int report_reader::process(const char* filename)
                             >> t
                             >> thread_id;
 
-                blocks_occurences.emplace(string_id, 0).first->second++;
-                m_statistics.duration = std::max<perf_time>(m_statistics.duration, t);
+                m_blocks_occurences.emplace(string_id, 0).first->second++;
+                duration = std::max<perf_time>(duration, t - m_init_time);
 
-                std::cout << "Event " << strings[string_id]
-                          << " on "  << strings[threads[thread_id]]
-                          <<  " fired " << time_formatter(t - init_time, clock_frequency, time_format::automatic)
-                          << std::endl;
+                handle_event(string_id, thread_id, convert_time(t));
 
-                break;
-            }
-            case 77:
-            {
-                std::cout << "Page break " << std::endl;
                 break;
             }
             default:
             {
                 std::cout << "ERROR: Unknown record type " << record_type << std::endl;
-                return -1;
+                return perfometer::result::io_error;
             }
         }
     }
 
-    m_statistics.occurences.reserve(blocks_occurences.size());
-    std::copy(blocks_occurences.begin(), blocks_occurences.end(), std::back_inserter(m_statistics.occurences));
+    m_statistics.duration = static_cast<double>(duration) / m_clock_frequency;
+
+    m_statistics.occurences.reserve(m_blocks_occurences.size());
+    std::copy(m_blocks_occurences.begin(), m_blocks_occurences.end(), std::back_inserter(m_statistics.occurences));
     std::sort(m_statistics.occurences.begin(), m_statistics.occurences.end(), [](const auto& left, const auto& right)
     {
         return left.second < right.second;
     });
 
-    return 0;
+    return perfometer::result::ok;
 }
 
 } // namespace utils

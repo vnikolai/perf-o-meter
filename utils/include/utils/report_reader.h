@@ -20,20 +20,26 @@ SOFTWARE. */
 
 #pragma once
 
-#include <perfometer/config.h>
+#include <perfometer/perfometer.h>
 #include <utils/time.h>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace perfometer
 {
     namespace utils
     {
+        using perf_thread_id = int64_t; // holding at least 8 bytes
+        using perf_time = uint64_t;     // holding at least 8 bytes
+        using perf_string_id = perfometer::string_id;
+
         class report_reader
         {
         public:
             struct statistics
             {
-                perfometer::time duration   = 0;
+                double duration             = 0.0f;
                 size_t num_blocks           = 0;
                 std::vector<std::pair<perfometer::string_id, size_t>> occurences;
             };
@@ -41,11 +47,34 @@ namespace perfometer
             report_reader();
             ~report_reader();
 
-            int process(const char* filename);
+            perfometer::result process(const char* filename);
 
             const statistics& stats() const { return m_statistics; }
 
+            const std::string& string_by_id(perf_string_id id) { return m_strings[id]; }
+            const std::string& thread_name_by_id(perf_thread_id id) { return m_strings[m_threads[id]]; }
+
+        protected:
+            virtual void log(const std::string& message) {}
+            virtual void log_error(const std::string& message) {}
+            virtual void handle_clock_configuration(char time_size, perf_time clock_frequency, perf_time init_time) {}
+            virtual void handle_thread_info(char thread_id_size, perf_thread_id main_thread_id) {}
+            virtual void handle_string(perfometer::string_id id, const std::string& string) {}
+            virtual void handle_thread_name(perf_thread_id thread_id, const std::string& name) {}
+            virtual void handle_work(perfometer::string_id string_id, perf_thread_id thread_id, double time_start, double time_end) {}
+            virtual void handle_wait(perfometer::string_id string_id, perf_thread_id thread_id, double time_start, double time_end) {}
+            virtual void handle_event(perfometer::string_id string_id, perf_thread_id thread_id, double time) {}
+
         private:
+            double convert_time(perf_time time);
+
+        private:
+            perf_time m_init_time = 0;
+            perf_time m_clock_frequency = 0;
+
+            std::unordered_map<perf_string_id, std::string>         m_strings;
+            std::unordered_map<perf_thread_id, perf_string_id>      m_threads;
+            std::unordered_map<perf_string_id, size_t>              m_blocks_occurences;
             statistics m_statistics;
         };
     }
