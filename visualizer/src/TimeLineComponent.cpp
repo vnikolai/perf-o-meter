@@ -1,4 +1,4 @@
-/* Copyright 2020-2021 Volodymyr Nikolaichuk
+/* Copyright 2020-2023 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -77,17 +77,17 @@ void TimeLineComponent::onBeginFrame()
     m_statistics.frameRenderTime = 0.0;
 }
 
-void TimeLineComponent::render(QPainter& painter, QRectF viewport, QPointF offset)
+void TimeLineComponent::render(QPainter& painter, const RenderContext& context, const Parameters& parameters)
 {
-    const auto viewportWidth = viewport.width();
+    const auto viewportWidth = context.viewport.width();
 
-    if (offset.y() < -ThreadTitleHeight)
+    if (context.offset.y() < -ThreadTitleHeight)
     {
         return;
     }
     
-    QRectF titleRect(viewport);
-    titleRect.translate(0, offset.y());
+    QRectF titleRect(context.viewport);
+    titleRect.translate(0, context.offset.y());
     titleRect.setHeight(ThreadTitleHeight);
 
     if (collapsed())
@@ -103,14 +103,14 @@ void TimeLineComponent::render(QPainter& painter, QRectF viewport, QPointF offse
     QString text;
     painter.setPen(Qt::white);
 
-    painter.drawText(RulerDistReport + std::max<qreal>(viewport.left(), offset.x()),
-                     viewport.top() + offset.y(),
-                     viewport.width(), ThreadTitleHeight,
+    painter.drawText(RulerDistReport + std::max<qreal>(context.viewport.left(), context.offset.x()),
+                     context.viewport.top() + context.offset.y(),
+                     context.viewport.width(), ThreadTitleHeight,
                      Qt::AlignVCenter | Qt::AlignLeft,
                      text.fromStdString(name()));
 }
 
-void TimeLineComponent::renderOverlay(QPainter& painter, QRectF viewport, QPointF offset)
+void TimeLineComponent::renderOverlay(QPainter& painter, const RenderContext& context, const Parameters& parameters)
 {
 }
 

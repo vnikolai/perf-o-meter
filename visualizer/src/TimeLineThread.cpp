@@ -196,7 +196,7 @@ void TimeLineThread::onCopy(QClipboard* clipboard)
     }
 }
 
-void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
+void TimeLineThread::render(QPainter& painter, const RenderContext& context, const Parameters& parameters)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
@@ -205,7 +205,7 @@ void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
 
     const auto pixpersec = m_view.pixelsPerSecond();
 
-    TimeLineComponent::render(painter, viewport, offset);
+    TimeLineComponent::render(painter, context, parameters);
 
     if (collapsed())
     {
@@ -214,36 +214,39 @@ void TimeLineThread::render(QPainter& painter, QRectF viewport, QPointF offset)
 
     painter.setPen(Qt::black);
 
-    QPointF childPos(offset);
+    QPointF childPos(context.offset);
     childPos.ry() += ThreadTitleHeight;
-    drawRecords(painter, viewport, childPos, m_thread->records);
+    drawRecords(painter, context.viewport, childPos, m_thread->records);
 
-    drawEvents(painter, viewport, childPos, m_recordsHeight, m_thread->events);
+    if (parameters.showEvents)
+    {
+        drawEvents(painter, context.viewport, childPos, m_recordsHeight, m_thread->events);
+    }
 
     if (m_selectedRecordInfo)
     {
         QRectF bounds(m_selectedRecordInfo->bounds);
-        bounds.translate(viewport.topLeft() + offset);
+        bounds.translate(context.viewport.topLeft() + context.offset);
 
         painter.setPen(Qt::white);
         painter.setBrush(Qt::NoBrush);
-        painter.drawRect(bounds.intersected(viewport));
+        painter.drawRect(bounds.intersected(context.viewport));
     }
 
     if (m_highlightedRecordInfo)
     {
         QRectF bounds(m_highlightedRecordInfo->bounds);
-        bounds.translate(viewport.topLeft() + offset);
+        bounds.translate(context.viewport.topLeft() + context.offset);
 
         painter.setPen(Qt::green);
         painter.setBrush(Qt::NoBrush);
-        painter.drawRect(bounds.intersected(viewport));
+        painter.drawRect(bounds.intersected(context.viewport));
     }
 
     m_statistics.frameRenderTime += frameTimer.elapsed() / 1000.0;
 }
 
-void TimeLineThread::renderOverlay(QPainter& painter, QRectF viewport, QPointF offset)
+void TimeLineThread::renderOverlay(QPainter& painter, const RenderContext& context, const Parameters& parameters)
 {
     if (!m_selectedRecordInfo)
     {
@@ -255,9 +258,9 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRectF viewport, QPointF o
     QString text;
 
     QRectF recordInfoBounds(
-        viewport.left() + RecordInfoDist,
-        viewport.bottom() - RecordInfoHeight - RecordInfoDist,
-        viewport.width() - 2 * RecordInfoDist,
+        context.viewport.left() + RecordInfoDist,
+        context.viewport.bottom() - RecordInfoHeight - RecordInfoDist,
+        context.viewport.width() - 2 * RecordInfoDist,
         RecordInfoHeight
     );
 
@@ -271,7 +274,7 @@ void TimeLineThread::renderOverlay(QPainter& painter, QRectF viewport, QPointF o
     text = text.fromStdString(m_selectedRecordInfo->name);
     painter.drawText(recordInfoBounds, Qt::AlignVCenter | Qt::AlignLeft, text);
 
-    recordInfoBounds.setRight(viewport.right() - RecordInfoDist - RecordInfoTextDist);
+    recordInfoBounds.setRight(context.viewport.right() - RecordInfoDist - RecordInfoTextDist);
 
     const auto duration = m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime;
     text = text.fromStdString(perfometer::utils::time_to_string(duration));

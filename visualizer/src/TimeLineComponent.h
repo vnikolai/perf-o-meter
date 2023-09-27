@@ -1,4 +1,4 @@
-/* Copyright 2020-2021 Volodymyr Nikolaichuk
+/* Copyright 2020-2023 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@ SOFTWARE. */
 
 #include "PerfometerReport.h"
 #include "TimeLineConfig.h"
+#include "TimeLineParameters.h"
 #include <QPainter>
 #include <QClipboard>
 
@@ -60,8 +61,8 @@ namespace visualizer
         virtual void onPaste(QClipboard* clipboard);
 
         virtual void onBeginFrame();
-        virtual void render(QPainter& painter, QRectF viewport, QPointF offset);
-        virtual void renderOverlay(QPainter& painter, QRectF viewport, QPointF offset);
+        virtual void render(QPainter& painter, const RenderContext& context, const Parameters& parameters);
+        virtual void renderOverlay(QPainter& painter, const RenderContext& context, const Parameters& parameters);
 
         const std::string& name() const;
         void setName(const std::string& name);

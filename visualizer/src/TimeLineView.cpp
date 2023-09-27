@@ -1,4 +1,4 @@
-/* Copyright 2020-2021 Volodymyr Nikolaichuk
+/* Copyright 2020-2023 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -145,7 +145,7 @@ void TimeLineView::paintGL()
             continue;
         }
 
-        component->render(painter, viewport, pos);
+        component->render(painter, RenderContext{viewport, pos}, m_parameters);
 
         pos.ry() += componentHeight;
         if (pos.ry() >= viewport.height())
@@ -156,7 +156,7 @@ void TimeLineView::paintGL()
 
     for (auto& component : m_components)
     {
-        component->renderOverlay(painter, viewport, pos);
+        component->renderOverlay(painter, RenderContext{viewport, pos}, m_parameters);
     }
 
     for (auto& component : m_components)
@@ -320,6 +320,11 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
                 }
             }
             
+            break;
+        }
+        case Qt::Key_E:
+        {
+            m_parameters.showEvents = !m_parameters.showEvents;
             break;
         }
         case Qt::Key_V:

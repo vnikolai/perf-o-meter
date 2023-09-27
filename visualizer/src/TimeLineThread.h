@@ -1,4 +1,4 @@
-/* Copyright 2020-2021 Volodymyr Nikolaichuk
+/* Copyright 2020-2023 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -48,8 +48,8 @@ namespace visualizer
 
         void onCopy(QClipboard* clipboard) override;
 
-        void render(QPainter& painter, QRectF viewport, QPointF offset) override;
-        void renderOverlay(QPainter& painter, QRectF viewport, QPointF offset) override;
+        void render(QPainter& painter, const RenderContext& context, const Parameters& parameters) override;
+        void renderOverlay(QPainter& painter, const RenderContext& context, const Parameters& parameters) override;
 
     private:
 
