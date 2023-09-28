@@ -226,9 +226,11 @@ void TimeLineThread::render(QPainter& painter, const RenderContext& context, con
     if (m_selectedRecordInfo)
     {
         QRectF bounds(m_selectedRecordInfo->bounds);
+        bounds.setLeft(m_selectedRecordInfo->startTime * pixpersec);
+        bounds.setWidth((m_selectedRecordInfo->endTime - m_selectedRecordInfo->startTime) * pixpersec);
         bounds.translate(context.viewport.topLeft() + context.offset);
 
-        painter.setPen(Qt::white);
+        painter.setPen(QPen(QBrush(Qt::yellow), 2));
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(bounds.intersected(context.viewport));
     }
@@ -236,9 +238,11 @@ void TimeLineThread::render(QPainter& painter, const RenderContext& context, con
     if (m_highlightedRecordInfo)
     {
         QRectF bounds(m_highlightedRecordInfo->bounds);
+        bounds.setLeft(m_highlightedRecordInfo->startTime * pixpersec);
+        bounds.setWidth((m_highlightedRecordInfo->endTime - m_highlightedRecordInfo->startTime) * pixpersec);
         bounds.translate(context.viewport.topLeft() + context.offset);
 
-        painter.setPen(Qt::green);
+        painter.setPen(QPen(QBrush(Qt::green), 2));
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(bounds.intersected(context.viewport));
     }
