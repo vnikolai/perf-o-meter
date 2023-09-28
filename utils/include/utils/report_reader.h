@@ -40,6 +40,7 @@ namespace perfometer
             struct statistics
             {
                 double duration             = 0.0f;
+                size_t num_pages            = 0;
                 size_t num_blocks           = 0;
                 std::vector<std::pair<perfometer::string_id, size_t>> occurences;
             };

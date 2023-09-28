@@ -59,12 +59,12 @@ private:
 
     void handle_string(perfometer::string_id id, const std::string& string) override
     {
-        std::cout << "String ID " << id << " name " << string << std::endl;
+        std::cout << "String " << id << ":" << string << std::endl;
     }
 
     void handle_thread_name(int64_t thread_id, const std::string& name) override
     {
-        std::cout << "Thread ID " << thread_id << " name " << name << std::endl;
+        std::cout << "Thread " << thread_id << ":" << name << std::endl;
     }
 };
 
@@ -119,6 +119,7 @@ int process(const char* filename, options opts)
         const auto& stats = reader.stats(); 
         std::cout << "Statistics " << std::endl
                   << "Report duration " << time_formatter(stats.duration, opts.tfmt) << std::endl
+                  << "Num pages " << stats.num_pages << std::endl
                   << "Num blocks " << stats.num_blocks << std::endl;
 
         std::cout << stats.occurences.size() << std::endl;

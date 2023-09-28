@@ -165,6 +165,7 @@ perfometer::result report_reader::process(const char* filename)
     perf_time duration = 0;
     perf_thread_id main_thread_id = 0;
 
+    std::streampos page_end = -1;
     perfometer::format::record_type record_type;
 
     while ((report_file >> record_type) && !report_file.eof())
@@ -222,6 +223,30 @@ perfometer::result report_reader::process(const char* filename)
                 report_file >> main_thread_id;
 
                 handle_thread_info(thread_id_size, main_thread_id);
+
+                break;
+            }
+            case perfometer::format::record_type::page:
+            {
+                uint16_t page_size = 0;
+                report_file >> page_size;
+
+                page_end = report_file.tellg() + std::streampos(page_size);
+
+                perf_thread_id page_thread_id = 0;
+                report_file >> page_thread_id;
+
+                m_statistics.num_pages++;
+
+                LOG( "reading page " << page_size << " bytes with thread id " << page_thread_id );
+
+                break;
+            }
+            case perfometer::format::record_type::page_end:
+            {
+                page_end = -1;
+
+                LOG( "page ended" );
 
                 break;
             }
@@ -296,8 +321,19 @@ perfometer::result report_reader::process(const char* filename)
             }
             default:
             {
-                std::cout << "ERROR: Unknown record type " << record_type << std::endl;
-                return perfometer::result::io_error;
+                LOG_ERROR( "ERROR: Unknown record type " << int(record_type) );
+
+                if (page_end > report_file.tellg() && page_end < report_size)
+                {
+                    report_file.seekg(page_end);
+
+                    LOG_ERROR( "Jumping to end of page at " << page_end );
+                }
+                else
+                {
+                    LOG_ERROR( "No next page" )
+                    return perfometer::result::io_error;
+                }
             }
         }
     }

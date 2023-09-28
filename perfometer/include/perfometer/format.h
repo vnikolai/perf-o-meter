@@ -31,7 +31,7 @@ namespace format
     const char header[] = "PERFOMETER.";    // PERFOMETER.VER - VER is version composed from
                                             // major minor and patch versions one byte each
 
-    constexpr unsigned char major_version = 1;
+    constexpr unsigned char major_version = 2;
     constexpr unsigned char minor_version = 0;
     constexpr unsigned char patch_version = 0;
 
@@ -68,11 +68,17 @@ namespace format
                                     // time size time
                                     // thread id size thread id
 
-        wait = 7                    // 8 bit record type
+        wait = 7,                   // 8 bit record type
                                     // 16 bit name string id
                                     // time size time start
                                     // time size time end
                                     // thread id size thread id
+
+        page = 8,                   // 8 bit record type
+                                    // 16 bit page size
+                                    // thread id size thread id
+
+        page_end = 9                // 8 bit record type
     };
 
     constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();

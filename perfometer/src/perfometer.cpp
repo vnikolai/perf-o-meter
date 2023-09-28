@@ -61,7 +61,14 @@ void logger_thread()
 
         if (buffer)
         {
-            s_serializer.write(buffer->data(), buffer->used_size());
+            formatter<serializer> output(s_serializer);
+            
+            output << format::record_type::page
+                   << uint16_t(buffer->used_size());
+            
+            output.write(buffer->data(), buffer->used_size());
+
+            output << format::record_type::page_end;
         }
         else
         {
@@ -262,7 +269,9 @@ result ensure_buffer()
             return result::no_memory_available;
         }
 
-        auto t_id = get_thread_id();
+        thread_id t_id = get_thread_id();
+        formatter<record_buffer>(*s_record_cache) << t_id;
+
         scoped_lock lock(s_records_mutex);
         s_records_inprogress[t_id] = s_record_cache;
     }
