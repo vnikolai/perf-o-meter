@@ -32,11 +32,13 @@ namespace visualizer
 {
     using StringID = perfometer::string_id;
 
+    // string& in Record, Event & Thread are here for optimization
+    // and correctly displaying strings that loaded later that used
     struct Record
     {
         double timeStart;
         double timeEnd;
-        const std::string name;
+        const std::string& name;
         bool wait;
         std::vector<Record> enclosed;
     };
@@ -44,7 +46,7 @@ namespace visualizer
     struct Event
     {
         double time;
-        const std::string name;
+        const std::string& name;
     };
 
     struct Thread
@@ -58,7 +60,7 @@ namespace visualizer
         }
 
         ID id;
-        const std::string name;
+        const std::string& name;
         std::vector<Record> records;
         std::vector<Event> events;
     };
@@ -111,6 +113,8 @@ namespace visualizer
         void handle_event(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time) override;
 
         void process_record(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time_start, double time_end, bool wait);
+        uint64_t check_for_dynamic_string(perfometer::string_id string_id);
+        const std::string& stringByID(uint64_t string_id);
 
     private:
         double m_startTime;
@@ -120,6 +124,9 @@ namespace visualizer
         Threads m_threads;
 
         Thread::ID m_mainThreadID;
+
+        uint64_t m_dynamic_string_id;
+        std::unordered_map<uint64_t, std::string> m_dynamic_strings;
     };
 
 } // namespace visualizer

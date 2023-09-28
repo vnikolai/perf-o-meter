@@ -19,8 +19,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include "PerfometerReport.h"
-#include <cstring>
+#include <perfometer/format.h>
 #include <perfometer/helpers.h>
+#include <cstring>
 #include <QDebug>
 
 namespace visualizer {
@@ -31,6 +32,7 @@ PerfometerReport::PerfometerReport()
     : m_startTime(std::numeric_limits<double>::max())
     , m_endTime(std::numeric_limits<double>::min())
     , m_mainThreadID(0)
+    , m_dynamic_string_id(perfometer::format::invalid_string_id + 1)
 {
 }
 
@@ -120,7 +122,7 @@ void PerfometerReport::process_record(perfometer::string_id string_id,
     }
 
     ThreadPtr thread = getThread(thread_id);
-    Record record{time_start, time_end, string_by_id(string_id), wait};
+    Record record{time_start, time_end, stringByID(check_for_dynamic_string(string_id)), wait};
 
     std::vector<Record>& records = thread->records;
 
@@ -169,10 +171,28 @@ void PerfometerReport::handle_event(perfometer::string_id string_id, perfometer:
 
     ThreadPtr thread = getThread(thread_id);
 
-    thread->events.push_back(Event{event_time, string_by_id(string_id)});
+    thread->events.push_back(Event{event_time, stringByID(check_for_dynamic_string(string_id))});
 
     m_startTime = std::min(m_startTime, event_time);
     m_endTime = std::max(m_endTime, event_time);
+}
+
+uint64_t PerfometerReport::check_for_dynamic_string(perfometer::string_id string_id)
+{
+    if (string_id != perfometer::format::dynamic_string_id)
+    {
+        return string_id;
+    }
+
+    m_dynamic_strings[++m_dynamic_string_id] = string_by_id(string_id);
+    return m_dynamic_string_id;
+}
+
+const std::string& PerfometerReport::stringByID(uint64_t string_id)
+{
+    return string_id <= perfometer::format::invalid_string_id ?
+            string_by_id(string_id) :
+            m_dynamic_strings[string_id];
 }
 
 const Threads& PerfometerReport::getThreads() const
