@@ -48,8 +48,12 @@ namespace perfometer
     result flush_thread_cache();
     result flush();
 
+    // register static reusable string, returns assigned string id, up until string_id::max
     string_id register_string(const char* string);
     string_id register_string(const char* string, size_t len);
+
+    // writes string id without registration, to be used once, returns format::dynamic_string_id
+    string_id write_string(const char* string, size_t len);
 
     result log_thread_name(string_id s_id, thread_id t_id);
     result log_thread_name(string_id s_id);

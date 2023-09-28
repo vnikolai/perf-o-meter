@@ -22,6 +22,7 @@ SOFTWARE. */
 
 #include <perfometer/config.h>
 #include <iostream>
+#include <limits>
 
 namespace perfometer
 {
@@ -73,6 +74,10 @@ namespace format
                                     // time size time end
                                     // thread id size thread id
     };
+
+    constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();
+    constexpr string_id unknown_string_id = 0;
+    constexpr string_id dynamic_string_id = 1;
 
     inline std::ostream& operator << (std::ostream& stream, const record_type& type)
     {

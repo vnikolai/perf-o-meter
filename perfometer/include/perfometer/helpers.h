@@ -110,7 +110,8 @@ namespace perfometer
         perfometer::log_event(PERFOMETER_UNIQUE(s_id), perfometer::get_time())
 
 #define PERFOMETER_LOG_DYNAMIC_EVENT(name)                                                  \
-        perfometer::log_event(perfometer::register_string(name), perfometer::get_time())
+        perfometer::log_event(perfometer::write_string(PERFOMETER_STRING_ADAPTER(name)),    \
+                              perfometer::get_time())
 
 #define PERFOMETER_LOG_WORK_FUNCTION()      PERFOMETER_LOG_WORK_SCOPE(PERFOMETER_FUNCTION)
 #define PERFOMETER_LOG_WAIT_FUNCTION()      PERFOMETER_LOG_WAIT_SCOPE(PERFOMETER_FUNCTION)

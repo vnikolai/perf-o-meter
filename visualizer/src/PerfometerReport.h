@@ -36,7 +36,7 @@ namespace visualizer
     {
         double timeStart;
         double timeEnd;
-        const std::string& name;
+        const std::string name;
         bool wait;
         std::vector<Record> enclosed;
     };
@@ -44,7 +44,7 @@ namespace visualizer
     struct Event
     {
         double time;
-        const std::string& name;
+        const std::string name;
     };
 
     struct Thread
@@ -58,7 +58,7 @@ namespace visualizer
         }
 
         ID id;
-        const std::string& name;
+        const std::string name;
         std::vector<Record> records;
         std::vector<Event> events;
     };

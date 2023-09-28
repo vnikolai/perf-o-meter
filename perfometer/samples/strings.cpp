@@ -21,6 +21,7 @@ SOFTWARE. */
 #include <perfometer/perfometer.h>
 #include <perfometer/helpers.h>
 #include <string>
+#include <sstream>
 #include <iostream>
 
 // Showing automatic usage both of char* and std::string
@@ -41,6 +42,19 @@ void func_with_cpp_string()
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
 }
 
+void func_with_dynamic_string()
+{
+    std::stringstream s;
+    s << "Have some random number " << rand();
+    PERFOMETER_LOG_DYNAMIC_EVENT(s.str());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+    s.seekp(0);
+    s << "Have some random number " << rand();
+    PERFOMETER_LOG_DYNAMIC_EVENT(s.str());
+}
+
 int main(int argc, const char** argv)
 {
     auto result = perfometer::initialize();
@@ -51,6 +65,8 @@ int main(int argc, const char** argv)
     func_with_c_string();
 
     func_with_cpp_string();
+
+    func_with_dynamic_string();
 
     result = perfometer::shutdown();
     std::cout << "perfometer::shutdown() returned " << result << std::endl;

@@ -28,7 +28,6 @@ SOFTWARE. */
 #include <queue>
 #include <thread>
 #include <atomic>
-#include <limits>
 
 namespace perfometer {
 
@@ -44,8 +43,6 @@ static std::queue<std::shared_ptr<record_buffer>> s_logger_records_queue;
 static std::unordered_map<thread_id, std::shared_ptr<record_buffer>> s_records_inprogress;
 static mutex s_records_mutex;
 static thread_local std::shared_ptr<record_buffer> s_record_cache = nullptr;
-
-constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();
 
 void logger_thread()
 {
@@ -113,16 +110,16 @@ result initialize(const char file_name[], bool running)
            << thread_id_size
            << get_thread_id();
 
-    // writing "UKNOWN" to string map first to ocupy zero ID
-    constexpr char unknown_tag[] = "UNKNOWN";
-    string_id s_id = register_string(unknown_tag);
+    output << format::record_type::string
+           << format::unknown_string_id
+           << "UNKNOWN";
 
     output << format::record_type::string
-           << s_id
-           << unknown_tag;
+           << format::dynamic_string_id
+           << "Dynamic string";
 
     output << format::record_type::string
-           << invalid_string_id
+           << format::invalid_string_id
            << "String limit overflow";
 
     s_logger_thread_running = true;
@@ -288,7 +285,7 @@ result log_thread_name(string_id s_id, thread_id t_id)
         return result::not_initialized;
     }
 
-    if (s_id == invalid_string_id)
+    if (s_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -320,7 +317,7 @@ result log_work(string_id s_id, time start_time, time end_time)
         return result::not_running;
     }
 
-    if (s_id == invalid_string_id)
+    if (s_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -349,7 +346,7 @@ result log_wait(string_id s_id, time start_time, time end_time)
         return result::not_running;
     }
 
-    if (s_id == invalid_string_id)
+    if (s_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -378,7 +375,7 @@ result log_event(string_id s_id, time t)
         return result::not_running;
     }
 
-    if (s_id == invalid_string_id)
+    if (s_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -406,12 +403,16 @@ string_id register_string(const char* string)
 
 string_id register_string(const char* string, size_t len)
 {
-    static std::atomic<string_id> s_unique_id(0);
+    // reserved ids
+    // 0 - "UNKNOWN"
+    // 1 - dynamic string marker
+    // string_id::max - invalid id
+    static std::atomic<string_id> s_unique_id(2);
 
     string_id s_id = s_unique_id;
-    if (s_unique_id == invalid_string_id)
+    if (s_unique_id == format::invalid_string_id)
     {
-        return invalid_string_id;
+        return format::invalid_string_id;
     }
 
     s_unique_id++;
@@ -429,6 +430,28 @@ string_id register_string(const char* string, size_t len)
     output.write_string(string, len);
 
     return s_id;
+}
+
+string_id write_string(const char* string, size_t len)
+{
+    if (!s_logging_enabled)
+    {
+        return result::not_running;
+    }
+
+    result res = ensure_buffer();
+    if (res != result::ok)
+    {
+        return res;
+    }
+
+    formatter<record_buffer> output(*s_record_cache);
+    
+    output << format::record_type::string
+           << format::dynamic_string_id;
+    output.write_string(string, len);
+
+    return format::dynamic_string_id;
 }
 
 } // namespace perfometer
