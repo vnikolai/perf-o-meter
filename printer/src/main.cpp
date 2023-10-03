@@ -98,8 +98,8 @@ public:
 
     void handle_event(perfometer::string_id string_id, perf_thread_id thread_id, double time) override
     {
-        std::cout << "Event " << string_by_id(string_id)
-                  << " on "  << thread_name_by_id(thread_id)
+        std::cout << "Event " << string_id << ":" << string_by_id(string_id)
+                  << " on " << thread_id << ":" << thread_name_by_id(thread_id)
                   <<  " fired " << time_formatter(time, m_options.tfmt)
                   << std::endl;
     }
