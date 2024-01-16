@@ -36,7 +36,7 @@ namespace perfometer
         {            
         }
 
-        formatter& operator << (const unsigned char byte)
+        formatter& operator << (const uint8_t byte)
         {
             write(reinterpret_cast<const char*>(&byte), 1);
             return *this;
@@ -44,7 +44,7 @@ namespace perfometer
 
         formatter& operator << (const char* string)
         {
-            unsigned char string_length = std::min(255, static_cast<int>(std::strlen(string)));
+            uint8_t string_length = std::min(255, static_cast<int>(std::strlen(string)));
             *this << string_length;
 
             write(string, string_length);
@@ -78,15 +78,15 @@ namespace perfometer
 
         void write_string(const char* string, size_t len)
         {
-            unsigned char string_length = std::min<unsigned int>(255, len);
+            uint8_t string_length = std::min<unsigned int>(255, len);
             *this << string_length;
 
             write(string, string_length);
         }
 
-        void write(const char* data, size_t size)
+        void write(const void* data, size_t size)
         {
-            m_buffer.write(data, size);
+            m_buffer.write(reinterpret_cast<const char*>(data), size);
         }
 
     private:

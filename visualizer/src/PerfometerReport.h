@@ -104,8 +104,8 @@ namespace visualizer
         void log(const std::string& message) override;
         void log_error(const std::string& message) override;
         void handle_loading_progress(size_t percentage) override;
-        void handle_clock_configuration(char time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time) override;
-        void handle_thread_info(char thread_id_size, perfometer::utils::perf_thread_id main_thread_id) override;
+        void handle_clock_configuration(uint8_t time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time) override;
+        void handle_thread_info(uint8_t thread_id_size, perfometer::utils::perf_thread_id main_thread_id) override;
         void handle_string(perfometer::string_id id, const std::string& string) override;
         void handle_thread_name(perfometer::utils::perf_thread_id thread_id, const std::string& name) override;
         void handle_work(perfometer::string_id string_id, perfometer::utils::perf_thread_id thread_id, double time_start, double time_end) override;

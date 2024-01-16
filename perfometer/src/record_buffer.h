@@ -56,9 +56,9 @@ namespace perfometer
             return records_cache_size > used ? records_cache_size - used : 0;
         }
 
-        const char* data() const { return m_data; }
+        const uint8_t* data() const { return m_data; }
 
-        void write(const char *data, size_t size)
+        void write(const void *data, size_t size)
         {
             if (data && size <= free_size())
             {
@@ -68,8 +68,8 @@ namespace perfometer
         }
 
     private:
-        char        m_data[records_cache_size];
-        char*       m_curr_pos;
+        uint8_t     m_data[records_cache_size];
+        uint8_t*    m_curr_pos;
     };
 
 } // namespace perfometer

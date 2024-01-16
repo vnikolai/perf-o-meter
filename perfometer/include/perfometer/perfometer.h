@@ -55,12 +55,12 @@ namespace perfometer
     // writes string id without registration, to be used once, returns format::dynamic_string_id
     string_id write_string(const char* string, size_t len);
 
-    result log_thread_name(string_id s_id, thread_id t_id);
-    result log_thread_name(string_id s_id);
+    result log_thread_name(string_id str_id, thread_id t_id);
+    result log_thread_name(string_id str_id);
 
-    result log_work(string_id s_id, time start_time, time end_time);
-    result log_wait(string_id s_id, time start_time, time end_time);
+    result log_work(string_id str_id, time start_time, time end_time);
+    result log_wait(string_id str_id, time start_time, time end_time);
 
-    result log_event(string_id s_id, time t);
+    result log_event(string_id str_id, time t);
 
 } // namespace perfometer

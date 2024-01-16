@@ -44,14 +44,14 @@ private:
         std::cerr << message << std::endl;
     }
 
-    void handle_clock_configuration(char time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time) override
+    void handle_clock_configuration(uint8_t time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time) override
     {
         std::cout << "Time size " << int(time_size) << " bytes" << std::endl;
         std::cout << "Clock frequency " << clock_frequency << std::endl;
         std::cout << "Start time " << init_time << std::endl;
     }
 
-    void handle_thread_info(char thread_id_size, int64_t main_thread_id) override
+    void handle_thread_info(uint8_t thread_id_size, int64_t main_thread_id) override
     {
         std::cout << "Thread ID size " << int(thread_id_size) << " bytes" << std::endl;
         std::cout << "Main thread " << main_thread_id << std::endl;

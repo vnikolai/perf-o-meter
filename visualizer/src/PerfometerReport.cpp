@@ -72,11 +72,11 @@ void PerfometerReport::handle_loading_progress(size_t percentage)
     qDebug() << "Report loading progress " << percentage << "%";
 }
 
-void PerfometerReport::handle_clock_configuration(char time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time)
+void PerfometerReport::handle_clock_configuration(uint8_t time_size, perfometer::utils::perf_time clock_frequency, perfometer::utils::perf_time init_time)
 {
 }
 
-void PerfometerReport::handle_thread_info(char thread_id_size, perfometer::utils::perf_thread_id main_thread_id)
+void PerfometerReport::handle_thread_info(uint8_t thread_id_size, perfometer::utils::perf_thread_id main_thread_id)
 {
     m_mainThreadID = main_thread_id;
 }

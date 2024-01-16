@@ -31,9 +31,9 @@ namespace format
     const char header[] = "PERFOMETER.";    // PERFOMETER.VER - VER is version composed from
                                             // major minor and patch versions one byte each
 
-    constexpr unsigned char major_version = 2;
-    constexpr unsigned char minor_version = 0;
-    constexpr unsigned char patch_version = 0;
+    constexpr uint8_t major_version = 2;
+    constexpr uint8_t minor_version = 0;
+    constexpr uint8_t patch_version = 0;
 
     enum record_type : uint8_t
     {

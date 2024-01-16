@@ -103,7 +103,7 @@ result initialize(const char file_name[], bool running)
            << format::minor_version
            << format::patch_version;
 
-    unsigned char time_size = sizeof(time);
+    uint8_t time_size = sizeof(time);
     auto start_time = get_time();
     auto clock_frequency = get_clock_frequency();
 
@@ -112,7 +112,7 @@ result initialize(const char file_name[], bool running)
            << clock_frequency
            << start_time;
 
-    unsigned char thread_id_size = sizeof(thread_id);
+    uint8_t thread_id_size = sizeof(thread_id);
     output << format::record_type::thread_info
            << thread_id_size
            << get_thread_id();
@@ -287,14 +287,14 @@ result ensure_buffer()
     return result::ok;
 }
 
-result log_thread_name(string_id s_id, thread_id t_id)
+result log_thread_name(string_id str_id, thread_id t_id)
 {
     if (!s_initialized)
     {
         return result::not_initialized;
     }
 
-    if (s_id == format::invalid_string_id)
+    if (str_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -309,24 +309,24 @@ result log_thread_name(string_id s_id, thread_id t_id)
 
     output << format::record_type::thread_name
            << t_id
-           << s_id;
+           << str_id;
 
     return result::ok;
 }
 
-result log_thread_name(string_id s_id)
+result log_thread_name(string_id str_id)
 {
-    return log_thread_name(s_id, get_thread_id());
+    return log_thread_name(str_id, get_thread_id());
 }
 
-result log_work(string_id s_id, time start_time, time end_time)
+result log_work(string_id str_id, time start_time, time end_time)
 {
     if (!s_logging_enabled)
     {
         return result::not_running;
     }
 
-    if (s_id == format::invalid_string_id)
+    if (str_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -340,7 +340,7 @@ result log_work(string_id s_id, time start_time, time end_time)
     formatter<record_buffer> output(*s_record_cache);
 
     output << format::record_type::work
-           << s_id
+           << str_id
            << start_time
            << end_time
            << get_thread_id();
@@ -348,14 +348,14 @@ result log_work(string_id s_id, time start_time, time end_time)
     return result::ok;
 }
 
-result log_wait(string_id s_id, time start_time, time end_time)
+result log_wait(string_id str_id, time start_time, time end_time)
 {
     if (!s_logging_enabled)
     {
         return result::not_running;
     }
 
-    if (s_id == format::invalid_string_id)
+    if (str_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -369,7 +369,7 @@ result log_wait(string_id s_id, time start_time, time end_time)
     formatter<record_buffer> output(*s_record_cache);
 
     output << format::record_type::wait
-           << s_id
+           << str_id
            << start_time
            << end_time
            << get_thread_id();
@@ -377,14 +377,14 @@ result log_wait(string_id s_id, time start_time, time end_time)
     return result::ok;
 }
 
-result log_event(string_id s_id, time t)
+result log_event(string_id str_id, time t)
 {
     if (!s_logging_enabled)
     {
         return result::not_running;
     }
 
-    if (s_id == format::invalid_string_id)
+    if (str_id == format::invalid_string_id)
     {
         return result::invalid_arguments;
     }
@@ -398,7 +398,7 @@ result log_event(string_id s_id, time t)
     formatter<record_buffer> output(*s_record_cache);
 
     output << format::record_type::event
-           << s_id
+           << str_id
            << t
            << get_thread_id();
 
@@ -418,7 +418,7 @@ string_id register_string(const char* string, size_t len)
     // string_id::max - invalid id
     static std::atomic<string_id> s_unique_id(2);
 
-    string_id s_id = s_unique_id;
+    string_id str_id = s_unique_id;
     if (s_unique_id == format::invalid_string_id)
     {
         return format::invalid_string_id;
@@ -435,10 +435,10 @@ string_id register_string(const char* string, size_t len)
     formatter<record_buffer> output(*s_record_cache);
     
     output << format::record_type::string
-           << s_id;
+           << str_id;
     output.write_string(string, len);
 
-    return s_id;
+    return str_id;
 }
 
 string_id write_string(const char* string, size_t len)

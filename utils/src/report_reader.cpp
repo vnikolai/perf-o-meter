@@ -43,7 +43,7 @@ public:
     {
     }
 
-    binary_stream_reader& operator >> (unsigned char& byte)
+    binary_stream_reader& operator >> (uint8_t& byte)
     {
         stream::read(reinterpret_cast<char*>(&byte), 1);
         return *this;
@@ -76,7 +76,7 @@ public:
 
     binary_stream_reader& read_string(char* buffer, size_t buffer_size)
     {
-        unsigned char name_length = 0;
+        uint8_t name_length = 0;
         *this >> name_length;
 
         size_t length = std::min(buffer_size - 1, static_cast<size_t>(name_length));
@@ -134,9 +134,9 @@ perfometer::result report_reader::process(const char* filename)
         return perfometer::result::wrong_format;
     }
 
-    unsigned char major_version = 0;
-    unsigned char minor_version = 0;
-    unsigned char patch_version = 0;
+    uint8_t major_version = 0;
+    uint8_t minor_version = 0;
+    uint8_t patch_version = 0;
 
     report_file >> major_version
                 >> minor_version
@@ -189,7 +189,7 @@ perfometer::result report_reader::process(const char* filename)
         {
             case perfometer::format::record_type::clock_configuration:
             {
-                unsigned char time_size = 0;
+                uint8_t time_size = 0;
                 report_file >> time_size;
 
                 if (time_size > 8)
@@ -209,7 +209,7 @@ perfometer::result report_reader::process(const char* filename)
             }
             case perfometer::format::record_type::thread_info:
             {
-                unsigned char thread_id_size = 0;
+                uint8_t thread_id_size = 0;
                 report_file >> thread_id_size;
 
                 if (thread_id_size > 8)
