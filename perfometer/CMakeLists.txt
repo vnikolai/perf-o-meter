@@ -61,10 +61,16 @@ if (PERFOMETER_BUILD_SAMPLES)
 endif()
 
 if (PERFOMETER_BUILD_TESTS)
-    add_executable(test_start_stop test/test_start_stop.cpp)
-    target_link_libraries(test_start_stop perfometer)
+    file(GLOB files "test/*.cpp")
 
-    add_test(NAME test_start_stop COMMAND test_start_stop)
+    foreach(file ${files})
+        get_filename_component(file_name ${file} NAME_WE)
+        add_executable(${file_name} ${file})
+        target_link_libraries(${file_name} perfometer)
+        set_property(TARGET ${file_name} PROPERTY CXX_STANDARD 11)
+        add_test(NAME ${file_name} COMMAND ${file_name})
+    endforeach()
+   
 endif()
 
 if (PERFOMETER_BUILD_BENCHMARKS)
