@@ -54,6 +54,9 @@ namespace visualizer {
     constexpr int       StatusMessageTextDist   = 12;
     constexpr int       StatusMessageDist       = 25;
 
+    const char*         FontFace                = "Helvetica";
+    constexpr int       FontSize                = 10;
+
     static QColor       BackgroundColor                 (32, 32, 32, 255);
     static QColor       StatusMessageBackgroundColor    (16, 16, 16, 128);
     static QColor       ComponentHighlightColor         (48, 48, 48, 128);

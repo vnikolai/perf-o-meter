@@ -124,7 +124,7 @@ void TimeLineView::paintGL()
     glClear(GL_COLOR_BUFFER_BIT);
 
     QPainter painter(this);
-    painter.setFont(QFont("Helvetica", 10));
+    painter.setFont(QFont(FontFace, FontSize));
 
     QPointF pos(-m_offset.x(), RulerHeight + RulerDistReport - m_offset.y());
 
