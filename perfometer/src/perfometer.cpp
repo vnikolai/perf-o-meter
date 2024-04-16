@@ -28,6 +28,7 @@ SOFTWARE. */
 #include <queue>
 #include <thread>
 #include <atomic>
+#include <memory>
 
 namespace perfometer {
 
