@@ -1,4 +1,4 @@
-/* Copyright 2020-2023 Volodymyr Nikolaichuk
+/* Copyright 2020-2025 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,13 +39,19 @@ namespace perfometer
         newer_format
     };
 
+    // initializes perfometer engine
     result initialize(const char file_name[] = "perfometer.report", bool running = true);
+    // shuts down perfometer engine
     result shutdown();
 
+    // pauses writing log data
     result pause();
+    // resumes writing log data
     result resume();
 
+    // flushes records cached in current thread page into file writing queue
     result flush_thread_cache();
+    // waits untill file writing queue is written to file
     result flush();
 
     // register static reusable string, returns assigned string id, up until string_id::max
@@ -55,12 +61,26 @@ namespace perfometer
     // writes string id without registration, to be used once, returns format::dynamic_string_id
     string_id write_string(const char* string, size_t len);
 
+    // log record_type::thread_name block with string id, thread id
     result log_thread_name(string_id str_id, thread_id t_id);
+    // log record_type::thread_name block with string id and current thread id
     result log_thread_name(string_id str_id);
 
+    // log record_type::work block with string id, start time, end time
     result log_work(string_id str_id, time start_time, time end_time);
-    result log_wait(string_id str_id, time start_time, time end_time);
+    // begin record_type::work block with string id, start time
+    result log_work_start(string_id str_id, time start_time);
+    // log last block in current thread with end time
+    result log_work_end(time end_time);
 
+    // log record_type::wait block with string id, start time, end time
+    result log_wait(string_id str_id, time start_time, time end_time);
+    // begin record_type::wait block with string id, start time
+    result log_wait_start(string_id str_id, time start_time);
+    // log last block in current thread with end time
+    result log_wait_end(time end_time);
+
+    // log record_type::event block with string id, time
     result log_event(string_id str_id, time t);
 
 } // namespace perfometer

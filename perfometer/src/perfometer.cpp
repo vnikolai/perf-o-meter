@@ -1,4 +1,4 @@
-/* Copyright 2020-2021 Volodymyr Nikolaichuk
+/* Copyright 2020-2025 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,18 +19,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include <perfometer/perfometer.h>
+
 #include "record_buffer.h"
 #include "serializer.h"
-#include <string>
+
+#include <atomic>
 #include <cstring>
+#include <memory>
+#include <queue>
+#include <stack>
+#include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
-#include <queue>
-#include <thread>
-#include <atomic>
-#include <memory>
 
 namespace perfometer {
+
+struct record_block_start {
+    record_block_start(format::record_type t, string_id sid, time st)
+        : type(t), str_id(sid), start_time(st)
+    {
+    }
+
+    format::record_type type;
+    string_id str_id;
+    time start_time;
+};
 
 static bool s_initialized = false;
 serializer s_serializer;
@@ -44,6 +58,7 @@ static std::queue<std::shared_ptr<record_buffer>> s_logger_records_queue;
 static std::unordered_map<thread_id, std::shared_ptr<record_buffer>> s_records_inprogress;
 static mutex s_records_mutex;
 static thread_local std::shared_ptr<record_buffer> s_record_cache = nullptr;
+static thread_local std::stack<record_block_start> s_started_blocks;
 
 void logger_thread()
 {
@@ -349,6 +364,61 @@ result log_work(string_id str_id, time start_time, time end_time)
     return result::ok;
 }
 
+result log_work_start(string_id str_id, time start_time)
+{
+    if (!s_logging_enabled)
+    {
+        return result::not_running;
+    }
+
+    if (str_id == format::invalid_string_id)
+    {
+        return result::invalid_arguments;
+    }
+
+    s_started_blocks.emplace(format::record_type::work, str_id, start_time);
+
+    return result::ok;
+}
+
+result log_block_end(time end_time)
+{
+    if (!s_logging_enabled)
+    {
+        return result::not_running;
+    }
+
+    if (s_started_blocks.size() == 0)
+    {
+        return result::invalid_arguments;
+    }
+
+    result res = ensure_buffer();
+    if (res != result::ok)
+    {
+        return res;
+    }
+
+    const record_block_start& block_start = s_started_blocks.top();
+
+    formatter<record_buffer> output(*s_record_cache);
+
+    output << block_start.type
+           << block_start.str_id
+           << block_start.start_time
+           << end_time
+           << get_thread_id();
+
+    s_started_blocks.pop();
+
+    return result::ok;
+}
+
+result log_work_end(time end_time)
+{
+    return log_block_end(end_time);
+}
+
 result log_wait(string_id str_id, time start_time, time end_time)
 {
     if (!s_logging_enabled)
@@ -376,6 +446,28 @@ result log_wait(string_id str_id, time start_time, time end_time)
            << get_thread_id();
 
     return result::ok;
+}
+
+result log_wait_start(string_id str_id, time start_time)
+{
+    if (!s_logging_enabled)
+    {
+        return result::not_running;
+    }
+
+    if (str_id == format::invalid_string_id)
+    {
+        return result::invalid_arguments;
+    }
+
+    s_started_blocks.emplace(format::record_type::wait, str_id, start_time);
+
+    return result::ok;
+}
+
+result log_wait_end(time end_time)
+{
+    return log_block_end(end_time);
 }
 
 result log_event(string_id str_id, time t)

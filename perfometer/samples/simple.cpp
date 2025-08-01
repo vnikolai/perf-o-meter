@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2025 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -47,6 +47,23 @@ void my_another_func()
     my_enclosed_func();
 }
 
+void my_func_with_blocks()
+{
+    PERFOMETER_LOG_WORK_START("block1");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
+
+    PERFOMETER_LOG_WORK_START("block2");
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    PERFOMETER_LOG_WORK_END();
+
+    PERFOMETER_LOG_WAIT_START("block wait");
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    PERFOMETER_LOG_WAIT_END();
+
+    PERFOMETER_LOG_WORK_END();
+}
+
 int main(int argc, const char** argv)
 {
     auto result = perfometer::initialize();
@@ -57,6 +74,8 @@ int main(int argc, const char** argv)
     my_func_to_trace();
 
     my_another_func();
+
+    my_func_with_blocks();
 
     result = perfometer::shutdown();
     std::cout << "perfometer::shutdown() returned " << result << std::endl;

@@ -1,4 +1,4 @@
-/* Copyright 2020 Volodymyr Nikolaichuk
+/* Copyright 2020-2025 Volodymyr Nikolaichuk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -96,10 +96,24 @@ namespace perfometer
         perfometer::scope_log<perfometer::log_work>                                         \
             PERFOMETER_UNIQUE(logger)(PERFOMETER_UNIQUE(s_id))
 
+#define PERFOMETER_LOG_WORK_START(name)                                                     \
+        PERFOMETER_REGISTER_STRING(name);                                                   \
+        perfometer::log_work_start(PERFOMETER_UNIQUE(s_id), perfometer::get_time())
+
+#define PERFOMETER_LOG_WORK_END()                                                           \
+        perfometer::log_work_end(perfometer::get_time())
+
 #define PERFOMETER_LOG_WAIT_SCOPE(name)                                                     \
         PERFOMETER_REGISTER_STRING(name);                                                   \
         perfometer::scope_log<perfometer::log_wait>                                         \
             PERFOMETER_UNIQUE(logger)(PERFOMETER_UNIQUE(s_id))
+
+#define PERFOMETER_LOG_WAIT_START(name)                                                     \
+        PERFOMETER_REGISTER_STRING(name);                                                   \
+        perfometer::log_wait_start(PERFOMETER_UNIQUE(s_id), perfometer::get_time())
+
+#define PERFOMETER_LOG_WAIT_END()                                                           \
+        perfometer::log_wait_end(perfometer::get_time())
 
 #define PERFOMETER_LOG_THREAD_NAME(name)                                                    \
         PERFOMETER_REGISTER_STRING(name);                                                   \
