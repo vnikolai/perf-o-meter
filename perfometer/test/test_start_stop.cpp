@@ -20,7 +20,7 @@ SOFTWARE. */
 
 #include <perfometer/perfometer.h>
 #include <perfometer/helpers.h>
-#include <ctime>
+#include <iomanip>
 #include <iostream>
 #include <thread>
 
@@ -39,10 +39,14 @@ void sub_task(unsigned int microsec)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    char time_buffer[64];
-    std::time_t result = std::time(nullptr);
-    ctime_s(time_buffer, sizeof(time_buffer), &result);
-    PERFOMETER_LOG_DYNAMIC_EVENT(time_buffer);
+    auto now = std::chrono::system_clock::now();
+    std::time_t time_now = std::chrono::system_clock::to_time_t(now);
+    std::tm* local_time = std::localtime(&time_now);
+
+    std::stringstream ss;
+    ss << std::put_time(local_time, "%Y-%m-%d %H:%M:%S");
+
+    PERFOMETER_LOG_DYNAMIC_EVENT(ss.str());
 
     std::this_thread::sleep_for(std::chrono::microseconds(microsec));
 }

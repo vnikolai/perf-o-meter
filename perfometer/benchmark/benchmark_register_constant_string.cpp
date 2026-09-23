@@ -20,6 +20,7 @@ SOFTWARE. */
 
 #include <perfometer/perfometer.h>
 #include <benchmark/benchmark.h>
+#include <cstring>
 
 #define SIMPLE_REGISTER(name) perfometer::register_string(name);
 #define LENGTH_REGISTER(name) perfometer::register_string(name, std::strlen(name));

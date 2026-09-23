@@ -248,11 +248,11 @@ void TimeLineView::keyPressEvent(QKeyEvent* event)
         {
             if (ctrl)
             {
-                scrollYTo(std::numeric_limits<coord_t>::max());
+                scrollYTo(static_cast<qreal>(std::numeric_limits<coord_t>::max()));
             }
             else
             {
-                scrollXTo(std::numeric_limits<coord_t>::max());
+                scrollXTo(static_cast<qreal>(std::numeric_limits<coord_t>::max()));
             }
             break;
         }
@@ -657,16 +657,16 @@ void TimeLineView::drawStatusMessage(QPainter& painter)
                    << "report time: [" << perfometer::utils::time_to_string(m_report ? m_report->getStartTime() : 0.f) << "] - [" 
                                        << perfometer::utils::time_to_string(m_report ? m_report->getEndTime() : 0.f) <<  "]" << std::endl
                    << "pixel per second: " << pixelsPerSecond() << std::endl;
-        break;
+            break;
 
         case StatusDisplayMode::Stats:
-        {
             stream << "frame render time: " << m_statistics.frameRenderTime << std::endl
                    << "hit test time: " << m_statistics.hitTestTime << std::endl
                    << "visible records: " << m_statistics.numRecords << std::endl;
-
             break;
-        }
+
+        case StatusDisplayMode::None:
+            break;
     }
 
     QRectF viewport = getViewport();
