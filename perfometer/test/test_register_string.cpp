@@ -23,6 +23,7 @@ SOFTWARE. */
 #include <gtest/gtest.h>
 #include <thread>
 #include <vector>
+#include <utils/timer.h>
 
 std::vector<int> num_ids(perfometer::format::invalid_string_id + 2);
 const int num_invalid_tries = 17;
@@ -32,6 +33,8 @@ const int num_registers_per_thread = (perfometer::format::invalid_string_id - 1 
 
 TEST(register_string_test, until_max_and_then_some)
 {
+    perfometer::utils::logging_timer timer;
+
     ASSERT_EQ(perfometer::initialize("test_register_string.report"), perfometer::ok);
 
     EXPECT_EQ(perfometer::register_string(""), 2);

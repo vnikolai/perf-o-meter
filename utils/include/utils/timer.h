@@ -21,6 +21,7 @@ SOFTWARE. */
 #pragma once
 
 #include <perfometer/time.h>
+#include <utils/time.h>
 #include <iostream>
 
 namespace perfometer
