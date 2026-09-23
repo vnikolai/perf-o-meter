@@ -22,14 +22,7 @@ SOFTWARE. */
 #include <vector>
 #include <iostream>
 
-template<typename T1, typename T2>
-void print_error(const T1& a, const T2& b, const char* desc_a, const char* desc_b)
-{
-    std::cout << "check failed " << desc_a << " != " << desc_b << std::endl;
-    std::cout << "Expected: " << b << ", actual: " << a << std::endl;
-}
-
-#define CHECK(a, b) if (a != b) { print_error(a, b, #a, #b); result = -1; }
+#include <gtest/gtest.h>
 
 class stream_stub
 {
@@ -60,7 +53,7 @@ private:
     std::vector<uint8_t> m_data;
 };
 
-int result = 0;
+const char* dummy_string = "dummy string";
 
 template <typename T> void check_formatting_size(const T& value)
 {
@@ -68,7 +61,7 @@ template <typename T> void check_formatting_size(const T& value)
     perfometer::formatter<stream_stub> fmt(s);
     fmt << value;
 
-    CHECK(s.size(), sizeof(value));
+    EXPECT_EQ(s.size(), sizeof(value));
 }
 
 template <typename T> void check_formatting_value(const T& value)
@@ -77,8 +70,8 @@ template <typename T> void check_formatting_value(const T& value)
     perfometer::formatter<stream_stub> fmt(s);
     fmt << value;
 
-    CHECK(s.size(), sizeof(value));
-    CHECK(*reinterpret_cast<const T*>(s.data()), value);
+    ASSERT_EQ(s.size(), sizeof(value));
+    EXPECT_EQ(*reinterpret_cast<const T*>(s.data()), value);
 }
 
 template <typename T> void check_formatting(const T& value)
@@ -87,37 +80,64 @@ template <typename T> void check_formatting(const T& value)
     check_formatting_value(value);
 }
 
-void check_formatting_string()
+TEST(test_formatter, write_bytes)
 {
-    const char* dummy_string = "dummy string";
+    stream_stub s;
+    EXPECT_EQ(s.size(), 0);
+
+    char buff[64];
+
+    perfometer::formatter<stream_stub> fmt(s);
+
+    fmt.write(buff, 11);
+    ASSERT_EQ(s.size(), 11);
+
+    fmt.write(buff + 11, 33);
+
+    ASSERT_EQ(s.size(), 44);
+
+    EXPECT_EQ(std::memcmp(s.data(), buff, 44), 0);
+}
+
+TEST(test_formatter, formatting_basic_types)
+{
+    check_formatting(uint8_t(14));
+    check_formatting(uint8_t(117));
+    
+    check_formatting(perfometer::format::record_type::clock_configuration);
+    check_formatting(perfometer::format::record_type::wait);
+
+    check_formatting(perfometer::string_id(0));
+    check_formatting(perfometer::string_id(1));
+    check_formatting(perfometer::string_id(333));
+    check_formatting(perfometer::string_id(1557));
+    check_formatting(perfometer::format::invalid_string_id);
+    check_formatting(perfometer::format::unknown_string_id);
+    check_formatting(perfometer::format::dynamic_string_id);
+
+    check_formatting(perfometer::time(0));
+    check_formatting(perfometer::time(178976));
+    check_formatting_size(perfometer::thread_id());
+}
+
+TEST(test_formatter, formatting_string)
+{
     stream_stub s;
     perfometer::formatter<stream_stub> fmt(s);
     fmt << dummy_string;
 
-    CHECK(s.size(), 1 + strlen(dummy_string));
-    CHECK(s[0], strlen(dummy_string));
-    CHECK(std::memcmp(s.data() + 1, dummy_string, strlen(dummy_string)), 0);
+    EXPECT_EQ(s.size(), 1 + strlen(dummy_string));
+    EXPECT_EQ(s[0], strlen(dummy_string));
+    EXPECT_EQ(std::memcmp(s.data() + 1, dummy_string, strlen(dummy_string)), 0);
 }
 
-void check_formatting_string2()
+TEST(test_formatter, formatting_string2)
 {
-    const char* dummy_string = "dummy string";
     stream_stub s;
     perfometer::formatter<stream_stub> fmt(s);
     fmt.write_string(dummy_string, strlen(dummy_string));
 
-    CHECK(s.size(), 1 + strlen(dummy_string));
-    CHECK(s[0], strlen(dummy_string));
-    CHECK(std::memcmp(s.data() + 1, dummy_string, strlen(dummy_string)), 0);
-}
-
-int main(int argc, const char** argv)
-{
-    check_formatting(perfometer::format::record_type::clock_configuration);
-    check_formatting(perfometer::string_id(1557));
-    check_formatting(perfometer::time(178976));
-    check_formatting_size(perfometer::thread_id());
-    check_formatting_string();
-
-    return result;
+    EXPECT_EQ(s.size(), 1 + strlen(dummy_string));
+    EXPECT_EQ(s[0], strlen(dummy_string));
+    EXPECT_EQ(std::memcmp(s.data() + 1, dummy_string, strlen(dummy_string)), 0);
 }
