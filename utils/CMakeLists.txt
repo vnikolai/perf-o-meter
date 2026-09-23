@@ -15,7 +15,7 @@ set_property(TARGET utils PROPERTY CXX_STANDARD 17)
 
 if (PERFOMETER_BUILD_TESTS)
     add_executable(test_format_time test/test_format_time.cpp)
-    target_link_libraries(test_format_time utils)
+    target_link_libraries(test_format_time utils gtest gtest_main)
 
     add_test(NAME test_format_time COMMAND test_format_time)
 endif()
