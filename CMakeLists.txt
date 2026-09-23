@@ -1,6 +1,6 @@
 # Perf-o-meter project for collecting and visualizing performance data
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 
 option (PERFOMETER_BUILD_PRINTER    "Build printer"     OFF)
 option (PERFOMETER_BUILD_SAMPLES    "Build samples"     OFF)
@@ -10,12 +10,13 @@ option (PERFOMETER_BUILD_BENCHMARKS "Build benchmarks"  OFF)
 option (LEAN_AND_MEAN               "Minimum build"     OFF)
 
 if (PERFOMETER_BUILD_TESTS)
-    enable_testing()
+    enable_testing ()
+    include (cmake/testing.cmake)
 endif()
 
 project (perf-o-meter VERSION 2.5.0)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
