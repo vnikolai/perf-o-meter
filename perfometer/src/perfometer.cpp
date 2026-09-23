@@ -509,15 +509,16 @@ string_id register_string(const char* string, size_t len)
     // 0 - "UNKNOWN"
     // 1 - dynamic string marker
     // string_id::max - invalid id
-    static std::atomic<string_id> s_unique_id(2);
+    static std::atomic<uint32_t> s_unique_id(2);
 
-    string_id str_id = s_unique_id;
-    if (s_unique_id == format::invalid_string_id)
+    uint32_t str_id32 = s_unique_id.fetch_add(1, std::memory_order_relaxed);
+    if (str_id32 >= format::invalid_string_id)
     {
+        s_unique_id.store(format::invalid_string_id, std::memory_order_relaxed);
         return format::invalid_string_id;
     }
 
-    s_unique_id++;
+    string_id str_id = static_cast<string_id>(str_id32);
 
     result res = ensure_buffer();
     if (res != result::ok)

@@ -43,7 +43,6 @@ TEST(register_string_test, until_max_and_then_some)
         threads.push_back(std::thread(
             []()
             {
-                std::cout << num_registers_per_thread << std::endl;
                 for (int i = 0; i < num_registers_per_thread; ++i)
                 {
                     perfometer::string_id id = perfometer::register_string("");
@@ -57,16 +56,6 @@ TEST(register_string_test, until_max_and_then_some)
     {
         threads[i].join();
     }
-
-
-
-    // for (int i = 2; i < perfometer::format::invalid_string_id; ++i)
-    // {
-    //     perfometer::string_id id = perfometer::register_string("");
-    //     EXPECT_EQ(id, i);
-
-    //     num_ids[id]++;
-    // }
 
     // repeated invalid id after max strings
     for (int i = 0; i < num_invalid_tries; ++i)
@@ -87,18 +76,6 @@ TEST(register_string_test, until_max_and_then_some)
     for (int i = 3; i < perfometer::format::invalid_string_id; ++i)
     {
         EXPECT_EQ(num_ids[i], 1);
-
-        if (num_ids[i] != 1)
-        {
-            std::cout << "this is the shit " << i << std::endl;
-
-            ++counter;
-
-            if (counter >= 10)
-            {
-                ASSERT_EQ(0, 1);                
-            }
-        }
     }
 
     EXPECT_EQ(num_ids[perfometer::format::invalid_string_id], num_invalid_tries);
