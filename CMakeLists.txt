@@ -12,7 +12,11 @@ option (LEAN_AND_MEAN               "Minimum build"     OFF)
 if (PERFOMETER_BUILD_TESTS)
     enable_testing ()
     include (cmake/testing.cmake)
-endif()
+endif ()
+
+if (PERFOMETER_BUILD_BENCHMARKS)
+    include (cmake/benchmark.cmake)
+endif ()
 
 project (perf-o-meter VERSION 2.5.0)
 
@@ -22,23 +26,21 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-#if (MSVC)
-    foreach (OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-        string (TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-        set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_SOURCE_DIR}/bin)
-        set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_SOURCE_DIR}/bin)
-        set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_SOURCE_DIR}/bin)
-    endforeach (OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)
-#endif
+foreach (OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string (TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+    set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_SOURCE_DIR}/bin)
+    set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_SOURCE_DIR}/bin)
+    set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_SOURCE_DIR}/bin)
+endforeach (OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)
 
 add_subdirectory (perfometer)
 add_subdirectory (utils)
 
 if (PERFOMETER_BUILD_PRINTER)
     add_subdirectory (printer)
-endif()
+endif ()
 
 if (PERFOMETER_BUILD_VISUALIZER)
     add_subdirectory (visualizer)
-endif()
+endif ()
 
