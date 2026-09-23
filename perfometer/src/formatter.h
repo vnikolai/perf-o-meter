@@ -78,8 +78,8 @@ namespace perfometer
 
         void write_string(const char* string, size_t len)
         {
-            uint8_t string_length = std::min<unsigned int>(255, len);
-            *this << string_length;
+            size_t string_length = std::min<size_t>(255, len);
+            *this << static_cast<uint8_t>(string_length);
 
             write(string, string_length);
         }

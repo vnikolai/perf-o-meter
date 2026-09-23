@@ -39,8 +39,10 @@ void sub_task(unsigned int microsec)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
+    char time_buffer[64];
     std::time_t result = std::time(nullptr);
-    PERFOMETER_LOG_DYNAMIC_EVENT(std::ctime(&result));
+    ctime_s(time_buffer, sizeof(time_buffer), &result);
+    PERFOMETER_LOG_DYNAMIC_EVENT(time_buffer);
 
     std::this_thread::sleep_for(std::chrono::microseconds(microsec));
 }
