@@ -74,6 +74,6 @@ if (PERFOMETER_BUILD_TESTS)
 endif()
 
 if (PERFOMETER_BUILD_BENCHMARKS)
-    add_executable(benchmark benchmark/benchmark_register_constant_string.cpp)
-    target_link_libraries(benchmark perfometer utils)
+    add_executable(register_string_benchmark benchmark/benchmark_register_constant_string.cpp)
+    target_link_libraries(register_string_benchmark perfometer utils benchmark::benchmark benchmark::benchmark_main)
 endif()
