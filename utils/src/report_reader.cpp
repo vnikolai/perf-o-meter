@@ -120,7 +120,7 @@ perfometer::result report_reader::process(const char* filename)
 
     LOG( "Opening report file " << filename );
 
-    const size_t report_size = report_file.tellg();
+    const size_t report_size = static_cast<size_t>(report_file.tellg());
     report_file.seekg(0);
     size_t progress = 0;
 
@@ -176,7 +176,7 @@ perfometer::result report_reader::process(const char* filename)
             return perfometer::result::io_error;
         }
 
-        size_t current_progress = report_file.tellg() * 100 / report_size;
+        size_t current_progress = static_cast<size_t>(report_file.tellg()) * 100 / report_size;
         if (current_progress > progress)
         {
             progress = current_progress;
