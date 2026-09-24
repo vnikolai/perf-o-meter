@@ -19,70 +19,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include <perfometer/perfometer.h>
-#include <perfometer/helpers.h>
-#include <iostream>
-#include <chrono>
-#include <utils/time.h>
-#include <utils/timer.h>
+#include <benchmark/benchmark.h>
+#include <cstring>
 
 #define SIMPLE_REGISTER(name) perfometer::register_string(name);
 #define LENGTH_REGISTER(name) perfometer::register_string(name, std::strlen(name));
 
-size_t strlen_wrapper(const char* str)
+static void benchmark_simple_registration(benchmark::State& state)
 {
-    return std::strlen(str);
-}
-
-void benchmark_simple_registration()
-{
-    std::cout << "benchmark_simple_registration" << std::endl;
-    perfometer::utils::logging_timer timer;
-
-    for (size_t i = 0; i < 10000; ++i)
+    perfometer::initialize();
+  
+    for (auto _ : state)
     {
+        // This code gets timed
         SIMPLE_REGISTER("lets_say_it's_some_pretty_long_string_to_look_like_function_declaration");
     }
+
+    perfometer::shutdown();
 }
 
-void benchmark_length_in_registration()
-{
-    std::cout << "benchmark_length_in_registration" << std::endl;
-    perfometer::utils::logging_timer timer;
+BENCHMARK(benchmark_simple_registration);
 
-    for (size_t i = 0; i < 10000; ++i)
-    {
-        LENGTH_REGISTER("lets_say_it's_some_pretty_long_string_to_look_like_function_declaration");
-    }
-}
-
-void benchmark_strlen()
-{
-    std::cout << "benchmark_strlen" << std::endl;
-    perfometer::utils::logging_timer timer;
-
-    size_t cnt = 0;
-    for (size_t i = 0; i < 10000; ++i)
-    {
-        const char* bla = "lets_say_it's_some_pretty_long_string_to_look_like_function_declaration";
-        cnt += strlen_wrapper(bla);
-    }
-}
-
-
-int main(int argc, const char** argv)
+static void benchmark_length_in_registration(benchmark::State& state)
 {
     perfometer::initialize();
 
-    PERFOMETER_LOG_THREAD_NAME("MAIN_THREAD");
+    for (auto _ : state)
+    {
+        // This code gets timed
+        LENGTH_REGISTER("lets_say_it's_some_pretty_long_string_to_look_like_function_declaration");
+    }
 
-    //benchmark_simple_registration();
-    benchmark_length_in_registration();
-    //benchmark_length_in_registration();
-    //benchmark_simple_registration();
-
-    benchmark_strlen();
-    
     perfometer::shutdown();
-
-    return 0;
 }
+
+BENCHMARK(benchmark_length_in_registration);
+
+// Run the benchmark
+BENCHMARK_MAIN();
+

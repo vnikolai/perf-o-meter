@@ -20,12 +20,15 @@ SOFTWARE. */
 
 #include <perfometer/perfometer.h>
 #include <perfometer/helpers.h>
-#include <ctime>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <thread>
 
 constexpr int num_threads = 10;
 std::thread threads[num_threads];
+
+auto application_start_time = std::chrono::steady_clock::now();
 
 void wait(unsigned int microsec)
 {
@@ -39,8 +42,13 @@ void sub_task(unsigned int microsec)
 {
     PERFOMETER_LOG_WORK_FUNCTION();
 
-    std::time_t result = std::time(nullptr);
-    PERFOMETER_LOG_DYNAMIC_EVENT(std::ctime(&result));
+    auto since_app_start = std::chrono::steady_clock::now() - application_start_time;
+    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(since_app_start);
+
+    std::stringstream ss;
+    ss << microseconds.count() << " us since app start";
+
+    PERFOMETER_LOG_DYNAMIC_EVENT(ss.str());
 
     std::this_thread::sleep_for(std::chrono::microseconds(microsec));
 }
