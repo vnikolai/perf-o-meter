@@ -1,6 +1,6 @@
 # Perf-o-meter project for collecting and visualizing performance data
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 
 option (PERFOMETER_BUILD_PRINTER    "Build printer"     OFF)
 option (PERFOMETER_BUILD_SAMPLES    "Build samples"     OFF)
