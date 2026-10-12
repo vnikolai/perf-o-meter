@@ -30,8 +30,9 @@ namespace perfometer
 {
     namespace utils
     {
-        using perf_thread_id = int64_t; // holding at least 8 bytes
-        using perf_time = uint64_t;     // holding at least 8 bytes
+        // redefining types with max size as report could be from a different platform
+        using perf_thread_id = int64_t;
+        using perf_time = uint64_t;
         using perf_string_id = perfometer::string_id;
 
         class report_reader
@@ -67,7 +68,7 @@ namespace perfometer
             virtual void handle_wait(perfometer::string_id string_id, perf_thread_id thread_id, double time_start, double time_end) {}
             virtual void handle_event(perfometer::string_id string_id, perf_thread_id thread_id, double time) {}
 
-        private:
+        protected:
             double convert_time(perf_time time);
 
         private:
