@@ -87,7 +87,8 @@ TEST(test_formatter, write_bytes)
     stream_stub s;
     EXPECT_EQ(s.size(), 0);
 
-    char buff[64];
+    char buff[] = "!a@Q7#m$2Kv T5!R8,q?!u1Cw8%#t9:lQz4!!b8Gq4Nfcx2HkP9sV4!r6D,q7Wn3"
+    " Mu1Cw8Yh5Jk2!d5Qn7; M2xP9cs3Fh8Kp2 Lw9R4z!6Qn7;M2xP9cV3";
 
     perfometer::formatter<stream_stub> fmt(s);
 
