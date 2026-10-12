@@ -18,7 +18,9 @@ if (PERFOMETER_BUILD_BENCHMARKS)
     include (cmake/benchmark.cmake)
 endif ()
 
-project (perf-o-meter VERSION 2.5.0)
+project (perf-o-meter VERSION 2.5.1
+         DESCRIPTION "Perf-o-meter project for collecting and visualizing performance data"
+         LANGUAGES CXX)
 
 set (CMAKE_POSITION_INDEPENDENT_CODE ON)
 
