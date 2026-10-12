@@ -81,8 +81,17 @@ namespace format
         page_end = 9                // 8 bit record type
     };
 
+    // Indicates that max string id limit was reached.
     constexpr string_id invalid_string_id = std::numeric_limits<string_id>::max();
+
+    // Indicates uninitialized string id.
     constexpr string_id unknown_string_id = 0;
+
+    // Indicates that log record has a dynamic string and report reader will get last string with with id 1
+    // from stream as it's name. Theoretically it can be broken if dynamic string is written at the end of the page
+    // but actual log item goes to next, and between them there is another page from different thread with dynamic
+    // string, thus second dynamic string might appear for both items. Should be possible to avoid by storing
+    // last dynamic string per thread in reader.
     constexpr string_id dynamic_string_id = 1;
 
     inline std::ostream& operator << (std::ostream& stream, const record_type& type)

@@ -143,7 +143,7 @@ result initialize(const char file_name[], bool running)
 
     output << format::record_type::string
            << format::invalid_string_id
-           << "String limit overflow";
+           << "Invalid string ID";
 
     s_logger_thread_running = true;
     s_logger_thread = std::thread(logger_thread);
@@ -310,11 +310,6 @@ result log_thread_name(string_id str_id, thread_id t_id)
         return result::not_initialized;
     }
 
-    if (str_id == format::invalid_string_id)
-    {
-        return result::invalid_arguments;
-    }
-
     result res = ensure_buffer();
     if (res != result::ok)
     {
@@ -342,11 +337,6 @@ result log_work(string_id str_id, time start_time, time end_time)
         return result::not_running;
     }
 
-    if (str_id == format::invalid_string_id)
-    {
-        return result::invalid_arguments;
-    }
-
     result res = ensure_buffer();
     if (res != result::ok)
     {
@@ -369,11 +359,6 @@ result log_work_start(string_id str_id, time start_time)
     if (!s_logging_enabled)
     {
         return result::not_running;
-    }
-
-    if (str_id == format::invalid_string_id)
-    {
-        return result::invalid_arguments;
     }
 
     s_started_blocks.emplace(format::record_type::work, str_id, start_time);
@@ -426,11 +411,6 @@ result log_wait(string_id str_id, time start_time, time end_time)
         return result::not_running;
     }
 
-    if (str_id == format::invalid_string_id)
-    {
-        return result::invalid_arguments;
-    }
-
     result res = ensure_buffer();
     if (res != result::ok)
     {
@@ -455,11 +435,6 @@ result log_wait_start(string_id str_id, time start_time)
         return result::not_running;
     }
 
-    if (str_id == format::invalid_string_id)
-    {
-        return result::invalid_arguments;
-    }
-
     s_started_blocks.emplace(format::record_type::wait, str_id, start_time);
 
     return result::ok;
@@ -475,11 +450,6 @@ result log_event(string_id str_id, time t)
     if (!s_logging_enabled)
     {
         return result::not_running;
-    }
-
-    if (str_id == format::invalid_string_id)
-    {
-        return result::invalid_arguments;
     }
 
     result res = ensure_buffer();
@@ -500,11 +470,21 @@ result log_event(string_id str_id, time t)
 
 string_id register_string(const char* string)
 {
+    if (string == nullptr)
+    {
+        return format::invalid_string_id;
+    }
+
     return register_string(string, std::strlen(string));
 }
 
 string_id register_string(const char* string, size_t len)
 {
+    if (string == nullptr)
+    {
+        return format::invalid_string_id;
+    }
+
     // reserved ids
     // 0 - "UNKNOWN"
     // 1 - dynamic string marker
@@ -540,6 +520,11 @@ string_id write_string(const char* string, size_t len)
     if (!s_logging_enabled)
     {
         return result::not_running;
+    }
+
+    if (string == nullptr)
+    {
+        return result::invalid_arguments;
     }
 
     result res = ensure_buffer();

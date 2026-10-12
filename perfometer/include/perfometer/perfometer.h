@@ -54,11 +54,18 @@ namespace perfometer
     // waits untill file writing queue is written to file
     result flush();
 
-    // register static reusable string, returns assigned string id, up until string_id::max
+    // register static reusable string, returns assigned string id, 
+    // up to numeric_limits<string_id>::max()
+    // which, when passed to log function, will be used as name repeatedly
+    // returns new unique string id if successful,
+    // format::invalid_string_id if string id limit overflow.
+    // format::invalid_string_id if string is nullptr.
     string_id register_string(const char* string);
     string_id register_string(const char* string, size_t len);
 
-    // writes string id without registration, to be used once, returns format::dynamic_string_id
+    // Writes string with id 1 to report stream. 
+    // Any log record with string_id = 1 will use last such string as name.
+    // returns format::dynamic_string_id which if successful.
     string_id write_string(const char* string, size_t len);
 
     // log record_type::thread_name block with string id, thread id

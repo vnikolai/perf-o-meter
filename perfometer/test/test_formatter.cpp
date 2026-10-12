@@ -24,6 +24,8 @@ SOFTWARE. */
 
 #include <gtest/gtest.h>
 
+namespace {
+
 class stream_stub
 {
 public:
@@ -141,3 +143,5 @@ TEST(test_formatter, formatting_string2)
     EXPECT_EQ(s[0], strlen(dummy_string));
     EXPECT_EQ(std::memcmp(s.data() + 1, dummy_string, strlen(dummy_string)), 0);
 }
+
+} // namespace
