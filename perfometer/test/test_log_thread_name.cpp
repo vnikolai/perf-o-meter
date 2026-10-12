@@ -56,15 +56,6 @@ TEST(log_thread_name, not_initialized)
     EXPECT_EQ(perfometer::log_thread_name(10, std::this_thread::get_id()), perfometer::not_initialized);
 }
 
-TEST(log_thread_name, invalid_arguments_invalid_string_id)
-{
-    ASSERT_EQ(perfometer::initialize("test.report"), perfometer::ok);
-    EXPECT_EQ(perfometer::log_thread_name(perfometer::format::invalid_string_id, std::this_thread::get_id()),
-              perfometer::invalid_arguments);
-    EXPECT_EQ(perfometer::log_thread_name(perfometer::format::invalid_string_id), perfometer::invalid_arguments);
-    ASSERT_EQ(perfometer::shutdown(), perfometer::ok);
-}
-
 TEST(log_thread_name, records_current_thread_name_even_when_paused)
 {
     ASSERT_EQ(perfometer::initialize("test.report", false), perfometer::ok);

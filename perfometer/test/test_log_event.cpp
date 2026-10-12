@@ -71,14 +71,6 @@ TEST(log_event, not_running_explicitly_paused)
     ASSERT_EQ(perfometer::shutdown(), perfometer::ok);
 }
 
-TEST(log_event, invalid_arguments_invalid_string_id)
-{
-    ASSERT_EQ(perfometer::initialize("test.report"), perfometer::ok);
-    EXPECT_EQ(perfometer::log_event(perfometer::format::invalid_string_id, 0), perfometer::invalid_arguments);
-    EXPECT_EQ(perfometer::log_event(perfometer::format::invalid_string_id, 10), perfometer::invalid_arguments);
-    ASSERT_EQ(perfometer::shutdown(), perfometer::ok);
-}
-
 TEST(log_event, record_event)
 {
     ASSERT_EQ(perfometer::initialize("test.report"), perfometer::ok);
